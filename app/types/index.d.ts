@@ -1,7 +1,12 @@
 import type { AvatarProps } from '@nuxt/ui'
+import type { Database } from './x'
 
 export type UserStatus = 'subscribed' | 'unsubscribed' | 'bounced'
 export type SaleStatus = 'paid' | 'failed' | 'refunded'
+
+declare global {
+  type DB = Database
+}
 
 export interface User {
   id: number

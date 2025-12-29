@@ -7,69 +7,151 @@ const toast = useToast()
 const open = ref(false)
 
 const links = [[{
-  label: 'Home',
+  label: 'Dashboard',
   icon: 'i-lucide-house',
   to: '/',
   onSelect: () => {
     open.value = false
   }
 }, {
-  label: 'Inbox',
-  icon: 'i-lucide-inbox',
+  label: 'Agents & Rôles',
+  icon: 'i-heroicons-identification',
   to: '/inbox',
-  badge: '4',
-  onSelect: () => {
-    open.value = false
-  }
-}, {
-  label: 'Customers',
-  icon: 'i-lucide-users',
-  to: '/customers',
-  onSelect: () => {
-    open.value = false
-  }
-}, {
-  label: 'Settings',
-  to: '/settings',
-  icon: 'i-lucide-settings',
-  defaultOpen: true,
+  //badge: '4',
+  defaultOpen: false,
   type: 'trigger',
   children: [{
-    label: 'General',
+    label: 'Agents',
+    icon: 'i-heroicons-users',
+    to: '/agents',
+    exact: true,
+    onSelect: () => {
+      open.value = false
+    }
+  }, {
+    label: 'Rôles & Permissions',
+    icon: 'i-heroicons-key',
+    to: '/settings/members',
+    defaultOpen: false,
+    type: 'trigger',
+    children: [{
+      label: 'Rôles',
+      icon: 'i-heroicons-shield-check',
+      to: '/roles',
+      exact: true,
+      onSelect: () => {
+        open.value = false
+      }
+    }, {
+      label: 'Permissions',
+      icon: 'i-heroicons-lock-closed',
+      to: '/settings/members',
+      onSelect: () => {
+        open.value = false
+      }
+    }]
+  }]
+}, {
+  label: 'Organisation',
+  icon: 'i-lucide-users',
+  to: '/customers',
+  defaultOpen: false,
+  type: 'trigger',
+  children: [{
+    label: 'Services',
+    icon: 'i-heroicons-building-office',
+    to: '/services',
+  }, {
+    label: 'Départements',
+    icon: 'i-heroicons-squares-2x2',
+    to: '/departements',
+    onSelect: () => {
+      open.value = false
+    }
+  }]
+}, {
+  label: 'Apprentissage',
+  icon: 'i-heroicons-building-library',
+  defaultOpen: false,
+  type: 'trigger',
+  children: [{
+    label: 'Catégories',
+    icon: 'i-heroicons-tag',
+    to: '/categories',
+    onSelect: () => {
+      open.value = false
+    }
+  }, {
+    label: 'Modules',
+    icon: 'i-heroicons-rectangle-stack',
+    to: '/modules',
+    exact: true,
+    onSelect: () => {
+      open.value = false
+    }
+  }, {
+    label: 'Éditeur du Module',
+    icon: 'i-heroicons-document-text',
+    to: '/settings/members',
+    defaultOpen: false,
+    type: 'trigger',
+    children: [{
+      label: 'Détails du module',
+      icon: 'i-heroicons-document-text',
+      to: '/settings',
+      exact: true,
+      onSelect: () => {
+        open.value = false
+      }
+    }, {
+      label: 'Cours',
+      icon: 'i-heroicons-book-open',
+      to: '/settings/members',
+      onSelect: () => {
+        open.value = false
+      }
+    }, {
+      label: 'Quiz',
+      icon: 'i-heroicons-question-mark-circle',
+      to: '/settings/members',
+      onSelect: () => {
+        open.value = false
+      }
+    }, {
+      label: 'Questions & Réponses',
+      icon: 'i-heroicons-list-bullet',
+      to: '/settings/members',
+      onSelect: () => {
+        open.value = false
+      }
+    }]
+  }]
+}], [{
+  label: 'Suivi & Analyse',
+  icon: 'i-lucide-search',
+  to: '/settings/members',
+  defaultOpen: false,
+  type: 'trigger',
+  children: [{
+    label: 'Progression Agents',
+    icon: 'i-heroicons-chart-bar',
     to: '/settings',
     exact: true,
     onSelect: () => {
       open.value = false
     }
   }, {
-    label: 'Members',
+    label: 'Résultats Quiz',
+    icon: 'i-heroicons-sparkles',
     to: '/settings/members',
     onSelect: () => {
       open.value = false
     }
-  }, {
-    label: 'Notifications',
-    to: '/settings/notifications',
-    onSelect: () => {
-      open.value = false
-    }
-  }, {
-    label: 'Security',
-    to: '/settings/security',
-    onSelect: () => {
-      open.value = false
-    }
   }]
-}], [{
-  label: 'Feedback',
-  icon: 'i-lucide-message-circle',
-  to: 'https://github.com/nuxt-ui-templates/dashboard',
-  target: '_blank'
 }, {
-  label: 'Help & Support',
-  icon: 'i-lucide-info',
-  to: 'https://github.com/nuxt-ui-templates/dashboard',
-  target: '_blank'
+  label: 'Documents',
+  icon: 'i-heroicons-folder',
+  to: '/settings/members'
 }]] satisfies NavigationMenuItem[][]
 
 const groups = computed(() => [{
