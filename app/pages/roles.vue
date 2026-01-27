@@ -276,7 +276,7 @@ function clearTableSelection() {
       <!-- Tableau -->
       <UTable
         ref="table"
-        v-model:row-selection="rowSelection" 
+        v-model:row-selection="rowSelection"
         :data="paginatedData"
         :columns="columns"
         :loading="pending"

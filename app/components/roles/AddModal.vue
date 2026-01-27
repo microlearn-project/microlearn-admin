@@ -35,8 +35,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     emit("addrole");
     state.designation = "";
     open.value = false;
-  } catch (err: any) {
-    console.error("Erreur API :", err);
+  } catch (err: any) { 
 
     const message =
       err?.data?.message || err?.statusMessage || err?.message || "";

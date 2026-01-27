@@ -53,7 +53,7 @@ const selectedRows = computed(
 
 /* ---------------------------------------------------
      4. Items du menu sur chaque ligne
-----------------------------------------------------*/ 
+----------------------------------------------------*/
 function getRowItems(row: { original: Departement }) {
   const s = row.original;
   return [

@@ -50,6 +50,18 @@ export default defineEventHandler(async (event) => {
     if (error)
       throw createError({ statusCode: 500, statusMessage: error.message });
 
+    // Log de l'activité de suppression de département
+    const session = getUserSession(event);
+    await logActivity({
+      user_id: session?.user?.id_agent || null,
+      action: "departement_supprime",
+      objet_type: "departement",
+      objet_id: id,
+      meta: {
+        designation: data?.designation,
+      },
+    });
+
     return data;
   } else {
     // Hard delete
@@ -65,6 +77,18 @@ export default defineEventHandler(async (event) => {
         statusMessage: error.message,
       });
     }
+
+    // Log de l'activité de suppression de département
+    const session = getUserSession(event);
+    await logActivity({
+      user_id: session?.user?.id_agent || null,
+      action: "departement_supprime",
+      objet_type: "departement",
+      objet_id: id,
+      meta: {
+        designation: data ? data[0].designation : null,
+      },
+    }); 
 
     return (data ?? []) as DepartementUpdate[];
   }

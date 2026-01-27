@@ -3,6 +3,21 @@ import type { TableColumn } from "@nuxt/ui";
 import { upperFirst } from "scule";
 import type { Tables } from "~/types/database.types";
 
+// Auth
+const { user, authenticated, fetchUser, hasRole } = useAuth();
+
+// Charger l'utilisateur au montage
+onMounted(async () => {
+  if (!authenticated.value) {
+    await fetchUser();
+  }
+});
+
+// Vérification des rôles
+const isSuperAdmin = computed(() => hasRole("SUPERADMIN"));
+const isAdmin = computed(() => hasRole("ADMIN"));
+const isFormateur = computed(() => hasRole("FORMATEUR"));
+
 type Module = Tables<"module">;
 
 const toast = useToast();
@@ -34,7 +49,7 @@ const rowSelection = ref<Record<string, boolean>>({});
 const selectedRows = computed(
   () =>
     table.value?.tableApi?.getSelectedRowModel().rows.map((r) => r.original) ??
-    []
+    [],
 );
 
 /* ---------------------------------------------------
@@ -57,16 +72,9 @@ const showDocumentsModal = ref(false);
 ----------------------------------------------------*/
 function getRowItems(row: { original: Module }) {
   const m = row.original;
-  return [
+
+  const items = [
     { type: "label", label: "Actions sur le module" },
-    {
-      label: "Copier l'ID",
-      icon: "i-lucide-copy",
-      onSelect: () => {
-        navigator.clipboard.writeText(String(m.id_module));
-        toast.add({ title: "ID copié dans le presse-papier" });
-      },
-    },
     { type: "separator" },
     {
       label: "Modifier",
@@ -75,20 +83,65 @@ function getRowItems(row: { original: Module }) {
         navigateTo(`/modules/edit/${m.id_module}`);
       },
     },
-    ...(!m.publish
-      ? [
-          {
-            label: "Publier",
-            icon: "i-lucide-upload",
-            color: "success",
-            onSelect: () => {
-              moduleToPublish.value = m;
-              showPublishModal.value = true;
-            },
-          },
-          { type: "separator" },
-        ]
-      : []),
+  ];
+
+  // Actions de publication (tous les rôles)
+  if (!m.publish) {
+    // Module non publié
+    if (m.publish_at) {
+      // A déjà été publié avant → Republier
+      items.push({
+        label: "Republier",
+        icon: "i-lucide-refresh-cw",
+        onSelect: () => {
+          republier(m.id_module);
+        },
+      });
+    } else {
+      // Jamais publié → Publier
+      items.push({
+        label: "Publier",
+        icon: "i-lucide-upload",
+        onSelect: () => {
+          moduleToPublish.value = m;
+          showPublishModal.value = true;
+        },
+      });
+    }
+  } else {
+    // Module publié → Retirer
+    items.push({
+      label: "Retirer",
+      icon: "i-lucide-arrow-down",
+      onSelect: () => {
+        if (isSuperAdmin.value) {
+          retirer(m.id_module);
+        } else {
+          toast.add({
+            title: "Permission refusée",
+            description: "Seul un SUPERADMIN peut retirer un module publié.",
+            color: "error",
+          });
+        }
+      },
+    });
+  }
+
+  // ACTION TÉLÉCHARGEABLE : Visible uniquement pour SUPERADMIN
+  if (isSuperAdmin.value) {
+    items.push({
+      label: m.download_enabled
+        ? "Désactiver le téléchargement"
+        : "Activer le téléchargement",
+      icon: m.download_enabled ? "i-lucide-download-off" : "i-lucide-download",
+      onSelect: () => {
+        toggleDownloadable(m.id_module, !m.download_enabled);
+      },
+    });
+  }
+
+  // Actions communes à tous
+  items.push(
     {
       label: "Catégories",
       icon: "i-lucide-tags",
@@ -113,11 +166,13 @@ function getRowItems(row: { original: Module }) {
         showDocumentsModal.value = true;
       },
     },
-  ];
+  );
+
+  return items;
 }
 
 /* ---------------------------------------------------
-   4. Colonnes du tableau
+   5. Colonnes du tableau
 ----------------------------------------------------*/
 const columns: TableColumn<Module>[] = [
   {
@@ -159,14 +214,28 @@ const columns: TableColumn<Module>[] = [
           color: row.original.publish ? "success" : "neutral",
           variant: "subtle",
         },
-        () => (row.original.publish ? "OUI" : "NON")
+        () => (row.original.publish ? "OUI" : "NON"),
+      ),
+  },
+  {
+    id: "downloadable",
+    accessorFn: (row: Module) => row.download_enabled,
+    header: "Téléchargeable ?",
+    cell: ({ row }: any) =>
+      h(
+        UBadge,
+        {
+          color: row.original.download_enabled ? "success" : "neutral",
+          variant: "subtle",
+        },
+        () => (row.original.download_enabled ? "OUI" : "NON"),
       ),
   },
   {
     accessorKey: "publish_at",
     header: "Date publication",
     cell: ({ row }: any) => {
-      if (!row.original.publish_at) return "---";
+      if (!row.original.publish_at) return "Jamais publié";
       const date = new Date(row.original.publish_at);
       return date.toLocaleString("fr-FR", {
         dateStyle: "medium",
@@ -212,14 +281,14 @@ const columns: TableColumn<Module>[] = [
               color: "neutral",
               variant: "ghost",
               class: "ml-auto",
-            })
+            }),
         ),
       ]),
   },
 ];
 
 /* ---------------------------------------------------
-   5. Pagination
+   6. Pagination
 ----------------------------------------------------*/
 const pagination = ref({
   pageIndex: 0,
@@ -227,7 +296,7 @@ const pagination = ref({
 });
 
 /* ---------------------------------------------------
-   6. Filtre du tableau
+   7. Filtre du tableau
 ----------------------------------------------------*/
 const publishFilter = ref("all");
 watch(
@@ -243,11 +312,11 @@ watch(
     } else {
       publishColumn.setFilterValue(newVal === "published");
     }
-  }
+  },
 );
 
 /* ---------------------------------------------------
-   7. Données paginées
+   8. Données paginées
 ----------------------------------------------------*/
 const paginatedData = computed(() => {
   if (!modules.value) return [];
@@ -256,19 +325,15 @@ const paginatedData = computed(() => {
   return modules.value.slice(start, end);
 });
 
-
 /* ---------------------------------------------------
-   8. Déselectionner toutes les lignes
+   9. Déselectionner toutes les lignes
 ----------------------------------------------------*/
 function clearTableSelection() {
   table.value?.tableApi?.resetRowSelection();
   rowSelection.value = {};
 }
 
-/* ---------------------------------------------------
-   Mise à jour locale (UX optimisée)
-----------------------------------------------------*/
-
+// Actions Api
 // Gérer la publication d'un module
 function handlePublishSuccess(updatedModule?: Module) {
   if (!modules.value || !moduleToPublish.value) return;
@@ -284,7 +349,7 @@ function handlePublishSuccess(updatedModule?: Module) {
           updated_at: new Date().toISOString(),
           ...(updatedModule || {}),
         }
-      : m
+      : m,
   );
 
   moduleToPublish.value = null;
@@ -300,15 +365,87 @@ function handleDeletionSuccess() {
 
   // Filtrage local
   modules.value = modules.value.filter(
-    (m) => !idsToRemove.includes(m.id_module)
+    (m) => !idsToRemove.includes(m.id_module),
   );
 
   toast.add({
     title: "Suppression réussie",
-    description: `${idsToRemove.length} module(s) supprimé(s)`
+    description: `${idsToRemove.length} module(s) supprimé(s)`,
   });
 
   clearTableSelection();
+}
+
+// Retirer le module
+async function retirer(id: string) {
+  try {
+    await $fetch(`/api/module/${id}/unpublish`, { method: "PATCH" });
+    refresh();
+    toast.add({ title: "Module retiré" });
+  } catch (err) {
+    toast.add({
+      title: "Erreur",
+      description: "Impossible de retirer le module",
+      color: "error",
+    });
+  }
+}
+
+// Republier le module
+async function republier(id: string) {
+  try {
+    await $fetch(`/api/module/${id}/republish`, { method: "PATCH" });
+    refresh();
+    toast.add({
+      title: "Module republié",
+      description:
+        "Le module est à nouveau visible sans modifier la date de publication originale",
+      color: "success",
+    });
+  } catch (err: any) {
+    toast.add({
+      title: "Erreur",
+      description:
+        err?.data?.statusMessage || "Impossible de republier le module",
+      color: "error",
+    });
+  }
+}
+
+// Toggle téléchargement (SUPERADMIN uniquement)
+async function toggleDownloadable(id: string, enabled: boolean) {
+  try {
+    await $fetch(`/api/module/${id}/toggle-download`, {
+      method: "PATCH",
+      body: { download_enabled: enabled },
+    });
+
+    // Mise à jour locale
+    if (modules.value) {
+      modules.value = modules.value.map((m) =>
+        m.id_module === id
+          ? {
+              ...m,
+              download_enabled: enabled,
+              updated_at: new Date().toISOString(),
+            }
+          : m,
+      );
+    }
+
+    toast.add({
+      title: "Téléchargement " + (enabled ? "activé" : "désactivé"),
+      description: "Le module a été mis à jour avec succès",
+      color: "success",
+    });
+  } catch (err: any) {
+    toast.add({
+      title: "Erreur",
+      description:
+        err?.data?.statusMessage || "Impossible de modifier le téléchargement",
+      color: "error",
+    });
+  }
 }
 </script>
 
@@ -391,7 +528,9 @@ function handleDeletionSuccess() {
             >
               <template #trailing>
                 <UKbd>
-                  {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length }}
+                  {{
+                    table?.tableApi?.getFilteredSelectedRowModel().rows.length
+                  }}
                 </UKbd>
               </template>
             </UButton>

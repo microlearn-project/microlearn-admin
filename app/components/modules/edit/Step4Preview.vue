@@ -48,6 +48,17 @@ async function publishModule() {
     publishing.value = false;
   }
 }
+
+// Formater la date
+function formatDate(date: string) {
+  return new Date(date).toLocaleDateString("fr-FR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 </script>
 
 <template>
@@ -63,20 +74,24 @@ async function publishModule() {
     <div class="space-y-4">
       <div class="bg-elevated border border-default rounded-lg p-6">
         <h3 class="font-semibold text-lg mb-4">{{ module.titre }}</h3>
-        <div class="space-y-3 text-sm">
-          <div class="flex items-start gap-2">
-            <UIcon name="i-lucide-clock" class="text-muted mt-0.5" />
-            <div>
-              <span class="font-medium">Durée :</span>
-              <span class="text-muted ml-1">{{ module.duree_lecture }}</span>
-            </div>
+        <div class="space-y-4 text-sm">
+          <!-- Durée -->
+          <div class="flex items-center gap-2">
+            <UIcon name="i-lucide-clock" class="text-muted" />
+            <span class="font-medium">Durée :</span>
+            <span class="text-muted">{{ module.duree_lecture }}</span>
           </div>
-          <div class="flex items-start gap-2">
-            <UIcon name="i-lucide-file-text" class="text-muted mt-0.5" />
-            <div>
-              <span class="font-medium">Description :</span>
-              <p class="text-muted mt-1">{{ module.description }}</p>
+
+          <!-- Aperçu de la description -->
+          <div>
+            <div class="flex items-center gap-2 mb-3">
+              <UIcon name="i-lucide-file-text" class="text-muted" />
+              <span class="font-medium">Aperçu de la description :</span>
             </div>
+            <div
+              class="prose prose-sm prose-neutral dark:prose-invert max-w-none max-h-64 overflow-y-auto rounded-lg bg-muted/20 p-4 border border-default"
+              v-html="module.description"
+            />
           </div>
         </div>
       </div>
@@ -91,7 +106,7 @@ async function publishModule() {
           <div>
             <p class="font-medium">Module déjà publié</p>
             <p class="text-sm text-muted">
-              Publié le {{ new Date(module.publish_at!).toLocaleString('fr-FR') }}
+              Publié le {{ formatDate(module.publish_at!) }}
             </p>
           </div>
         </div>
@@ -141,3 +156,28 @@ async function publishModule() {
     </div>
   </div>
 </template>
+
+<style scoped>
+:deep(.prose img) {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+:deep(.prose h1) {
+  font-size: 1.5rem;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+:deep(.prose h2) {
+  font-size: 1.25rem;
+  margin-top: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+:deep(.prose p) {
+  margin: 0.5rem 0;
+}
+</style>

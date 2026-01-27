@@ -2,157 +2,271 @@
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
-const fileRef = ref<HTMLInputElement>()
+const { user, fetchUser } = useAuth()
+const toast = useToast()
 
+// Schéma de validation
 const profileSchema = z.object({
-  name: z.string().min(2, 'Too short'),
-  email: z.string().email('Invalid email'),
-  username: z.string().min(2, 'Too short'),
-  avatar: z.string().optional(),
-  bio: z.string().optional()
+  nom: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
+  prenom: z.string().min(2, 'Le prénom doit contenir au moins 2 caractères'),
+  email: z.string().email('Email invalide')
 })
 
 type ProfileSchema = z.output<typeof profileSchema>
 
-const profile = reactive<Partial<ProfileSchema>>({
-  name: 'Benjamin Canac',
-  email: 'ben@nuxtlabs.com',
-  username: 'benjamincanac',
-  avatar: undefined,
-  bio: undefined
+// État du formulaire
+const loading = ref(false)
+const loadingProfile = ref(true)
+
+const profile = reactive<Partial<ProfileSchema> & {
+  code_agent?: string
+  departement?: string
+  service?: string
+  created_at?: string
+}>({
+  nom: '',
+  prenom: '',
+  email: '',
+  code_agent: '',
+  departement: '',
+  service: '',
+  created_at: ''
 })
-const toast = useToast()
-async function onSubmit(event: FormSubmitEvent<ProfileSchema>) {
-  toast.add({
-    title: 'Success',
-    description: 'Your settings have been updated.',
-    icon: 'i-lucide-check',
-    color: 'success'
-  })
-  console.log(event.data)
-}
 
-function onFileChange(e: Event) {
-  const input = e.target as HTMLInputElement
+// Charger le profil complet
+async function loadProfile() {
+  loadingProfile.value = true
+  try {
+    const data = await $fetch('/api/auth/profile')
 
-  if (!input.files?.length) {
-    return
+    profile.nom = data.nom
+    profile.prenom = data.prenom
+    profile.email = data.email
+    profile.code_agent = data.code_agent
+    profile.departement = (data.departement as any)?.designation || ''
+    profile.service = (data.service as any)?.designation || ''
+    profile.created_at = data.created_at
+  } catch (err) {
+    toast.add({
+      title: 'Erreur',
+      description: 'Impossible de charger le profil',
+      color: 'error'
+    })
+  } finally {
+    loadingProfile.value = false
   }
-
-  profile.avatar = URL.createObjectURL(input.files[0]!)
 }
 
-function onFileClick() {
-  fileRef.value?.click()
+// Charger au montage
+onMounted(() => {
+  loadProfile()
+})
+
+// Soumettre les modifications
+async function onSubmit(event: FormSubmitEvent<ProfileSchema>) {
+  loading.value = true
+
+  try {
+    await $fetch('/api/auth/profile', {
+      method: 'PATCH',
+      body: {
+        nom: event.data.nom,
+        prenom: event.data.prenom,
+        email: event.data.email
+      }
+    })
+
+    toast.add({
+      title: 'Succès',
+      description: 'Votre profil a été mis à jour.',
+      icon: 'i-lucide-check',
+      color: 'success'
+    })
+
+    // Rafraîchir les données de session
+    await fetchUser()
+  } catch (err: any) {
+    toast.add({
+      title: 'Erreur',
+      description: err?.data?.statusMessage || 'Impossible de mettre à jour le profil',
+      color: 'error'
+    })
+  } finally {
+    loading.value = false
+  }
 }
+
+// Initiales pour l'avatar
+const initials = computed(() => {
+  if (!profile.prenom || !profile.nom) return '?'
+  return `${profile.prenom[0]}${profile.nom[0]}`.toUpperCase()
+})
+
+// Formater la date de création
+const formattedCreatedAt = computed(() => {
+  if (!profile.created_at) return ''
+  return new Date(profile.created_at).toLocaleDateString('fr-FR', {
+    dateStyle: 'long'
+  })
+})
 </script>
 
 <template>
+  <div v-if="loadingProfile" class="flex items-center justify-center py-12">
+    <UIcon name="i-lucide-loader-circle" class="animate-spin text-3xl text-muted" />
+  </div>
+
   <UForm
+    v-else
     id="settings"
     :schema="profileSchema"
     :state="profile"
     @submit="onSubmit"
   >
     <UPageCard
-      title="Profile"
-      description="These informations will be displayed publicly."
+      title="Profil"
+      description="Gérez vos informations personnelles."
       variant="naked"
       orientation="horizontal"
       class="mb-4"
     >
       <UButton
         form="settings"
-        label="Save changes"
+        label="Enregistrer"
         color="neutral"
         type="submit"
+        :loading="loading"
         class="w-fit lg:ms-auto"
       />
     </UPageCard>
 
     <UPageCard variant="subtle">
+      <!-- Avatar et infos de base -->
+      <div class="flex items-center gap-4 mb-6">
+        <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl">
+          {{ initials }}
+        </div>
+        <div>
+          <p class="font-medium text-lg">{{ profile.prenom }} {{ profile.nom }}</p>
+          <p class="text-muted text-sm">{{ user?.role?.designation || 'Agent' }}</p>
+        </div>
+      </div>
+
+      <USeparator />
+
+      <!-- Code agent (lecture seule) -->
+      <div class="flex max-sm:flex-col justify-between items-start gap-4 py-4">
+        <div>
+          <p class="font-medium">Code agent</p>
+          <p class="text-sm text-muted">Votre identifiant unique de connexion</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <code class="px-3 py-2 bg-muted/30 rounded-md font-mono text-sm">
+            {{ profile.code_agent }}
+          </code>
+          <UButton
+            icon="i-lucide-copy"
+            color="neutral"
+            variant="ghost"
+            size="sm"
+            @click="() => {
+              navigator.clipboard.writeText(profile.code_agent || '')
+              toast.add({ title: 'Code copié' })
+            }"
+          />
+        </div>
+      </div>
+
+      <USeparator />
+
+      <!-- Prénom -->
       <UFormField
-        name="name"
-        label="Name"
-        description="Will appear on receipts, invoices, and other communication."
+        name="prenom"
+        label="Prénom"
+        description="Votre prénom tel qu'il apparaîtra dans l'application."
         required
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <UInput
-          v-model="profile.name"
-          autocomplete="off"
+          v-model="profile.prenom"
+          autocomplete="given-name"
+          class="w-full sm:max-w-xs"
         />
       </UFormField>
+
       <USeparator />
+
+      <!-- Nom -->
+      <UFormField
+        name="nom"
+        label="Nom"
+        description="Votre nom de famille."
+        required
+        class="flex max-sm:flex-col justify-between items-start gap-4"
+      >
+        <UInput
+          v-model="profile.nom"
+          autocomplete="family-name"
+          class="w-full sm:max-w-xs"
+        />
+      </UFormField>
+
+      <USeparator />
+
+      <!-- Email -->
       <UFormField
         name="email"
         label="Email"
-        description="Used to sign in, for email receipts and product updates."
+        description="Utilisé pour les notifications et la récupération de compte."
         required
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <UInput
           v-model="profile.email"
           type="email"
-          autocomplete="off"
+          autocomplete="email"
+          class="w-full sm:max-w-xs"
         />
       </UFormField>
+
       <USeparator />
-      <UFormField
-        name="username"
-        label="Username"
-        description="Your unique username for logging in and your profile URL."
-        required
-        class="flex max-sm:flex-col justify-between items-start gap-4"
-      >
-        <UInput
-          v-model="profile.username"
-          type="username"
-          autocomplete="off"
-        />
-      </UFormField>
-      <USeparator />
-      <UFormField
-        name="avatar"
-        label="Avatar"
-        description="JPG, GIF or PNG. 1MB Max."
-        class="flex max-sm:flex-col justify-between sm:items-center gap-4"
-      >
-        <div class="flex flex-wrap items-center gap-3">
-          <UAvatar
-            :src="profile.avatar"
-            :alt="profile.name"
-            size="lg"
-          />
-          <UButton
-            label="Choose"
-            color="neutral"
-            @click="onFileClick"
-          />
-          <input
-            ref="fileRef"
-            type="file"
-            class="hidden"
-            accept=".jpg, .jpeg, .png, .gif"
-            @change="onFileChange"
-          >
+
+      <!-- Département (lecture seule) -->
+      <div class="flex max-sm:flex-col justify-between items-start gap-4 py-4">
+        <div>
+          <p class="font-medium">Département</p>
+          <p class="text-sm text-muted">Votre département d'affectation</p>
         </div>
-      </UFormField>
+        <div class="px-3 py-2 bg-muted/20 rounded-md text-sm">
+          {{ profile.departement || 'Non défini' }}
+        </div>
+      </div>
+
       <USeparator />
-      <UFormField
-        name="bio"
-        label="Bio"
-        description="Brief description for your profile. URLs are hyperlinked."
-        class="flex max-sm:flex-col justify-between items-start gap-4"
-        :ui="{ container: 'w-full' }"
-      >
-        <UTextarea
-          v-model="profile.bio"
-          :rows="5"
-          autoresize
-          class="w-full"
-        />
-      </UFormField>
+
+      <!-- Service (lecture seule) -->
+      <div class="flex max-sm:flex-col justify-between items-start gap-4 py-4">
+        <div>
+          <p class="font-medium">Service</p>
+          <p class="text-sm text-muted">Votre service d'affectation</p>
+        </div>
+        <div class="px-3 py-2 bg-muted/20 rounded-md text-sm">
+          {{ profile.service || 'Non défini' }}
+        </div>
+      </div>
+
+      <USeparator />
+
+      <!-- Date de création (lecture seule) -->
+      <div class="flex max-sm:flex-col justify-between items-start gap-4 py-4">
+        <div>
+          <p class="font-medium">Membre depuis</p>
+          <p class="text-sm text-muted">Date de création de votre compte</p>
+        </div>
+        <div class="px-3 py-2 bg-muted/20 rounded-md text-sm">
+          {{ formattedCreatedAt }}
+        </div>
+      </div>
     </UPageCard>
   </UForm>
 </template>

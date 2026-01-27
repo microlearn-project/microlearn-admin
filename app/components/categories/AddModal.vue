@@ -35,8 +35,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     emit("addcategory");
     state.designation = "";
     open.value = false;
-  } catch (err: any) {
-    console.error("Erreur API :", err);
+  } catch (err: any) { 
 
     const message =
       err?.data?.message || err?.statusMessage || err?.message || "";
@@ -100,7 +99,7 @@ function resetForm() {
             class="w-full"
             placeholder="INFORMATIQUE"
           />
-        </UFormField> 
+        </UFormField>
         <div class="flex justify-end gap-2">
           <UButton
             label="Annuler"

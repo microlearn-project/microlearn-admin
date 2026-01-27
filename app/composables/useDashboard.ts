@@ -4,21 +4,58 @@ const _useDashboard = () => {
   const route = useRoute()
   const router = useRouter()
   const isNotificationsSlideoverOpen = ref(false)
+  const isShortcutsHelpOpen = ref(false)
 
   defineShortcuts({
-    'g-h': () => router.push('/'),
-    'g-i': () => router.push('/inbox'),
-    'g-c': () => router.push('/customers'),
-    'g-s': () => router.push('/settings'),
-    'n': () => isNotificationsSlideoverOpen.value = !isNotificationsSlideoverOpen.value
-  })
+    // Navigation principale
+    "g-h": () => router.push("/"),
+    "g-a": () => router.push("/agents"),
+    "g-p": () => router.push("/permissions"),
+    "g-s": () => router.push("/services"),
+    "g-d": () => router.push("/documents"),
+    "g-m": () => router.push("/settings"),
+
+    // Nouvelles navigations
+    "g-o": () => router.push("/modules"),
+    "g-r": () => router.push("/progression"),
+    "g-q": () => router.push("/quiz-results"),
+
+    // Actions rapides
+    n: () => (isNotificationsSlideoverOpen.value = !isNotificationsSlideoverOpen.value),
+    c: () => {
+      if (route.path !== "/modules/create") {
+        router.push("/modules/create");
+      }
+    },
+
+    // Aide
+    "?": () => (isShortcutsHelpOpen.value = !isShortcutsHelpOpen.value),
+
+    // Navigation arrière
+    escape: () => {
+      if (isNotificationsSlideoverOpen.value) {
+        isNotificationsSlideoverOpen.value = false;
+      } else if (isShortcutsHelpOpen.value) {
+        isShortcutsHelpOpen.value = false;
+      } else if (window.history.length > 1) {
+        router.back();
+      }
+    },
+
+    // Refresh de la page actuelle
+    "r": () => {
+      window.location.reload();
+    },
+  });
 
   watch(() => route.fullPath, () => {
     isNotificationsSlideoverOpen.value = false
+    isShortcutsHelpOpen.value = false
   })
 
   return {
-    isNotificationsSlideoverOpen
+    isNotificationsSlideoverOpen,
+    isShortcutsHelpOpen
   }
 }
 

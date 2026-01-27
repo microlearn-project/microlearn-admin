@@ -1,6 +1,9 @@
 // server/api/tag/soft-delete.patch.ts
 import { createSupabaseServerClient } from "~~/server/utils/supabase";
 import type { TablesUpdate } from "~/types/database.types";
+import { getUserSession } from "~~/server/utils/session";
+import { logActivity } from "~~/server/utils/activityLog";
+
 
 type TagUpdate = TablesUpdate<"tag">;
 
@@ -50,6 +53,18 @@ export default defineEventHandler(async (event) => {
     if (error)
       throw createError({ statusCode: 500, statusMessage: error.message });
 
+    // Log activity
+    const session = getUserSession(event);
+    await logActivity({
+      user_id: session?.user?.id_agent || null,
+      action: "categorie_supprimee",
+      objet_type: "tag",
+      objet_id: id,
+      meta: {
+        designation: data?.designation,
+      },
+    });
+
     return data;
   } else {
     // Hard delete
@@ -65,6 +80,18 @@ export default defineEventHandler(async (event) => {
         statusMessage: error.message,
       });
     }
+
+    // Log activity
+    const session = getUserSession(event);
+    await logActivity({
+      user_id: session?.user?.id_agent || null,
+      action: "categorie_supprimee",
+      objet_type: "tag",
+      objet_id: id,
+      meta: {
+        designation: data[0].designation,
+      },
+    });
 
     return (data ?? []) as TagUpdate[];
   }

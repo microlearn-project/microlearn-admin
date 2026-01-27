@@ -39,8 +39,7 @@ export default defineEventHandler(async (event) => {
       upsert: false,
     });
 
-  if (uploadError) {
-    console.error("Erreur upload Supabase Storage:", uploadError);
+  if (uploadError) { 
     throw createError({
       statusCode: 500,
       statusMessage: `Erreur d'upload: ${uploadError.message}`,

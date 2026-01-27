@@ -38,14 +38,9 @@ const {
 );
 
 // Charger les catégories quand le modal s'ouvre
-watch(open, async (isOpen) => {
-  console.log('Modal open changed:', isOpen);
+watch(open, async (isOpen) => { 
   if (isOpen) {
-    console.log('Fetching available categories for module:', props.module.id_module);
     await refresh();
-    console.log('Available categories:', availableCategories.value);
-    console.log('Error:', error.value);
-    console.log('Pending:', pending.value);
   }
 }, { immediate: true });
 

@@ -8,29 +8,54 @@ defineProps<{
 const colorMode = useColorMode()
 const appConfig = useAppConfig()
 
+// Auth
+const { user: authUser, logout } = useAuth();
+
 const colors = ['red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose']
 const neutrals = ['slate', 'gray', 'zinc', 'neutral', 'stone']
 
-const user = ref({
-  name: 'Benjamin Canac',
-  avatar: {
-    src: 'https://github.com/benjamincanac.png',
-    alt: 'Benjamin Canac'
+// Données utilisateur - utilise l'auth si connecté, sinon fallback
+const user = computed(() => {
+  if (authUser.value) {
+    const initials = `${authUser.value.prenom[0]}${authUser.value.nom[0]}`.toUpperCase();
+    return {
+      name: `${authUser.value.prenom} ${authUser.value.nom}`,
+      email: authUser.value.email,
+      role: authUser.value.role?.designation || 'Agent',
+      avatar: {
+        // Utiliser les initiales comme fallback
+        alt: initials
+      }
+    }
   }
-})
+  return {
+    name: 'Utilisateur',
+    email: 'non.connecte@exemple.com',
+    role: 'Agent',
+    avatar: {
+      src: 'https://github.com/Franck-adjinon.png',
+      alt: 'User'
+    }
+  }
+});
+
+// Initiales pour l'avatar
+const initials = computed(() => {
+  if (authUser.value) {
+    return `${authUser.value.prenom[0]}${authUser.value.nom[0]}`.toUpperCase();
+  }
+  return '?';
+});
 
 const items = computed<DropdownMenuItem[][]>(() => ([[{
   type: 'label',
-  label: user.value.name,
-  avatar: user.value.avatar
+  label: user.value.email,
+  slot: 'user-info'
 }], [{
-  label: 'Profile',
-  icon: 'i-lucide-user'
-}, {
-  label: 'Paramètres',
-  icon: 'i-lucide-settings',
+  label: 'Profil',
+  icon: 'i-lucide-user',
   to: '/settings'
-}], [{
+} ], [{
   label: 'Theme',
   icon: 'i-lucide-palette',
   children: [{
@@ -75,20 +100,19 @@ const items = computed<DropdownMenuItem[][]>(() => ([[{
     }))
   }]
 }, {
-  label: 'Appearance',
+  label: 'Apparence',
   icon: 'i-lucide-sun-moon',
   children: [{
-    label: 'Light',
+    label: 'Clair',
     icon: 'i-lucide-sun',
     type: 'checkbox',
     checked: colorMode.value === 'light',
     onSelect(e: Event) {
       e.preventDefault()
-
       colorMode.preference = 'light'
     }
   }, {
-    label: 'Dark',
+    label: 'Sombre',
     icon: 'i-lucide-moon',
     type: 'checkbox',
     checked: colorMode.value === 'dark',
@@ -101,21 +125,11 @@ const items = computed<DropdownMenuItem[][]>(() => ([[{
       e.preventDefault()
     }
   }]
-}], [{
-  label: 'Templates',
-  icon: 'i-lucide-layout-template',
-  children: [  {
-    label: 'Portfolio',
-    to: 'https://github.com/microlearn-project/microlearn-admin'
-  }]
-}], [{
-  label: 'Documentation',
-  icon: 'i-lucide-book-open',
-  to: 'https://github.com/microlearn-project/microlearn-admin',
-  target: '_blank'
-}, {
+}],  [{
   label: 'Déconnexion',
-  icon: 'i-lucide-log-out'
+  icon: 'i-lucide-log-out',
+  color: 'error',
+  onSelect: () => logout()
 }]]))
 </script>
 
@@ -126,11 +140,6 @@ const items = computed<DropdownMenuItem[][]>(() => ([[{
     :ui="{ content: collapsed ? 'w-48' : 'w-(--reka-dropdown-menu-trigger-width)' }"
   >
     <UButton
-      v-bind="{
-        ...user,
-        label: collapsed ? undefined : user?.name,
-        trailingIcon: collapsed ? undefined : 'i-lucide-chevrons-up-down'
-      }"
       color="neutral"
       variant="ghost"
       block
@@ -139,7 +148,21 @@ const items = computed<DropdownMenuItem[][]>(() => ([[{
       :ui="{
         trailingIcon: 'text-dimmed'
       }"
-    />
+    >
+      <!-- Avatar avec initiales -->
+      <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium text-sm shrink-0">
+        {{ initials }}
+      </div>
+
+      <!-- Nom et rôle (masqués si collapsed) -->
+      <template v-if="!collapsed">
+        <div class="flex flex-col items-start flex-1 min-w-0 ml-2">
+          <span class="text-sm font-medium truncate w-full text-left">{{ user.name }}</span>
+          <span class="text-xs text-muted truncate w-full text-left">{{ user.role }}</span>
+        </div>
+        <UIcon name="i-lucide-chevrons-up-down" class="text-dimmed shrink-0" />
+      </template>
+    </UButton>
 
     <template #chip-leading="{ item }">
       <div class="inline-flex items-center justify-center shrink-0 size-5">
@@ -150,6 +173,12 @@ const items = computed<DropdownMenuItem[][]>(() => ([[{
             '--chip-dark': `var(--color-${(item as any).chip}-400)`
           }"
         />
+      </div>
+    </template>
+
+    <template #user-info-leading>
+      <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium text-sm">
+        {{ initials }}
       </div>
     </template>
   </UDropdownMenu>

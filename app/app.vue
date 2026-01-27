@@ -10,24 +10,22 @@ useHead({
     { key: 'theme-color', name: 'theme-color', content: color }
   ],
   link: [
-    { rel: 'icon', href: '/favicon.ico' }
+    { rel: 'icon', href: '/images/favicon.png' }
   ],
   htmlAttrs: {
-    lang: 'en'
+    lang: 'fr'
   }
 })
 
-const title = 'Nuxt Dashboard Template'
-const description = 'A professional dashboard template built with Nuxt UI, featuring multiple pages, data visualization, and comprehensive management capabilities for creating powerful admin interfaces.'
+const title = 'UTB Learn Administration'
+const description = 'Gérez votre plateforme UTB Learn facilement à l\'interface d\'administration UTB Learn. Surveillez les performances, gérez les utilisateurs et configurez les paramètres de votre plateforme en toute simplicité.'
 
 useSeoMeta({
   title,
   description,
   ogTitle: title,
   ogDescription: description,
-  ogImage: 'https://ui.nuxt.com/assets/templates/nuxt/dashboard-light.png',
-  twitterImage: 'https://ui.nuxt.com/assets/templates/nuxt/dashboard-light.png',
-  twitterCard: 'summary_large_image'
+  ogImage: '/images/favicon.png',
 })
 </script>
 
@@ -38,5 +36,9 @@ useSeoMeta({
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
+
+    <!-- Notifications toast -->
+    <UNotifications />
+    <ShortcutsHelpModal />
   </UApp>
 </template>

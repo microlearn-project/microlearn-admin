@@ -40,8 +40,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     state.actif = undefined;
     open.value = false;
 
-  } catch (err: any) {
-    console.error("Erreur API :", err);
+  } catch (err: any) { 
 
     const message = err?.data?.message || err?.statusMessage || err?.message || "";
 

@@ -10,7 +10,7 @@ async function isAgentUsed_role(id_agent: string): Promise<boolean> {
 
   let { data: user_role, error } = await supabase
     .from("user_role")
-    .select("user_role")
+    .select("id_agent")
     .eq("id_agent", id_agent)
     .limit(1);
 

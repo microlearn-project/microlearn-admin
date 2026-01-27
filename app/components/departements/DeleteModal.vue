@@ -87,7 +87,7 @@ function clear_selection() {
           </p>
           <ul class="list-disc pl-5 space-y-1">
             <li v-for="(line, i) in confirmationLines(rows)" :key="i">
-              {{ line }}  
+              {{ line }}
             </li>
           </ul>
         </div>

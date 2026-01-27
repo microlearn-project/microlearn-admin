@@ -50,5 +50,17 @@ export default defineEventHandler(async (event) => {
     });
   }
 
+  // logging de l'activité de publication du module
+  const session = getUserSession(event);
+  await logActivity({
+    user_id: session?.user?.id_agent || null,
+    action: "module_publie",
+    objet_type: "module",
+    objet_id: id,
+    meta: {
+      titre: existingModule.titre,
+    },
+  });
+
   return data;
 });

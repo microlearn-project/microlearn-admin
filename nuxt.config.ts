@@ -3,29 +3,44 @@ export default defineNuxtConfig({
   modules: ["@nuxt/eslint", "@nuxt/ui", "@vueuse/nuxt"],
 
   runtimeConfig: {
+    // Clés privées (côté serveur uniquement)
     supabaseUrl: process.env.NUXT_SUPABASE_URL,
     supabaseAnonKey: process.env.NUXT_SUPABASE_ANON_KEY,
+    supabaseServiceRoleKey: process.env.NUXT_SUPABASE_SERVICE_ROLE_KEY,
+
+    // Clés publiques (côté client)
     public: {
       supabaseUrl: process.env.NUXT_SUPABASE_URL,
       supabaseAnonKey: process.env.NUXT_SUPABASE_ANON_KEY,
     },
   },
+
   // FIX POUR SUPABASE + WINDOWS ESM
   vite: {
     optimizeDeps: {
       include: [
-        "@supabase/supabase-js", // Force optimisation ESM de Supabase
-        "@supabase/postgrest-js", // Et ses dépendances
+        "@supabase/supabase-js",
+        "@supabase/postgrest-js",
+        "prosemirror-state",
       ],
+    },
+    build: {
+      rollupOptions: {
+        onwarn(warning, warn) {
+          // Ignorer les warnings d'imports inutilisés de Supabase
+          if (warning.code === 'UNUSED_EXTERNAL_IMPORT' &&
+              warning.message.includes('@supabase')) {
+            return;
+          }
+          warn(warning);
+        }
+      }
     },
   },
 
   nitro: {
     externals: {
-      inline: [
-        "@supabase/supabase-js", // Bundle inline pour éviter imports externes cassés
-        "@supabase/postgrest-js",
-      ],
+      inline: ["@supabase/supabase-js", "@supabase/postgrest-js"],
     },
   },
 

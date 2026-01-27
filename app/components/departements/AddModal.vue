@@ -5,7 +5,7 @@ import type { FormSubmitEvent } from "@nuxt/ui";
 const emit = defineEmits(["adddepartement"]);
 
 const schema = z.object({
-  designation: z.string().max(50, "Le nombre maximum de caractères est de 50"), 
+  designation: z.string().max(50, "Le nombre maximum de caractères est de 50"),
 });
 const open = ref(false);
 
@@ -36,8 +36,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     state.designation = "";
     open.value = false;
 
-  } catch (err: any) {
-    console.error("Erreur API :", err);
+  } catch (err: any) { 
 
     const message = err?.data?.message || err?.statusMessage || err?.message || "";
 

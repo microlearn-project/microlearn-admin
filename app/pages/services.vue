@@ -12,7 +12,7 @@ const table = useTemplateRef<any>("table");
 const UCheckbox = resolveComponent("UCheckbox");
 const UBadge = resolveComponent("UBadge");
 const UDropdownMenu = resolveComponent("UDropdownMenu");
-const UButton = resolveComponent("UButton"); 
+const UButton = resolveComponent("UButton");
 
 /* ---------------------------------------------------
    1. Récupération des services

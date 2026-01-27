@@ -35,8 +35,7 @@ const publishModule = async (id: string) => {
 
     emit("published");
     open.value = false;
-  } catch (err: any) {
-    console.error("Erreur de publication :", err);
+  } catch (err: any) { 
 
     const message = err?.data?.message || err?.statusMessage || err?.message || "";
 

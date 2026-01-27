@@ -8,15 +8,13 @@ definePageMeta({
 
 const toast = useToast();
 const router = useRouter();
+const { user } = useAuth();
 
-/* ---------------------------------------------------
-   1. Gestion des étapes
-----------------------------------------------------*/
 const currentStep = ref(1);
 
-/* ---------------------------------------------------
-   2. Étape 1 : Informations de base
-----------------------------------------------------*/
+// Clé unique pour forcer le remontage propre de l'éditeur
+const editorKey = ref(0);
+
 const schema1 = z.object({
   titre: z.string().min(3, "Le titre doit contenir au moins 3 caractères").max(255),
   duree_lecture: z.string().min(1, "La durée est requise"),
@@ -29,27 +27,13 @@ const state1 = reactive<Partial<Schema1>>({
   duree_lecture: "",
 });
 
-const submitting1 = ref(false);
-
-function onSubmitStep1(event: FormSubmitEvent<Schema1>) {
-  // Passer à l'étape 2
+async function onSubmitStep1(event: FormSubmitEvent<Schema1>) {
+  // Incrémenter la clé pour un montage propre
+  editorKey.value++;
   currentStep.value = 2;
 }
 
-/* ---------------------------------------------------
-   3. Étape 2 : Description avec éditeur WYSIWYG
-----------------------------------------------------*/
 const description = ref("");
-
-/* ---------------------------------------------------
-   4. Récupérer l'agent connecté
-----------------------------------------------------*/
-// TODO: Remplacer par la vraie récupération de l'utilisateur authentifié
-const currentAgentId = ref("49d5e84b-c47e-43e0-b66b-36844da139d7");
-
-/* ---------------------------------------------------
-   5. Soumission finale
-----------------------------------------------------*/
 const submitting = ref(false);
 
 async function createModule() {
@@ -57,6 +41,15 @@ async function createModule() {
     toast.add({
       title: "Erreur",
       description: "Veuillez ajouter une description",
+      color: "error",
+    });
+    return;
+  }
+
+  if (!user.value?.id_agent) {
+    toast.add({
+      title: "Erreur",
+      description: "Vous devez être connecté pour créer un module",
       color: "error",
     });
     return;
@@ -71,7 +64,7 @@ async function createModule() {
         titre: state1.titre,
         description: description.value,
         duree_lecture: state1.duree_lecture,
-        id_agent: currentAgentId.value,
+        id_agent: user.value.id_agent,
       },
     });
 
@@ -81,10 +74,8 @@ async function createModule() {
       color: "success",
     });
 
-    // Rediriger vers l'éditeur du module
     router.push(`/modules/edit/${response.id_module}`);
-  } catch (err: any) {
-    console.error("Erreur création module :", err);
+  } catch (err: any) { 
 
     const message =
       err?.data?.message || err?.statusMessage || err?.message || "";
@@ -99,15 +90,14 @@ async function createModule() {
   }
 }
 
-/* ---------------------------------------------------
-   6. Navigation
-----------------------------------------------------*/
 function cancel() {
   router.push("/modules");
 }
 
 function goBack() {
   currentStep.value = 1;
+  // Réinitialiser pour le prochain montage
+  editorKey.value++;
 }
 </script>
 
@@ -131,7 +121,6 @@ function goBack() {
         <!-- Indicateur d'étapes -->
         <div class="mb-8">
           <div class="flex items-center justify-center gap-4">
-            <!-- Étape 1 -->
             <div class="flex items-center">
               <div
                 class="flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all"
@@ -156,13 +145,11 @@ function goBack() {
               </span>
             </div>
 
-            <!-- Ligne de connexion -->
             <div
               class="w-24 h-0.5"
               :class="currentStep > 1 ? 'bg-success' : 'bg-default'"
             />
 
-            <!-- Étape 2 -->
             <div class="flex items-center">
               <div
                 class="flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all"
@@ -184,7 +171,7 @@ function goBack() {
           </div>
         </div>
 
-        <!-- Étape 1: Informations de base -->
+        <!-- Étape 1 -->
         <div
           v-if="currentStep === 1"
           class="bg-elevated border border-default rounded-lg p-6 space-y-6"
@@ -192,8 +179,7 @@ function goBack() {
           <div>
             <h2 class="text-2xl font-bold mb-2">Informations de base</h2>
             <p class="text-muted">
-              Commencez par définir le titre et la durée estimée de votre
-              module.
+              Commencez par définir le titre et la durée estimée de votre module.
             </p>
           </div>
 
@@ -203,7 +189,6 @@ function goBack() {
             class="space-y-6"
             @submit="onSubmitStep1"
           >
-            <!-- Titre -->
             <UFormField label="Titre du module" name="titre" required>
               <UInput
                 v-model="state1.titre"
@@ -212,7 +197,6 @@ function goBack() {
               />
             </UFormField>
 
-            <!-- Durée de lecture -->
             <UFormField
               label="Durée de lecture estimée"
               name="duree_lecture"
@@ -222,7 +206,6 @@ function goBack() {
               <UInput v-model="state1.duree_lecture" placeholder="Ex: 2h30" />
             </UFormField>
 
-            <!-- Boutons d'action -->
             <div class="flex justify-end gap-3 pt-6 border-t border-default">
               <UButton
                 label="Annuler"
@@ -241,7 +224,7 @@ function goBack() {
           </UForm>
         </div>
 
-        <!-- Étape 2: Description avec éditeur WYSIWYG -->
+        <!-- Étape 2 -->
         <div
           v-if="currentStep === 2"
           class="bg-elevated border border-default rounded-lg overflow-hidden"
@@ -253,10 +236,13 @@ function goBack() {
             </p>
           </div>
 
-          <!-- Éditeur WYSIWYG -->
-          <ModulesCreateEditor v-model="description" />
+          <!-- Utiliser :key pour forcer un remontage propre -->
+          <ModulesCreateEditor
+            :key="editorKey"
+            v-model="description"
+            module-id="temp"
+          />
 
-          <!-- Boutons d'action -->
           <div class="flex justify-between p-6 border-t border-default">
             <UButton
               label="Précédent"
@@ -283,15 +269,11 @@ function goBack() {
           class="mt-6 bg-primary/10 border border-primary/20 rounded-lg p-4"
         >
           <div class="flex items-start gap-3">
-            <UIcon
-              name="i-lucide-info"
-              class="text-primary mt-0.5 shrink-0"
-            />
+            <UIcon name="i-lucide-info" class="text-primary mt-0.5 shrink-0" />
             <div class="text-sm">
               <p class="font-medium mb-1">Prochaines étapes</p>
               <p class="text-muted">
-                Après la création, vous serez redirigé vers l'éditeur complet
-                où vous pourrez :
+                Après la création, vous serez redirigé vers l'éditeur complet où vous pourrez :
               </p>
               <ul class="list-disc pl-5 mt-2 space-y-1 text-muted">
                 <li>Compléter les détails (catégories, services, documents)</li>

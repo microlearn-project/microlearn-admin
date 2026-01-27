@@ -7,9 +7,6 @@ type Tag = Tables<"tag">;
 export default defineEventHandler(async (event) => {
   const id_module = getRouterParam(event, "id");
 
-  console.log("=== Categories Available Endpoint ===");
-  console.log("Module ID:", id_module);
-
   if (!id_module) {
     throw createError({
       statusCode: 400,
@@ -26,10 +23,7 @@ export default defineEventHandler(async (event) => {
     .is("deleted_at", null)
     .order("designation", { ascending: true });
 
-  console.log("All tags:", allTags?.length, "tags");
-
   if (tagsError) {
-    console.error("Error fetching tags:", tagsError);
     throw createError({
       statusCode: 500,
       statusMessage: tagsError.message,
@@ -42,10 +36,7 @@ export default defineEventHandler(async (event) => {
     .select("id_tag")
     .eq("id_module", id_module);
 
-  console.log("Associated tags:", associatedTags?.length, "tags");
-
   if (associatedError) {
-    console.error("Error fetching associated tags:", associatedError);
     throw createError({
       statusCode: 500,
       statusMessage: associatedError.message,
@@ -57,15 +48,11 @@ export default defineEventHandler(async (event) => {
     (associatedTags ?? []).map((item) => item.id_tag)
   );
 
-  console.log("Associated IDs:", Array.from(associatedIds));
 
   // 4. Filtrer pour ne garder que les tags non associés
   const availableTags = (allTags ?? []).filter(
     (tag) => !associatedIds.has(tag.id_tag)
-  );
-
-  console.log("Available tags:", availableTags.length, "tags");
-  console.log("=================================");
+  ); 
 
   return availableTags as Tag[];
 });

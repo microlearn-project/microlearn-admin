@@ -1,101 +1,248 @@
 <script setup lang="ts">
 import type {
+  EditorCustomHandlers,
   EditorToolbarItem,
   EditorSuggestionMenuItem,
-} from '@nuxt/ui'
+} from "@nuxt/ui";
+import type { Editor } from "@tiptap/vue-3";
+import { ImageUpload } from "./editor/ImageUpload";
 
-const content = defineModel<string>({ default: "" })
+defineProps<{
+  moduleId?: string;
+}>();
 
-// Configuration de la toolbar
-const toolbarItems: EditorToolbarItem[][] = [
+const content = defineModel<string>({ default: "" });
+
+// Custom handlers pour l'upload d'image
+const customHandlers = {
+  imageUpload: {
+    canExecute: (editor: Editor) =>
+      editor.can().insertContent({ type: "imageUpload" }),
+    execute: (editor: Editor) => {
+      editor.chain().focus().insertContent({ type: "imageUpload" }).run();
+    },
+    isActive: (editor: Editor) => editor.isActive("imageUpload"),
+    isDisabled: undefined,
+  },
+} satisfies EditorCustomHandlers;
+
+// Toolbar fixe avec le bouton d'upload personnalisé
+const toolbarItems = [
   [
     {
-      icon: 'i-lucide-heading',
-      tooltip: { text: 'Titres' },
-      content: { align: 'start' },
+      icon: "i-lucide-heading",
+      tooltip: { text: "Titres" },
+      content: { align: "start" },
       items: [
-        { kind: 'heading', level: 1, icon: 'i-lucide-heading-1', label: 'Titre 1' },
-        { kind: 'heading', level: 2, icon: 'i-lucide-heading-2', label: 'Titre 2' },
-        { kind: 'heading', level: 3, icon: 'i-lucide-heading-3', label: 'Titre 3' },
-      ]
-    }
+        {
+          kind: "heading",
+          level: 1,
+          icon: "i-lucide-heading-1",
+          label: "Titre 1",
+        },
+        {
+          kind: "heading",
+          level: 2,
+          icon: "i-lucide-heading-2",
+          label: "Titre 2",
+        },
+        {
+          kind: "heading",
+          level: 3,
+          icon: "i-lucide-heading-3",
+          label: "Titre 3",
+        },
+      ],
+    },
   ],
   [
-    { kind: 'mark', mark: 'bold', icon: 'i-lucide-bold', tooltip: { text: 'Gras' } },
-    { kind: 'mark', mark: 'italic', icon: 'i-lucide-italic', tooltip: { text: 'Italique' } },
-    { kind: 'mark', mark: 'underline', icon: 'i-lucide-underline', tooltip: { text: 'Souligné' } },
-    { kind: 'mark', mark: 'strike', icon: 'i-lucide-strikethrough', tooltip: { text: 'Barré' } },
-    { kind: 'mark', mark: 'code', icon: 'i-lucide-code', tooltip: { text: 'Code' } },
+    {
+      kind: "mark",
+      mark: "bold",
+      icon: "i-lucide-bold",
+      tooltip: { text: "Gras" },
+    },
+    {
+      kind: "mark",
+      mark: "italic",
+      icon: "i-lucide-italic",
+      tooltip: { text: "Italique" },
+    },
+    {
+      kind: "mark",
+      mark: "underline",
+      icon: "i-lucide-underline",
+      tooltip: { text: "Souligné" },
+    },
+    {
+      kind: "mark",
+      mark: "strike",
+      icon: "i-lucide-strikethrough",
+      tooltip: { text: "Barré" },
+    },
+    {
+      kind: "mark",
+      mark: "code",
+      icon: "i-lucide-code",
+      tooltip: { text: "Code inline" },
+    },
   ],
   [
-    { kind: 'bulletList', icon: 'i-lucide-list', tooltip: { text: 'Liste à puces' } },
-    { kind: 'orderedList', icon: 'i-lucide-list-ordered', tooltip: { text: 'Liste numérotée' } },
-    { kind: 'blockquote', icon: 'i-lucide-text-quote', tooltip: { text: 'Citation' } },
+    {
+      kind: "bulletList",
+      icon: "i-lucide-list",
+      tooltip: { text: "Liste à puces" },
+    },
+    {
+      kind: "orderedList",
+      icon: "i-lucide-list-ordered",
+      tooltip: { text: "Liste numérotée" },
+    },
   ],
   [
-    { kind: 'link', icon: 'i-lucide-link', tooltip: { text: 'Lien' } },
-    { kind: 'image', icon: 'i-lucide-image', tooltip: { text: 'Image' } },
+    {
+      kind: "blockquote",
+      icon: "i-lucide-text-quote",
+      tooltip: { text: "Citation" },
+    },
+    {
+      kind: "codeBlock",
+      icon: "i-lucide-square-code",
+      tooltip: { text: "Bloc de code" },
+    },
+    {
+      kind: "horizontalRule",
+      icon: "i-lucide-separator-horizontal",
+      tooltip: { text: "Séparateur" },
+    },
   ],
   [
-    { kind: 'codeBlock', icon: 'i-lucide-square-code', tooltip: { text: 'Bloc de code' } },
-    { kind: 'horizontalRule', icon: 'i-lucide-separator-horizontal', tooltip: { text: 'Séparateur' } },
-  ]
-]
+    { kind: "link", icon: "i-lucide-link", tooltip: { text: "Lien" } },
+    // Bouton d'upload personnalisé
+    {
+      kind: "imageUpload",
+      icon: "i-lucide-image",
+      tooltip: { text: "Image" },
+    },
+  ],
+  [
+    { kind: "undo", icon: "i-lucide-undo", tooltip: { text: "Annuler" } },
+    { kind: "redo", icon: "i-lucide-redo", tooltip: { text: "Rétablir" } },
+  ],
+] satisfies EditorToolbarItem<typeof customHandlers>[][];
 
-// Menu de suggestions (commande slash /)
-const suggestionItems: EditorSuggestionMenuItem[][] = [
+// Toolbar bubble
+const bubbleToolbarItems = [
   [
-    { type: 'label', label: 'Texte' },
-    { kind: 'paragraph', label: 'Paragraphe', icon: 'i-lucide-type' },
-    { kind: 'heading', level: 1, label: 'Titre 1', icon: 'i-lucide-heading-1' },
-    { kind: 'heading', level: 2, label: 'Titre 2', icon: 'i-lucide-heading-2' },
-    { kind: 'heading', level: 3, label: 'Titre 3', icon: 'i-lucide-heading-3' },
+    {
+      kind: "mark",
+      mark: "bold",
+      icon: "i-lucide-bold",
+      tooltip: { text: "Gras" },
+    },
+    {
+      kind: "mark",
+      mark: "italic",
+      icon: "i-lucide-italic",
+      tooltip: { text: "Italique" },
+    },
+    {
+      kind: "mark",
+      mark: "underline",
+      icon: "i-lucide-underline",
+      tooltip: { text: "Souligné" },
+    },
+    {
+      kind: "mark",
+      mark: "strike",
+      icon: "i-lucide-strikethrough",
+      tooltip: { text: "Barré" },
+    },
+    {
+      kind: "mark",
+      mark: "code",
+      icon: "i-lucide-code",
+      tooltip: { text: "Code" },
+    },
+  ],
+  [{ kind: "link", icon: "i-lucide-link", tooltip: { text: "Lien" } }],
+] satisfies EditorToolbarItem[][];
+
+// Menu slash avec upload d'image
+const suggestionItems: EditorSuggestionMenuItem<typeof customHandlers>[][] = [
+  [
+    { type: "label", label: "Texte" },
+    { kind: "paragraph", label: "Paragraphe", icon: "i-lucide-type" },
+    { kind: "heading", level: 1, label: "Titre 1", icon: "i-lucide-heading-1" },
+    { kind: "heading", level: 2, label: "Titre 2", icon: "i-lucide-heading-2" },
+    { kind: "heading", level: 3, label: "Titre 3", icon: "i-lucide-heading-3" },
   ],
   [
-    { type: 'label', label: 'Listes' },
-    { kind: 'bulletList', label: 'Liste à puces', icon: 'i-lucide-list' },
-    { kind: 'orderedList', label: 'Liste numérotée', icon: 'i-lucide-list-ordered' },
+    { type: "label", label: "Listes" },
+    { kind: "bulletList", label: "Liste à puces", icon: "i-lucide-list" },
+    {
+      kind: "orderedList",
+      label: "Liste numérotée",
+      icon: "i-lucide-list-ordered",
+    },
   ],
   [
-    { type: 'label', label: 'Insérer' },
-    { kind: 'blockquote', label: 'Citation', icon: 'i-lucide-text-quote' },
-    { kind: 'codeBlock', label: 'Bloc de code', icon: 'i-lucide-square-code' },
-    { kind: 'horizontalRule', label: 'Séparateur', icon: 'i-lucide-separator-horizontal' },
-  ]
-]
+    { type: "label", label: "Insérer" },
+    { kind: "blockquote", label: "Citation", icon: "i-lucide-text-quote" },
+    { kind: "codeBlock", label: "Bloc de code", icon: "i-lucide-square-code" },
+    {
+      kind: "horizontalRule",
+      label: "Séparateur",
+      icon: "i-lucide-separator-horizontal",
+    },
+    { kind: "imageUpload", label: "Image", icon: "i-lucide-image" },
+  ],
+];
 </script>
 
 <template>
-  <div class="relative">
+  <div class="relative border border-default rounded-lg overflow-hidden">
     <UEditor
       v-slot="{ editor }"
       v-model="content"
       placeholder="Commencez à écrire la description de votre module..."
-      class="prose prose-neutral dark:prose-invert w-full max-w-none"
+      :min-height="500"
+      :extensions="[ImageUpload]"
+      :handlers="customHandlers"
+      class="prose prose-neutral dark:prose-invert max-w-none"
     >
-      <!-- Toolbar bubble de formatage -->
-      <UEditorToolbar :editor="editor" :items="toolbarItems" layout="bubble" />
+      <UEditorToolbar
+        :editor="editor"
+        :items="toolbarItems"
+        class="border-b border-default py-2 px-4 bg-elevated/50 sticky top-0 z-20"
+      />
 
-      <!-- Drag handle pour réorganiser les blocs -->
+      <UEditorToolbar
+        :editor="editor"
+        :items="bubbleToolbarItems"
+        layout="bubble"
+      />
+
       <UEditorDragHandle :editor="editor" />
-
-      <!-- Menu slash / pour commandes -->
+      <!--
       <UEditorSuggestionMenu :editor="editor" :items="suggestionItems" />
+      -->
     </UEditor>
 
-    <!-- Indication du nombre de caractères -->
-    <div class="absolute bottom-4 right-4 text-xs text-muted bg-elevated/80 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-default">
+    <div
+      class="absolute bottom-4 right-4 text-xs text-muted bg-elevated/80 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-default z-10 pointer-events-none"
+    >
       {{ content?.length || 0 }} caractères
     </div>
   </div>
 </template>
 
 <style scoped>
-/* Styles personnalisés pour l'éditeur */
 :deep(.ProseMirror) {
   padding: 1.5rem;
   min-height: 500px;
-  outline: none; 
+  outline: none;
+  background: var(--ui-bg);
 }
 
 :deep(.ProseMirror p.is-editor-empty:first-child::before) {
@@ -106,7 +253,6 @@ const suggestionItems: EditorSuggestionMenuItem[][] = [
   pointer-events: none;
 }
 
-/* Titres */
 :deep(.ProseMirror h1) {
   font-size: 2rem;
   font-weight: 700;
@@ -131,7 +277,6 @@ const suggestionItems: EditorSuggestionMenuItem[][] = [
   line-height: 1.4;
 }
 
-/* Listes */
 :deep(.ProseMirror ul),
 :deep(.ProseMirror ol) {
   padding-left: 1.5rem;
@@ -143,7 +288,6 @@ const suggestionItems: EditorSuggestionMenuItem[][] = [
   margin: 0.25rem 0;
 }
 
-/* Blockquote */
 :deep(.ProseMirror blockquote) {
   border-left: 4px solid var(--color-primary-500);
   padding-left: 1rem;
@@ -152,58 +296,33 @@ const suggestionItems: EditorSuggestionMenuItem[][] = [
   color: var(--color-gray-600);
 }
 
-/* Code inline */
 :deep(.ProseMirror code) {
   background: var(--color-gray-200);
   color: var(--color-gray-800);
   padding: 0.125rem 0.375rem;
   border-radius: 0.25rem;
   font-size: 0.875em;
-  font-family: 'JetBrains Mono', 'Fira Code', 'Monaco', 'Menlo', monospace;
+  font-family: "JetBrains Mono", "Fira Code", monospace;
 }
 
-/* Bloc de code (codeBlock) */
 :deep(.ProseMirror pre) {
-  background: var(--color-gray-900); /* Fond sombre dans tous les thèmes */
-  color: var(--color-gray-100); /* Texte clair */
+  background: var(--color-gray-900);
+  color: var(--color-gray-100);
   border-radius: 0.5rem;
   padding: 1rem;
-  margin: 1rem 0;
   overflow-x: auto;
+  margin: 1rem 0;
   font-size: 0.9rem;
   line-height: 1.5;
   border: 1px solid var(--color-gray-700);
-  position: relative;
 }
 
-/* Code à l'intérieur du bloc */
 :deep(.ProseMirror pre code) {
   background: none;
   padding: 0;
   color: inherit;
-  font-family: inherit;
-  font-size: inherit;
 }
 
-/* Syntax highlighting basique (optionnel mais très utile) */
-:deep(.ProseMirror pre code .token.keyword),
-:deep(.ProseMirror pre code .token.operator) {
-  color: #ff79c6;
-}
-:deep(.ProseMirror pre code .token.string) {
-  color: #f1fa8c;
-}
-:deep(.ProseMirror pre code .token.comment) {
-  color: #6272a4;
-}
-:deep(.ProseMirror pre code .token.function) {
-  color: #8be9fd;
-}
-:deep(.ProseMirror pre code .token.number) {
-  color: #bd93f9;
-}
-
-/* Lien */
 :deep(.ProseMirror a) {
   color: var(--color-primary-500);
   text-decoration: underline;
@@ -214,15 +333,14 @@ const suggestionItems: EditorSuggestionMenuItem[][] = [
   color: var(--color-primary-600);
 }
 
-/* Image */
 :deep(.ProseMirror img) {
   max-width: 100%;
   height: auto;
   border-radius: 0.5rem;
   margin: 1rem 0;
+  display: block;
 }
 
-/* Ligne horizontale */
 :deep(.ProseMirror hr) {
   border: none;
   border-top: 2px solid var(--color-gray-300);

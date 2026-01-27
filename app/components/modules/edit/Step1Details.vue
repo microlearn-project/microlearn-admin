@@ -106,9 +106,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
       <!-- Description -->
       <UFormField label="Description" required>
-        <div class="border border-default rounded-lg overflow-hidden">
-          <ModulesCreateEditor v-model="description" />
-        </div>
+        <ModulesCreateEditor v-model="description" :module-id="module.id_module" />
       </UFormField>
 
       <!-- Durée -->

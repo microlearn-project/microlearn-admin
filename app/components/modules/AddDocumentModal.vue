@@ -70,8 +70,6 @@ async function uploadDocuments() {
     selectedFiles.value = [];
     open.value = false;
   } catch (err: any) {
-    console.error("Erreur d'upload :", err);
-
     const message =
       err?.data?.message || err?.statusMessage || err?.message || "";
 
@@ -93,7 +91,7 @@ function formatFileSize(bytes: number): string {
   const k = 1024;
   const sizes = ["Bytes", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + " " + sizes[i];
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
 }
 </script>
 
@@ -102,7 +100,7 @@ function formatFileSize(bytes: number): string {
     v-model:open="open"
     title="Ajouter des documents"
     description="Sélectionnez les documents à ajouter au module"
-    :ui="{ width: 'sm:max-w-2xl' }"
+    :ui="{ content: 'sm:max-w-2xl' }"
   >
     <template #body>
       <div class="space-y-4">
@@ -142,7 +140,7 @@ function formatFileSize(bytes: number): string {
               class="flex items-center justify-between p-3 border border-default rounded-lg bg-elevated/50"
             >
               <div class="flex items-center gap-3 flex-1 min-w-0">
-                <UIcon name="i-lucide-file" class="text-muted flex-shrink-0" />
+                <UIcon name="i-lucide-file" class="text-muted shrink-0" />
                 <div class="min-w-0 flex-1">
                   <p class="text-sm font-medium truncate">{{ file.name }}</p>
                   <p class="text-xs text-muted">
@@ -170,9 +168,7 @@ function formatFileSize(bytes: number): string {
             name="i-lucide-cloud-upload"
             class="mx-auto mb-2 text-4xl text-muted"
           />
-          <p class="text-sm text-muted">
-            Aucun fichier sélectionné
-          </p>
+          <p class="text-sm text-muted">Aucun fichier sélectionné</p>
         </div>
 
         <!-- Boutons d'action -->
@@ -182,7 +178,10 @@ function formatFileSize(bytes: number): string {
             color="neutral"
             variant="subtle"
             :disabled="uploading"
-            @click="open = false; selectedFiles = []"
+            @click="
+              open = false;
+              selectedFiles = [];
+            "
           />
           <UButton
             label="Uploader"
