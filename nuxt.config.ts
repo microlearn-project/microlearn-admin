@@ -6,7 +6,7 @@ export default defineNuxtConfig({
     // Clés privées (côté serveur uniquement)
     supabaseUrl: process.env.NUXT_SUPABASE_URL,
     supabaseAnonKey: process.env.NUXT_SUPABASE_ANON_KEY,
-    supabaseServiceRoleKey: process.env.NUXT_SUPABASE_SERVICE_ROLE_KEY,
+    supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
 
     // Clés publiques (côté client)
     public: {
@@ -28,13 +28,15 @@ export default defineNuxtConfig({
       rollupOptions: {
         onwarn(warning, warn) {
           // Ignorer les warnings d'imports inutilisés de Supabase
-          if (warning.code === 'UNUSED_EXTERNAL_IMPORT' &&
-              warning.message.includes('@supabase')) {
+          if (
+            warning.code === "UNUSED_EXTERNAL_IMPORT" &&
+            warning.message.includes("@supabase")
+          ) {
             return;
           }
           warn(warning);
-        }
-      }
+        },
+      },
     },
   },
 

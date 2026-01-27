@@ -25,9 +25,9 @@ export const createSupabaseAdminClient = () => {
   const url = config.supabaseUrl;
   const serviceRoleKey = config.supabaseServiceRoleKey;
 
-  if (!url || !serviceRoleKey) { 
+  if (!url || !serviceRoleKey) {
     throw new Error(
-      "Missing Supabase admin credentials – check NUXT_SUPABASE_SERVICE_ROLE_KEY in .env"
+      "Missing Supabase admin credentials – check SUPABASE_SERVICE_ROLE_KEY in .env"
     );
   }
 

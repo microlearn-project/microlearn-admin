@@ -64,7 +64,7 @@ L'application est développée avec Nuxt 3 et utilise Supabase comme base de don
    # Configuration Supabase
    NUXT_SUPABASE_URL=https://votre-projet.supabase.co
    NUXT_SUPABASE_ANON_KEY=votre-cle-anonyme
-   NUXT_SUPABASE_SERVICE_ROLE_KEY=votre-cle-service-role
+   SUPABASE_SERVICE_ROLE_KEY=votre-cle-service-role
    ```
 
 5. **Démarrer le serveur de développement** :
@@ -80,7 +80,7 @@ L'application est développée avec Nuxt 3 et utilise Supabase comme base de don
 |----------|-------------|-------------|
 | `NUXT_SUPABASE_URL` | URL de votre projet Supabase | Oui |
 | `NUXT_SUPABASE_ANON_KEY` | Clé anonyme Supabase pour les opérations client | Oui |
-| `NUXT_SUPABASE_SERVICE_ROLE_KEY` | Clé service role Supabase pour les opérations serveur | Oui |
+| `SUPABASE_SERVICE_ROLE_KEY` | Clé service role Supabase pour les opérations serveur | Oui |
 
 ## Scripts disponibles
 

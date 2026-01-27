@@ -73,7 +73,7 @@ L'application suit une architecture client-serveur :
 
 ### Configuration Supabase
 - **URL** : Configurée via `NUXT_SUPABASE_URL`
-- **Clés** : `NUXT_SUPABASE_ANON_KEY` (client), `NUXT_SUPABASE_SERVICE_ROLE_KEY` (serveur)
+- **Clés** : `NUXT_SUPABASE_ANON_KEY` (client), `SUPABASE_SERVICE_ROLE_KEY` (serveur)
 - **Client** : Créé via `createSupabaseServerClient` et `createSupabaseAdminClient`
 
 ### Tables et leur rôle
