@@ -20,8 +20,7 @@ const shortcuts = [
     category: "Actions",
     items: [
       { keys: ["N"], description: "Ouvrir/fermer les notifications" },
-      { keys: ["C"], description: "Créer un nouveau module" },
-      { keys: ["R"], description: "Actualiser la page" },
+      { keys: ["C"], description: "Créer un nouveau module" }, 
       { keys: ["?"], description: "Afficher cette aide" },
       { keys: ["Esc"], description: "Retour / Fermer" },
     ],

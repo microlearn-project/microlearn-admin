@@ -40,12 +40,7 @@ const _useDashboard = () => {
       } else if (window.history.length > 1) {
         router.back();
       }
-    },
-
-    // Refresh de la page actuelle
-    "r": () => {
-      window.location.reload();
-    },
+    }, 
   });
 
   watch(() => route.fullPath, () => {
