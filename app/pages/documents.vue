@@ -68,7 +68,24 @@ const { data: modules } = await useFetch<Module[]>("/api/module", {
 });
 
 /* ---------------------------------------------------
-   3. Sélection des lignes
+   3. Modal de sélection de module pour le filtre
+----------------------------------------------------*/
+const showModuleSelectModal = ref(false);
+const selectedModuleForFilter = ref<Module | null>(null);
+const moduleFilter = ref("all");
+
+function handleModuleSelect(module: Module) {
+  selectedModuleForFilter.value = module;
+  moduleFilter.value = module.id_module;
+}
+
+function clearModuleFilter() {
+  selectedModuleForFilter.value = null;
+  moduleFilter.value = "all";
+}
+
+/* ---------------------------------------------------
+   4. Sélection des lignes
 ----------------------------------------------------*/
 const rowSelection = ref<Record<string, boolean>>({});
 
@@ -79,7 +96,7 @@ const selectedRows = computed(
 );
 
 /* ---------------------------------------------------
-   4. Modal de suppression
+   5. Modal de suppression
 ----------------------------------------------------*/
 const showDeleteModal = ref(false);
 const documentToDelete = ref<Document | null>(null);
@@ -100,7 +117,7 @@ function onDocumentDeleted() {
 }
 
 /* ---------------------------------------------------
-   5. Items du menu sur chaque ligne
+   6. Items du menu sur chaque ligne
 ----------------------------------------------------*/
 function getRowItems(row: { original: Document }) {
   const d = row.original;
@@ -142,7 +159,7 @@ function getRowItems(row: { original: Document }) {
 }
 
 /* ---------------------------------------------------
-   6. Colonnes du tableau
+   7. Colonnes du tableau
 ----------------------------------------------------*/
 function getFileName(fichier: string): string {
   try {
@@ -275,7 +292,7 @@ const columns: TableColumn<Document>[] = [
 ];
 
 /* ---------------------------------------------------
-   7. Pagination
+   8. Pagination
 ----------------------------------------------------*/
 const pagination = ref({
   pageIndex: 0,
@@ -283,21 +300,9 @@ const pagination = ref({
 });
 
 /* ---------------------------------------------------
-   8. Filtres
+   9. Filtres
 ----------------------------------------------------*/
-const moduleFilter = ref("all");
 const searchQuery = ref("");
-
-// Options du filtre module
-const moduleFilterOptions = computed(() => {
-  const options = [{ label: "Tous les modules", value: "all" }];
-  if (modules.value) {
-    for (const m of modules.value) {
-      options.push({ label: m.titre, value: m.id_module });
-    }
-  }
-  return options;
-});
 
 // Données filtrées
 const filteredData = computed(() => {
@@ -336,7 +341,7 @@ watch([moduleFilter, searchQuery], () => {
 });
 
 /* ---------------------------------------------------
-   9. Déselectionner toutes les lignes
+   10. Déselectionner toutes les lignes
 ----------------------------------------------------*/
 function clearTableSelection() {
   table.value?.tableApi?.resetRowSelection();
@@ -344,10 +349,9 @@ function clearTableSelection() {
 }
 
 /* ---------------------------------------------------
-   10. Suppression multiple
+   11. Suppression multiple
 ----------------------------------------------------*/
 const deletingMultiple = ref(false);
-const showBulkDeleteModal = ref(false);
 
 async function deleteSelectedDocuments() {
   if (selectedRows.value.length === 0) return;
@@ -404,6 +408,15 @@ async function deleteSelectedDocuments() {
         :document="documentToDelete"
         @deleted="onDocumentDeleted"
       />
+
+      <!-- Modal de sélection de module -->
+      <ModuleSelectModal
+        v-model:open="showModuleSelectModal"
+        v-model:selected-module="selectedModuleForFilter"
+        @select="handleModuleSelect"
+        @clear="clearModuleFilter"
+      />
+
       <!-- Stats rapides -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div class="bg-elevated border border-default rounded-lg p-4">
@@ -469,16 +482,31 @@ async function deleteSelectedDocuments() {
             </template>
           </UButton>
 
-          <!-- Filtre par module -->
-          <USelect
-            v-model="moduleFilter"
-            :items="moduleFilterOptions"
-            placeholder="Filtrer par module"
-            class="min-w-48"
-            :ui="{
-              trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200',
-            }"
-          />
+          <!-- Filtre par module avec modal -->
+          <div class="flex items-center gap-2">
+            <UButton
+              :label="
+                selectedModuleForFilter
+                  ? selectedModuleForFilter.titre
+                  : 'Filtrer par module'
+              "
+              :icon="selectedModuleForFilter ? 'i-lucide-book-open' : 'i-lucide-filter'"
+              :color="selectedModuleForFilter ? 'primary' : 'neutral'"
+              variant="outline"
+              class="min-w-48 justify-start"
+              truncate
+              @click="showModuleSelectModal = true"
+            />
+
+            <UButton
+              v-if="selectedModuleForFilter"
+              icon="i-lucide-x"
+              color="neutral"
+              variant="ghost"
+              square
+              @click="clearModuleFilter"
+            />
+          </div>
 
           <!-- Bouton colonnes visibles -->
           <UDropdownMenu

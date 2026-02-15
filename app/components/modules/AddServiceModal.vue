@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn } from "@nuxt/ui";
+import { getPaginationRowModel } from "@tanstack/vue-table";
 import type { Tables } from "~/types/database.types";
 
 type Module = Tables<"module">;
@@ -34,7 +35,7 @@ const {
     lazy: true,
     immediate: false,
     watch: false,
-  }
+  },
 );
 
 // Charger les services quand le modal s'ouvre
@@ -45,7 +46,7 @@ watch(
       await refresh();
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 /* ---------------------------------------------------
@@ -125,14 +126,7 @@ const columns: TableColumn<Service>[] = [
 ----------------------------------------------------*/
 const pagination = ref({
   pageIndex: 0,
-  pageSize: 8,
-});
-
-const paginatedData = computed(() => {
-  if (!availableServices.value) return [];
-  const start = pagination.value.pageIndex * pagination.value.pageSize;
-  const end = start + pagination.value.pageSize;
-  return availableServices.value.slice(start, end);
+  pageSize: 5,
 });
 </script>
 
@@ -163,7 +157,11 @@ const paginatedData = computed(() => {
         <!-- Tableau -->
         <UTable
           ref="table"
-          :data="paginatedData"
+          v-model:pagination="pagination"
+          :data="availableServices"
+          :pagination-options="{
+            getPaginationRowModel: getPaginationRowModel(),
+          }"
           :columns="columns"
           :loading="pending"
           class="max-h-100 overflow-y-auto"
@@ -190,10 +188,10 @@ const paginatedData = computed(() => {
           </div>
 
           <UPagination
-            :default-page="pagination.pageIndex + 1"
-            :items-per-page="pagination.pageSize"
-            :total="availableServices?.length || 0"
-            @update:page="(p) => (pagination.pageIndex = p - 1)"
+            :page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
+            :items-per-page="table?.tableApi?.getState().pagination.pageSize"
+            :total="table?.tableApi?.getFilteredRowModel().rows.length"
+            @update:page="(p) => table?.tableApi?.setPageIndex(p - 1)"
           />
         </div>
 

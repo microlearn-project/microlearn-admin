@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn } from "@nuxt/ui";
+import { getPaginationRowModel } from "@tanstack/vue-table";
 import type { Tables } from "~/types/database.types";
 
 type Module = Tables<"module">;
@@ -34,15 +35,19 @@ const {
     lazy: true,
     immediate: false,
     watch: false,
-  }
+  },
 );
 
 // Charger les catégories quand le modal s'ouvre
-watch(open, async (isOpen) => { 
-  if (isOpen) {
-    await refresh();
-  }
-}, { immediate: true });
+watch(
+  open,
+  async (isOpen) => {
+    if (isOpen) {
+      await refresh();
+    }
+  },
+  { immediate: true },
+);
 
 /* ---------------------------------------------------
    2. Ajouter une catégorie
@@ -121,14 +126,7 @@ const columns: TableColumn<Tag>[] = [
 ----------------------------------------------------*/
 const pagination = ref({
   pageIndex: 0,
-  pageSize: 8,
-});
-
-const paginatedData = computed(() => {
-  if (!availableCategories.value) return [];
-  const start = pagination.value.pageIndex * pagination.value.pageSize;
-  const end = start + pagination.value.pageSize;
-  return availableCategories.value.slice(start, end);
+  pageSize: 5,
 });
 </script>
 
@@ -159,7 +157,11 @@ const paginatedData = computed(() => {
         <!-- Tableau -->
         <UTable
           ref="table"
-          :data="paginatedData"
+          v-model:pagination="pagination"
+          :data="availableCategories"
+          :pagination-options="{
+            getPaginationRowModel: getPaginationRowModel(),
+          }"
           :columns="columns"
           :loading="pending"
           class="max-h-100 overflow-y-auto"
@@ -186,10 +188,10 @@ const paginatedData = computed(() => {
           </div>
 
           <UPagination
-            :default-page="pagination.pageIndex + 1"
-            :items-per-page="pagination.pageSize"
-            :total="availableCategories?.length || 0"
-            @update:page="(p) => (pagination.pageIndex = p - 1)"
+            :page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
+            :items-per-page="table?.tableApi?.getState().pagination.pageSize"
+            :total="table?.tableApi?.getFilteredRowModel().rows.length"
+            @update:page="(p) => table?.tableApi?.setPageIndex(p - 1)"
           />
         </div>
 

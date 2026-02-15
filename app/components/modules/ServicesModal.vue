@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn } from "@nuxt/ui";
-import { upperFirst } from "scule";
+import { getPaginationRowModel } from "@tanstack/vue-table"; 
 import type { Tables } from "~/types/database.types";
 
 type Module = Tables<"module">;
@@ -71,45 +71,6 @@ const showAddModal = ref(false);
 /* ---------------------------------------------------
    4. Retirer des services
 ----------------------------------------------------*/
-/*
-const removing = ref(false);
-
-async function removeServices() {
-  if (selectedRows.value.length === 0) return;
-
-  removing.value = true;
-  try {
-    await Promise.all(
-      selectedRows.value.map((service) =>
-        $fetch(`/api/module/services/remove`, {
-          method: "DELETE",
-          body: {
-            id_module: props.module.id_module,
-            id_service: service.id_service,
-          },
-        })
-      )
-    );
-
-    toast.add({
-      title: "Succès",
-      description: `${selectedRows.value.length} service(s) retiré(s)`,
-      color: "success",
-    });
-
-    await refresh();
-    clearTableSelection();
-  } catch (err) {
-    toast.add({
-      title: "Erreur",
-      description: (err as Error).message,
-      color: "error",
-    });
-  } finally {
-    removing.value = false;
-  }
-}
-*/
 const removing = ref(false);
 
 async function removeServices() {
@@ -205,13 +166,6 @@ const pagination = ref({
   pageSize: 5,
 });
 
-const paginatedData = computed(() => {
-  if (!services.value) return [];
-  const start = pagination.value.pageIndex * pagination.value.pageSize;
-  const end = start + pagination.value.pageSize;
-  return services.value.slice(start, end);
-});
-
 /* ---------------------------------------------------
    7. Déselectionner toutes les lignes
 ----------------------------------------------------*/
@@ -278,8 +232,12 @@ function clearTableSelection() {
         <!-- Tableau -->
         <UTable
           ref="table"
+      v-model:pagination="pagination"
           v-model:row-selection="rowSelection"
-          :data="paginatedData"
+        :data="services"
+        :pagination-options="{
+          getPaginationRowModel: getPaginationRowModel(),
+        }"
           :columns="columns"
           :loading="pending"
           class="max-h-100 overflow-y-auto"
@@ -306,11 +264,11 @@ function clearTableSelection() {
           </div>
 
           <UPagination
-            :default-page="pagination.pageIndex + 1"
-            :items-per-page="pagination.pageSize"
-            :total="services?.length || 0"
-            @update:page="(p) => (pagination.pageIndex = p - 1)"
-          />
+          :page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
+          :items-per-page="table?.tableApi?.getState().pagination.pageSize"
+          :total="table?.tableApi?.getFilteredRowModel().rows.length"
+          @update:page="(p) => table?.tableApi?.setPageIndex(p - 1)"
+        />
         </div>
 
         <!-- Message si aucun service -->

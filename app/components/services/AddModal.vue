@@ -17,6 +17,15 @@ const state = reactive<Partial<Schema>>({
   actif: undefined,
 });
 
+
+// Transformer la désignation en majuscules automatiquement
+const designationUppercase = computed({
+  get: () => state.designation,
+  set: (value: string) => {
+    state.designation = value.toUpperCase();
+  },
+});
+
 const toast = useToast();
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   try {
@@ -40,7 +49,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     state.actif = undefined;
     open.value = false;
 
-  } catch (err: any) { 
+  } catch (err: any) {
 
     const message = err?.data?.message || err?.statusMessage || err?.message || "";
 
@@ -95,7 +104,7 @@ function resetForm() {
           label="Designation"
           name="designation"
         >
-          <UInput v-model="state.designation" class="w-full" placeholder="COURRIER" />
+          <UInput v-model="designationUppercase" class="w-full" placeholder="COURRIER" />
         </UFormField>
         <UCheckbox indicator="end" label="Actif ?" v-model="state.actif" variant="card" />
         <div class="flex justify-end gap-2">

@@ -1,24 +1,24 @@
 <script setup lang="ts">
-import * as z from "zod"
-import type { FormSubmitEvent } from "@nuxt/ui"
-import type { Tables } from "~/types/database.types"
+import * as z from "zod";
+import type { FormSubmitEvent } from "@nuxt/ui";
+import type { Tables } from "~/types/database.types";
 
-type Service = Tables<"service">
+type Service = Tables<"service">;
 
 /* -------------------------
    Props
 --------------------------*/
 const props = defineProps<{
-  rows: Service[]
-}>()
+  rows: Service[];
+}>();
 
 /* -------------------------
    Emits
 --------------------------*/
 const emit = defineEmits<{
-  (e: "updateservice"): void
-  (e: "clear-selection"): void
-}>()
+  (e: "updateservice"): void;
+  (e: "clear-selection"): void;
+}>();
 
 /* -------------------------
    Validation
@@ -26,9 +26,9 @@ const emit = defineEmits<{
 const schema = z.object({
   designation: z.string().max(50),
   actif: z.boolean().default(false),
-})
+});
 
-type Schema = z.output<typeof schema>
+type Schema = z.output<typeof schema>;
 
 /* -------------------------
    State du formulaire
@@ -36,12 +36,20 @@ type Schema = z.output<typeof schema>
 const state = reactive<Partial<Schema>>({
   designation: "",
   actif: false,
-})
+});
+
+// Transformer la désignation en majuscules automatiquement
+const designationUppercase = computed({
+  get: () => state.designation,
+  set: (value: string) => {
+    state.designation = value.toUpperCase();
+  },
+});
 
 /* -------------------------
    Service courant (1 seul)
 --------------------------*/
-const currentService = computed(() => props.rows[0])
+const currentService = computed(() => props.rows[0]);
 
 /* -------------------------
    Sync props → form
@@ -49,22 +57,22 @@ const currentService = computed(() => props.rows[0])
 watch(
   currentService,
   (service) => {
-    if (!service) return
+    if (!service) return;
 
-    state.designation = service.designation
-    state.actif = service.actif
+    state.designation = service.designation;
+    state.actif = service.actif;
   },
-  { immediate: true }
-)
+  { immediate: true },
+);
 
-const toast = useToast()
-const open = ref(false)
+const toast = useToast();
+const open = ref(false);
 
 /* -------------------------
    Submit
 --------------------------*/
 async function onSubmit(event: FormSubmitEvent<Schema>) {
-  if (!currentService.value) return
+  if (!currentService.value) return;
 
   try {
     await $fetch("/api/service/updateservice", {
@@ -74,57 +82,60 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         designation: event.data.designation,
         actif: event.data.actif,
       },
-    })
+    });
 
     toast.add({
       title: "Succès",
       description: `Service « ${event.data.designation} » mis à jour`,
       color: "success",
-    })
+    });
 
-    emit("updateservice")
-    emit("clear-selection")
+    emit("updateservice");
+    emit("clear-selection");
   } catch (err: any) {
     const message =
-      err?.data?.message || err?.statusMessage || err?.message || ""
+      err?.data?.message || err?.statusMessage || err?.message || "";
 
     if (message.includes("duplicate") || message.includes("unique")) {
       toast.add({
         title: "Échec",
         description: "Cette désignation existe déjà.",
         color: "error",
-      })
-      return
+      });
+      return;
     }
 
     toast.add({
       title: "Erreur",
       description: "Un problème est survenu.",
       color: "error",
-    })
+    });
   }
 
-  open.value = false
+  open.value = false;
 }
-
 
 // Fonction pour nettoyer la sélection
 function clear_selection() {
   // Fermer la modale
-  open.value = false
+  open.value = false;
   // Désélectionner toutes les lignes
-  emit("clear-selection")
+  emit("clear-selection");
 }
 
 watch(open, (newValue) => {
   if (!newValue) {
     // La modale vient d'être fermée (par la croix, Esc, overlay, etc.)
-    emit("clear-selection")
+    emit("clear-selection");
   }
-})
+});
 </script>
 <template>
-  <UModal v-model:open="open" title="Modifier le service" :description="`Modifier le service sélectionné.`">
+  <UModal
+    v-model:open="open"
+    title="Modifier le service"
+    :description="`Modifier le service sélectionné.`"
+  >
     <slot />
 
     <template #body>
@@ -135,7 +146,7 @@ watch(open, (newValue) => {
         class="space-y-4"
       >
         <UFormField label="Désignation" name="designation">
-          <UInput v-model="state.designation" class="w-full" />
+          <UInput v-model="designationUppercase" class="w-full" />
         </UFormField>
 
         <UCheckbox
@@ -149,7 +160,11 @@ watch(open, (newValue) => {
           <UButton color="neutral" variant="subtle" @click="clear_selection()">
             Annuler
           </UButton>
-          <UButton type="submit" color="primary" :disabled="props.rows.length !== 1">
+          <UButton
+            type="submit"
+            color="primary"
+            :disabled="props.rows.length !== 1"
+          >
             Mettre à jour
           </UButton>
         </div>

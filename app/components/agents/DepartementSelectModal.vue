@@ -3,30 +3,31 @@ import type { TableColumn } from "@nuxt/ui";
 import type { Tables } from "~/types/database.types";
 import { getPaginationRowModel } from "@tanstack/vue-table";
 
-type Agent = Tables<"agent">;
+type Departement = Tables<"departement">;
 
 const open = defineModel<boolean>("open", { default: false });
-const selectedAgent = defineModel<Agent | null>("selectedAgent", {
+const selectedDepartement = defineModel<Departement | null>("selectedDepartement", {
   default: null,
 });
 
 const emit = defineEmits<{
-  (e: "select", agent: Agent): void;
+  (e: "select", departement: Departement): void;
 }>();
 
 const table = useTemplateRef<any>("table");
 const UButton = resolveComponent("UButton");
+const UBadge = resolveComponent("UBadge");
 
 const {
-  data: agents,
+  data: departements,
   pending,
   refresh,
-} = useFetch<Agent[]>("/api/agent", {
+} = useFetch<Departement[]>("/api/departement", {
   server: false,
   lazy: true,
   immediate: false,
   watch: false,
-  transform: (data) => data.filter((a) => !a.deleted_at && a.actif),
+  transform: (data) => data.filter((d) => !d.deleted_at),
 });
 
 watch(
@@ -39,29 +40,29 @@ watch(
   { immediate: true },
 );
 
-function selectAgent(agent: Agent) {
-  selectedAgent.value = agent;
-  emit("select", agent);
+function selectDepartement(departement: Departement) {
+  selectedDepartement.value = departement;
+  emit("select", departement);
   open.value = false;
 }
 
-const columns: TableColumn<Agent>[] = [
+const columns: TableColumn<Departement>[] = [
   {
-    accessorKey: "code_agent",
-    header: "Code",
-    cell: ({ row }: any) =>
-      h("code", { class: "text-xs font-mono" }, row.original.code_agent),
+    accessorKey: "designation",
+    header: "Désignation",
+    cell: ({ row }: any) => {
+      const dept = row.original;
+      return h("div", {}, [
+        h("p", { class: "font-medium" }, dept.designation), 
+      ]);
+    },
   },
   {
-    id: "nom_complet",
-    accessorKey: "email",
-    header: "Nom complet",
+    accessorKey: "created_at",
+    header: "Créé le",
     cell: ({ row }: any) => {
-      const agent = row.original;
-      return h("div", {}, [
-        h("p", { class: "font-medium" }, `${agent.prenom} ${agent.nom}`),
-        h("p", { class: "text-xs text-muted" }, agent.email || "N/A"),
-      ]);
+      const date = new Date(row.original.created_at);
+      return date.toLocaleDateString("fr-FR", { dateStyle: "medium" });
     },
   },
   {
@@ -74,7 +75,7 @@ const columns: TableColumn<Agent>[] = [
           color: "primary",
           variant: "ghost",
           size: "xs",
-          onClick: () => selectAgent(row.original),
+          onClick: () => selectDepartement(row.original),
         }),
       ]),
   },
@@ -93,19 +94,19 @@ const globalFilter = ref("");
     <Teleport to="body">
       <UModal
         v-model:open="open"
-        title="Sélectionner un agent"
-        description="Choisissez l'agent à qui attribuer un rôle"
+        title="Sélectionner un département"
+        description="Choisissez le département d'affectation de l'agent"
         :overlay="false"
         :ui="{
-          width: 'sm:max-w-4xl',
+          width: 'sm:max-w-3xl',
           wrapper: 'z-[100]',
         }"
       >
         <template #body>
           <div class="space-y-4">
             <UInput
-              placeholder="Rechercher par code ou email..."
               v-model="globalFilter"
+              placeholder="Rechercher un département..."
               icon="i-lucide-search"
               class="w-full"
             />
@@ -114,7 +115,7 @@ const globalFilter = ref("");
               ref="table"
               v-model:pagination="pagination"
               v-model:global-filter="globalFilter"
-              :data="agents"
+              :data="departements"
               :columns="columns"
               :loading="pending"
               class="max-h-100 overflow-y-auto"
@@ -131,11 +132,11 @@ const globalFilter = ref("");
             />
 
             <div
-              v-if="agents && agents.length > 0"
+              v-if="departements && departements.length > 0"
               class="flex items-center justify-between gap-4 border-t border-default pt-4"
             >
               <div class="text-sm text-muted">
-                {{ agents.length }} agent(s) disponible(s)
+                {{ departements.length }} département(s) disponible(s)
               </div>
 
               <UPagination
@@ -151,11 +152,11 @@ const globalFilter = ref("");
             </div>
 
             <div
-              v-if="!pending && (!agents || agents.length === 0)"
+              v-if="!pending && (!departements || departements.length === 0)"
               class="text-center py-8 text-muted"
             >
               <UIcon name="i-lucide-inbox" class="mx-auto mb-2 text-4xl" />
-              <p>Aucun agent disponible</p>
+              <p>Aucun département disponible</p>
             </div>
 
             <div class="flex justify-end pt-4">

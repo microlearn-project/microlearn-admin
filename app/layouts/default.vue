@@ -52,9 +52,11 @@ const links = computed<NavigationMenuItem[][]>(() => {
         to: '/permissions',
         onSelect: () => { open.value = false }
       }
-    ];
+    ]; 
 
     // Bouton Rôles uniquement pour SUPERADMIN
+    // Finalement NON
+    /*
     if (isSuperAdmin.value) {
       rolesPermissionsChildren.unshift({
         label: 'Rôles',
@@ -64,6 +66,7 @@ const links = computed<NavigationMenuItem[][]>(() => {
         onSelect: () => { open.value = false }
       });
     }
+    */
 
     agentsRolesChildren.push({
       label: 'Rôles & Permissions',
@@ -181,7 +184,7 @@ const groups = computed(() => [{
   id: 'links',
   label: 'Aller au',
   items: links.value.flat()
-}]) 
+}])
 </script>
 
 <template>

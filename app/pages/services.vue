@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn } from "@nuxt/ui";
+import { getPaginationRowModel } from "@tanstack/vue-table";
 import { upperFirst } from "scule";
 import type { Tables } from "~/types/database.types";
 
@@ -256,16 +257,6 @@ watch(
   }
 );
 
-/*
-  Calculer les données de la table
-*/
-const paginatedData = computed(() => {
-  if (!services.value) return [];
-  const start = pagination.value.pageIndex * pagination.value.pageSize;
-  const end = start + pagination.value.pageSize;
-  return services.value.slice(start, end);
-});
-
 // Déselectionner toutes les lignes du tableau
 function clearTableSelection() {
   // Vide la sélection TanStack Table
@@ -384,8 +375,12 @@ function clearTableSelection() {
       <!-- Tableau -->
       <UTable
         ref="table"
+      v-model:pagination="pagination"
         v-model:row-selection="rowSelection"
-        :data="paginatedData"
+        :data="services"
+        :pagination-options="{
+          getPaginationRowModel: getPaginationRowModel(),
+        }"
         :columns="columns"
         :loading="pending"
         class="max-h-125 overflow-y-auto"
@@ -411,10 +406,10 @@ function clearTableSelection() {
         </div>
 
         <UPagination
-          :default-page="pagination.pageIndex + 1"
-          :items-per-page="pagination.pageSize"
-          :total="services?.length ?? 0"
-          @update:page="(p) => (pagination.pageIndex = p - 1)"
+          :page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
+          :items-per-page="table?.tableApi?.getState().pagination.pageSize"
+          :total="table?.tableApi?.getFilteredRowModel().rows.length"
+          @update:page="(p) => table?.tableApi?.setPageIndex(p - 1)"
         />
       </div>
     </template>

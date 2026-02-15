@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn } from "@nuxt/ui";
+import { getPaginationRowModel } from "@tanstack/vue-table";
 
 interface Module {
   id_module: string;
@@ -37,7 +38,7 @@ watch(
       await refresh();
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 function selectModule(module: Module) {
@@ -83,15 +84,8 @@ const columns: TableColumn<Module>[] = [
 
 const pagination = ref({
   pageIndex: 0,
-  pageSize: 8,
-});
-
-const paginatedData = computed(() => {
-  if (!modules.value) return [];
-  const start = pagination.value.pageIndex * pagination.value.pageSize;
-  const end = start + pagination.value.pageSize;
-  return modules.value.slice(start, end);
-});
+  pageSize: 5,
+}); 
 </script>
 
 <template>
@@ -106,9 +100,8 @@ const paginatedData = computed(() => {
         <UInput
           placeholder="Rechercher un module..."
           :model-value="
-            (table?.tableApi
-              ?.getColumn('titre')
-              ?.getFilterValue() as string) ?? ''
+            (table?.tableApi?.getColumn('titre')?.getFilterValue() as string) ??
+            ''
           "
           icon="i-lucide-search"
           class="w-full"
@@ -119,7 +112,11 @@ const paginatedData = computed(() => {
 
         <UTable
           ref="table"
-          :data="paginatedData"
+          v-model:pagination="pagination"
+          :data="modules"
+          :pagination-options="{
+            getPaginationRowModel: getPaginationRowModel(),
+          }"
           :columns="columns"
           :loading="pending"
           class="max-h-100 overflow-y-auto"
@@ -141,10 +138,10 @@ const paginatedData = computed(() => {
           </div>
 
           <UPagination
-            :default-page="pagination.pageIndex + 1"
-            :items-per-page="pagination.pageSize"
-            :total="modules?.length || 0"
-            @update:page="(p) => (pagination.pageIndex = p - 1)"
+            :page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
+            :items-per-page="table?.tableApi?.getState().pagination.pageSize"
+            :total="table?.tableApi?.getFilteredRowModel().rows.length"
+            @update:page="(p) => table?.tableApi?.setPageIndex(p - 1)"
           />
         </div>
 

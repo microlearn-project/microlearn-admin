@@ -9,7 +9,6 @@ const { isNotificationsSlideoverOpen } = useDashboard();
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
-
         <template #right>
           <UTooltip text="Notifications" :shortcuts="['N']">
             <UButton
@@ -29,16 +28,68 @@ const { isNotificationsSlideoverOpen } = useDashboard();
 
     <template #body>
       <div class="space-y-6">
+        <!-- Stats principales (rapide - 1-2 requêtes) -->
         <HomeStatsUtb />
 
-        <HomeActivityChart />
+        <!-- Top modules (rapide - ~5 requêtes) -->
+        <HomeTopModules />
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <HomeTopModules />
-          <HomeRecentModules />
-        </div>
+        <!-- Actions rapides (aucune requête) -->
+        <UCard>
+          <template #header>
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-semibold">Actions rapides</h3>
+              <UIcon name="i-lucide-zap" class="text-warning" />
+            </div>
+          </template>
 
-        <HomeServicesProgress />
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <UButton
+              label="Gérer les modules"
+              icon="i-lucide-book-open"
+              size="lg"
+              color="primary"
+              variant="outline"
+              to="/modules"
+              block
+            />
+
+            <UButton
+              label="Voir les agents"
+              icon="i-lucide-users"
+              size="lg"
+              color="neutral"
+              variant="outline"
+              to="/agents"
+              block
+            />
+
+            <UButton
+              label="Résultats des quiz"
+              icon="i-lucide-bar-chart-3"
+              size="lg"
+              color="neutral"
+              variant="outline"
+              to="/quiz-results"
+              block
+            />
+
+            <UButton
+              label="Les services"
+              icon="i-heroicons-building-office"
+              size="lg"
+              color="neutral"
+              variant="outline"
+              to="/services"
+              block
+            />
+          </div>
+        </UCard>
+
+        <!-- Statistiques de la semaine (aucune requête supplémentaire si déjà dans HomeStatsUtb) -->
+        <UCard>
+          <HomeWeeklyOverview />
+        </UCard>
       </div>
     </template>
   </UDashboardPanel>

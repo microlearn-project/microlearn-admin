@@ -36,6 +36,14 @@ const state = reactive<Partial<Schema>>({
   designation: "",
 })
 
+// Transformer la désignation en majuscules automatiquement
+const designationUppercase = computed({
+  get: () => state.designation,
+  set: (value: string) => {
+    state.designation = value.toUpperCase();
+  },
+});
+
 /* -------------------------
    Département courant (1 seul)
 --------------------------*/
@@ -133,7 +141,7 @@ watch(open, (newValue) => {
         class="space-y-4"
       >
         <UFormField label="Désignation" name="designation">
-          <UInput v-model="state.designation" class="w-full" />
+          <UInput v-model="designationUppercase" class="w-full" />
         </UFormField>
 
         <div class="flex justify-end gap-2">

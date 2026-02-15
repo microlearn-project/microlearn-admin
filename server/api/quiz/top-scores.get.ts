@@ -27,6 +27,7 @@ export default defineEventHandler(async (event) => {
       id_agent,
       id_quiz,
       updated_at,
+      date_fin,
       agent:id_agent (
         code_agent,
         nom,
@@ -79,6 +80,7 @@ export default defineEventHandler(async (event) => {
       nom: r.agent?.nom || "N/A",
       prenom: r.agent?.prenom || "N/A",
       module_titre: r.quiz?.cours?.module?.titre || "N/A",
+      date_soumission: r.date_fin || r.updated_at,
     }))
     .sort((a, b) => b.score - a.score)
     .slice(0, 10);

@@ -26,11 +26,15 @@ const filters = ref({
   search: "",
 });
 
+// Modals de sélection
+const showActionSelectModal = ref(false);
+const showTypeSelectModal = ref(false);
+
 // Modal détail
 const showDetailModal = ref(false);
 const selectedLog = ref<any>(null);
 
-// Options de filtre
+// Options de filtre pour l'affichage
 const actionOptions = [
   { label: "Connexion", value: "connexion" },
   { label: "Déconnexion", value: "deconnexion" },
@@ -55,6 +59,40 @@ const objetTypeOptions = [
   { label: "Service", value: "service" },
   { label: "Département", value: "departement" },
 ];
+
+// Handlers de sélection
+function handleActionSelect(action: string) {
+  filters.value.action = action;
+}
+
+function clearActionFilter() {
+  filters.value.action = null;
+}
+
+function handleTypeSelect(type: string) {
+  filters.value.objet_type = type;
+}
+
+function clearTypeFilter() {
+  filters.value.objet_type = null;
+}
+
+// Récupérer le label d'une action
+const selectedActionLabel = computed(() => {
+  if (!filters.value.action) return null;
+  return actionOptions.find(a => a.value === filters.value.action)?.label || filters.value.action;
+});
+
+// Récupérer le label d'un type
+const selectedTypeLabel = computed(() => {
+  if (!filters.value.objet_type) return null;
+  return objetTypeOptions.find(t => t.value === filters.value.objet_type)?.label || filters.value.objet_type;
+});
+
+// Vérifier si des filtres sont actifs
+const hasActiveFilters = computed(() => {
+  return filters.value.action !== null || filters.value.objet_type !== null || filters.value.search !== "";
+});
 
 // Charger les logs
 async function loadLogs() {
@@ -264,6 +302,13 @@ function changePage(newPage: number) {
   loadLogs();
 }
 
+// Réinitialiser tous les filtres
+function resetAllFilters() {
+  filters.value.action = null;
+  filters.value.objet_type = null;
+  filters.value.search = "";
+}
+
 // Watcher sur les filtres
 watch(
   () => [filters.value.action, filters.value.objet_type],
@@ -304,6 +349,21 @@ onMounted(() => {
     </template>
 
     <template #body>
+      <!-- Modals de sélection -->
+      <DocumentsActivityLogActionSelectModal
+        v-model:open="showActionSelectModal"
+        v-model:selected-action="filters.action"
+        @select="handleActionSelect"
+        @clear="clearActionFilter"
+      />
+
+      <DocumentsActivityLogTypeSelectModal
+        v-model:open="showTypeSelectModal"
+        v-model:selected-type="filters.objet_type"
+        @select="handleTypeSelect"
+        @clear="clearTypeFilter"
+      />
+
       <div class="p-4 sm:p-6 space-y-6">
         <!-- Stats -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -366,43 +426,114 @@ onMounted(() => {
         </div>
 
         <!-- Filtres -->
-        <div class="flex flex-wrap items-center gap-4">
-          <UInput
-            v-model="filters.search"
-            placeholder="Rechercher un utilisateur..."
-            icon="i-lucide-search"
-            class="w-64"
-          />
+        <div class="bg-elevated border border-default rounded-lg p-4">
+          <div class="space-y-4">
+            <!-- Ligne 1 : Recherche et filtres -->
+            <div class="flex flex-wrap items-center gap-4">
+              <UInput
+                v-model="filters.search"
+                placeholder="Rechercher un utilisateur..."
+                icon="i-lucide-search"
+                class="flex-1 min-w-64"
+                :ui="{ icon: { trailing: { pointer: '' } } }"
+              >
+                <template v-if="filters.search" #trailing>
+                  <UButton
+                    icon="i-lucide-x"
+                    color="neutral"
+                    variant="ghost"
+                    size="2xs"
+                    @click="filters.search = ''"
+                  />
+                </template>
+              </UInput>
 
-          <USelect
-            v-model="filters.action"
-            :items="actionOptions"
-            value-key="value"
-            placeholder="Filtrer par action"
-            class="w-48"
-          />
+              <!-- Filtre par action avec modal -->
+              <div class="flex items-center gap-2">
+                <UButton
+                  :label="selectedActionLabel || 'Filtrer par action'"
+                  :icon="filters.action ? 'i-lucide-filter-check' : 'i-lucide-filter'"
+                  :color="filters.action ? 'primary' : 'neutral'"
+                  variant="outline"
+                  class="min-w-48 justify-start"
+                  truncate
+                  @click="showActionSelectModal = true"
+                />
 
-          <USelect
-            v-model="filters.objet_type"
-            :items="objetTypeOptions"
-            value-key="value"
-            placeholder="Filtrer par type"
-            class="w-48"
-          />
+                <UButton
+                  v-if="filters.action"
+                  icon="i-lucide-x"
+                  color="neutral"
+                  variant="ghost"
+                  square
+                  @click="clearActionFilter"
+                />
+              </div>
 
-          <UButton
-            v-if="filters.action || filters.objet_type"
-            icon="i-lucide-x"
-            color="neutral"
-            variant="ghost"
-            size="sm"
-            @click="
-              filters.action = null;
-              filters.objet_type = null;
-            "
-          >
-            Réinitialiser
-          </UButton>
+              <!-- Filtre par type avec modal -->
+              <div class="flex items-center gap-2">
+                <UButton
+                  :label="selectedTypeLabel || 'Filtrer par type'"
+                  :icon="filters.objet_type ? 'i-lucide-layers' : 'i-lucide-layers-2'"
+                  :color="filters.objet_type ? 'primary' : 'neutral'"
+                  variant="outline"
+                  class="min-w-48 justify-start"
+                  truncate
+                  @click="showTypeSelectModal = true"
+                />
+
+                <UButton
+                  v-if="filters.objet_type"
+                  icon="i-lucide-x"
+                  color="neutral"
+                  variant="ghost"
+                  square
+                  @click="clearTypeFilter"
+                />
+              </div>
+            </div>
+
+            <!-- Ligne 2 : Bouton de réinitialisation et badges -->
+            <div v-if="hasActiveFilters" class="flex flex-wrap items-center gap-3 pt-2 border-t border-default">
+              <p class="text-xs text-muted">Filtres actifs :</p>
+
+              <UBadge
+                v-if="filters.action"
+                color="primary"
+                variant="subtle"
+                size="xs"
+              >
+                Action: {{ selectedActionLabel }}
+              </UBadge>
+
+              <UBadge
+                v-if="filters.objet_type"
+                color="info"
+                variant="subtle"
+                size="xs"
+              >
+                Type: {{ selectedTypeLabel }}
+              </UBadge>
+
+              <UBadge
+                v-if="filters.search"
+                color="success"
+                variant="subtle"
+                size="xs"
+              >
+                Recherche: "{{ filters.search }}"
+              </UBadge>
+
+              <UButton
+                label="Réinitialiser"
+                icon="i-lucide-rotate-ccw"
+                color="neutral"
+                variant="ghost"
+                size="xs"
+                @click="resetAllFilters"
+              />
+            </div>
+          </div>
         </div>
 
         <!-- Tableau -->

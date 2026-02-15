@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn } from "@nuxt/ui";
+import { getPaginationRowModel } from "@tanstack/vue-table";
 import { upperFirst } from "scule";
 import type { Tables } from "~/types/database.types";
 
@@ -34,11 +35,15 @@ const {
 });
 
 // Charger les catégories quand le modal s'ouvre
-watch(open, async (isOpen) => {
-  if (isOpen) {
-    await refresh();
-  }
-}, { immediate: true });
+watch(
+  open,
+  async (isOpen) => {
+    if (isOpen) {
+      await refresh();
+    }
+  },
+  { immediate: true },
+);
 
 /* ---------------------------------------------------
    2. Sélection des lignes
@@ -48,7 +53,7 @@ const rowSelection = ref<Record<string, boolean>>({});
 const selectedRows = computed(
   () =>
     table.value?.tableApi?.getSelectedRowModel().rows.map((r) => r.original) ??
-    []
+    [],
 );
 
 /* ---------------------------------------------------
@@ -76,14 +81,14 @@ async function removeCategories() {
             id_module: props.module.id_module,
             id_tag: cat.id_tag,
           },
-        })
-      )
+        }),
+      ),
     );
 
     // --- MISE À JOUR LOCALE ---
     if (categories.value) {
       categories.value = categories.value.filter(
-        (cat) => !idsToRemove.includes(cat.id_tag)
+        (cat) => !idsToRemove.includes(cat.id_tag),
       );
     }
 
@@ -164,13 +169,6 @@ const pagination = ref({
   pageSize: 5,
 });
 
-const paginatedData = computed(() => {
-  if (!categories.value) return [];
-  const start = pagination.value.pageIndex * pagination.value.pageSize;
-  const end = start + pagination.value.pageSize;
-  return categories.value.slice(start, end);
-});
-
 /* ---------------------------------------------------
    7. Déselectionner toutes les lignes
 ----------------------------------------------------*/
@@ -237,8 +235,12 @@ function clearTableSelection() {
         <!-- Tableau -->
         <UTable
           ref="table"
+          v-model:pagination="pagination"
           v-model:row-selection="rowSelection"
-          :data="paginatedData"
+          :data="categories"
+          :pagination-options="{
+            getPaginationRowModel: getPaginationRowModel(),
+          }"
           :columns="columns"
           :loading="pending"
           class="max-h-100 overflow-y-auto"
@@ -265,10 +267,10 @@ function clearTableSelection() {
           </div>
 
           <UPagination
-            :default-page="pagination.pageIndex + 1"
-            :items-per-page="pagination.pageSize"
-            :total="categories?.length || 0"
-            @update:page="(p) => (pagination.pageIndex = p - 1)"
+            :page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
+            :items-per-page="table?.tableApi?.getState().pagination.pageSize"
+            :total="table?.tableApi?.getFilteredRowModel().rows.length"
+            @update:page="(p) => table?.tableApi?.setPageIndex(p - 1)"
           />
         </div>
 

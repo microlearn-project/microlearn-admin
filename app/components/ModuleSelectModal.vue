@@ -3,30 +3,32 @@ import type { TableColumn } from "@nuxt/ui";
 import type { Tables } from "~/types/database.types";
 import { getPaginationRowModel } from "@tanstack/vue-table";
 
-type Agent = Tables<"agent">;
+type Module = Tables<"module">;
 
 const open = defineModel<boolean>("open", { default: false });
-const selectedAgent = defineModel<Agent | null>("selectedAgent", {
+const selectedModule = defineModel<Module | null>("selectedModule", {
   default: null,
 });
 
 const emit = defineEmits<{
-  (e: "select", agent: Agent): void;
+  (e: "select", module: Module): void;
+  (e: "clear"): void;
 }>();
 
 const table = useTemplateRef<any>("table");
 const UButton = resolveComponent("UButton");
+const UBadge = resolveComponent("UBadge");
 
 const {
-  data: agents,
+  data: modules,
   pending,
   refresh,
-} = useFetch<Agent[]>("/api/agent", {
+} = useFetch<Module[]>("/api/module", {
   server: false,
   lazy: true,
   immediate: false,
   watch: false,
-  transform: (data) => data.filter((a) => !a.deleted_at && a.actif),
+  transform: (data) => data.filter((m) => !m.deleted_at),
 });
 
 watch(
@@ -39,29 +41,35 @@ watch(
   { immediate: true },
 );
 
-function selectAgent(agent: Agent) {
-  selectedAgent.value = agent;
-  emit("select", agent);
+function selectModule(module: Module) {
+  selectedModule.value = module;
+  emit("select", module);
   open.value = false;
 }
 
-const columns: TableColumn<Agent>[] = [
+function clearSelection() {
+  selectedModule.value = null;
+  emit("clear");
+  open.value = false;
+}
+
+const columns: TableColumn<Module>[] = [
   {
-    accessorKey: "code_agent",
-    header: "Code",
-    cell: ({ row }: any) =>
-      h("code", { class: "text-xs font-mono" }, row.original.code_agent),
-  },
-  {
-    id: "nom_complet",
-    accessorKey: "email",
-    header: "Nom complet",
+    accessorKey: "titre",
+    header: "Titre du module",
     cell: ({ row }: any) => {
-      const agent = row.original;
+      const mod = row.original;
       return h("div", {}, [
-        h("p", { class: "font-medium" }, `${agent.prenom} ${agent.nom}`),
-        h("p", { class: "text-xs text-muted" }, agent.email || "N/A"),
+        h("p", { class: "font-medium" }, mod.titre),
       ]);
+    },
+  }, 
+  {
+    accessorKey: "created_at",
+    header: "Créé le",
+    cell: ({ row }: any) => {
+      const date = new Date(row.original.created_at);
+      return date.toLocaleDateString("fr-FR", { dateStyle: "medium" });
     },
   },
   {
@@ -74,7 +82,7 @@ const columns: TableColumn<Agent>[] = [
           color: "primary",
           variant: "ghost",
           size: "xs",
-          onClick: () => selectAgent(row.original),
+          onClick: () => selectModule(row.original),
         }),
       ]),
   },
@@ -93,8 +101,8 @@ const globalFilter = ref("");
     <Teleport to="body">
       <UModal
         v-model:open="open"
-        title="Sélectionner un agent"
-        description="Choisissez l'agent à qui attribuer un rôle"
+        title="Sélectionner un module"
+        description="Choisissez un module pour filtrer les documents"
         :overlay="false"
         :ui="{
           width: 'sm:max-w-4xl',
@@ -103,18 +111,28 @@ const globalFilter = ref("");
       >
         <template #body>
           <div class="space-y-4">
-            <UInput
-              placeholder="Rechercher par code ou email..."
-              v-model="globalFilter"
-              icon="i-lucide-search"
-              class="w-full"
-            />
+            <div class="flex items-center gap-3">
+              <UInput
+                v-model="globalFilter"
+                placeholder="Rechercher un module..."
+                icon="i-lucide-search"
+                class="flex-1"
+              />
+
+              <UButton
+                label="Tous les modules"
+                icon="i-lucide-x"
+                color="neutral"
+                variant="outline"
+                @click="clearSelection"
+              />
+            </div>
 
             <UTable
               ref="table"
               v-model:pagination="pagination"
               v-model:global-filter="globalFilter"
-              :data="agents"
+              :data="modules"
               :columns="columns"
               :loading="pending"
               class="max-h-100 overflow-y-auto"
@@ -131,11 +149,11 @@ const globalFilter = ref("");
             />
 
             <div
-              v-if="agents && agents.length > 0"
+              v-if="modules && modules.length > 0"
               class="flex items-center justify-between gap-4 border-t border-default pt-4"
             >
               <div class="text-sm text-muted">
-                {{ agents.length }} agent(s) disponible(s)
+                {{ modules.length }} module(s) disponible(s)
               </div>
 
               <UPagination
@@ -151,11 +169,11 @@ const globalFilter = ref("");
             </div>
 
             <div
-              v-if="!pending && (!agents || agents.length === 0)"
+              v-if="!pending && (!modules || modules.length === 0)"
               class="text-center py-8 text-muted"
             >
               <UIcon name="i-lucide-inbox" class="mx-auto mb-2 text-4xl" />
-              <p>Aucun agent disponible</p>
+              <p>Aucun module disponible</p>
             </div>
 
             <div class="flex justify-end pt-4">

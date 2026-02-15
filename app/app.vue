@@ -1,7 +1,20 @@
 <script setup lang="ts">
-const colorMode = useColorMode()
+// Le middleware gère toute l'authentification
+// app.vue gère uniquement le loading initial et le SEO
 
-const color = computed(() => colorMode.value === 'dark' ? '#1b1718' : 'white')
+const isInitialLoading = ref(true);
+
+// Petit délai pour laisser le middleware s'exécuter
+onMounted(() => {
+  // On attend que le premier check auth soit fait
+  setTimeout(() => {
+    isInitialLoading.value = false;
+  }, 300);
+});
+
+// SEO et meta tags
+const colorMode = useColorMode();
+const color = computed(() => colorMode.value === 'dark' ? '#1b1718' : 'white');
 
 useHead({
   meta: [
@@ -15,10 +28,10 @@ useHead({
   htmlAttrs: {
     lang: 'fr'
   }
-})
+});
 
-const title = 'UTB Learn Administration'
-const description = 'Gérez votre plateforme UTB Learn facilement à l\'interface d\'administration UTB Learn. Surveillez les performances, gérez les utilisateurs et configurez les paramètres de votre plateforme en toute simplicité.'
+const title = 'UTB Learn Administration';
+const description = 'Gérez votre plateforme UTB Learn facilement à l\'interface d\'administration UTB Learn. Surveillez les performances, gérez les utilisateurs et configurez les paramètres de votre plateforme en toute simplicité.';
 
 useSeoMeta({
   title,
@@ -26,19 +39,24 @@ useSeoMeta({
   ogTitle: title,
   ogDescription: description,
   ogImage: '/images/favicon.png',
-})
+});
 </script>
 
 <template>
   <UApp>
-    <NuxtLoadingIndicator />
+  <div>
+    <!-- Loading  -->
+    <AuthLoadingScreen v-if="isInitialLoading" />
 
-    <NuxtLayout>
-      <NuxtPage />
-    </NuxtLayout>
-
-    <!-- Notifications toast -->
-    <UNotifications />
-    <ShortcutsHelpModal />
+    <!-- Le contenu - le middleware protège les routes -->
+    <UTooltipProvider>
+    <div v-show="!isInitialLoading">
+      <NuxtLoadingIndicator />
+      <NuxtLayout>
+        <NuxtPage />
+      </NuxtLayout>
+    </div>
+    </UTooltipProvider>
+  </div>
   </UApp>
 </template>

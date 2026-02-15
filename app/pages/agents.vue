@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn } from "@nuxt/ui";
+import { getPaginationRowModel } from "@tanstack/vue-table";
 import { upperFirst } from "scule";
 import type { Tables } from "~/types/database.types";
 
@@ -258,7 +259,8 @@ const columns: TableColumn<Agent>[] = [
         modelValue: table.getIsSomePageRowsSelected()
           ? "indeterminate"
           : table.getIsAllPageRowsSelected(),
-        "onUpdate:modelValue": (v: unknown) => table.toggleAllPageRowsSelected(!!v),
+        "onUpdate:modelValue": (v: unknown) =>
+          table.toggleAllPageRowsSelected(!!v),
         ariaLabel: "Sélectionner tout",
       }),
     cell: ({ row }: any) =>
@@ -403,17 +405,7 @@ watch(statusFilter, (newVal) => {
 });
 
 /* ---------------------------------------------------
-   9. Données paginées
-----------------------------------------------------*/
-const paginatedData = computed(() => {
-  if (!agents.value) return [];
-  const start = pagination.value.pageIndex * pagination.value.pageSize;
-  const end = start + pagination.value.pageSize;
-  return agents.value.slice(start, end);
-});
-
-/* ---------------------------------------------------
-   10. Déselectionner toutes les lignes
+   9. Déselectionner toutes les lignes
 ----------------------------------------------------*/
 function clearTableSelection() {
   table.value?.tableApi?.resetRowSelection();
@@ -443,13 +435,6 @@ const sorting = ref([
     </template>
 
     <template #body>
-      <!-- Modal de gestion des services -->
-      <AgentsServicesModal
-        v-if="agentForServices"
-        v-model:open="showServicesModal"
-        :agent="agentForServices"
-      />
-
       <!-- Filtres et recherche -->
       <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
         <!-- Barre de recherche -->
@@ -543,11 +528,15 @@ const sorting = ref([
       <!-- Tableau -->
       <UTable
         ref="table"
+      v-model:pagination="pagination"
         v-model:row-selection="rowSelection"
         v-model:global-filter="globalFilter"
         v-model:sorting="sorting"
-        :data="paginatedData"
+        :data="agents"
         :columns="columns"
+        :pagination-options="{
+          getPaginationRowModel: getPaginationRowModel(),
+        }"
         :loading="pending"
         class="max-h-125 overflow-y-auto"
         :ui="{
@@ -572,10 +561,10 @@ const sorting = ref([
         </div>
 
         <UPagination
-          :default-page="pagination.pageIndex + 1"
-          :items-per-page="pagination.pageSize"
-          :total="agents?.length || 0"
-          @update:page="(p) => (pagination.pageIndex = p - 1)"
+          :page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
+          :items-per-page="table?.tableApi?.getState().pagination.pageSize"
+          :total="table?.tableApi?.getFilteredRowModel().rows.length"
+          @update:page="(p) => table?.tableApi?.setPageIndex(p - 1)"
         />
       </div>
     </template>

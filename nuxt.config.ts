@@ -1,7 +1,7 @@
 // nuxt.config.ts
 export default defineNuxtConfig({
   modules: ["@nuxt/eslint", "@nuxt/ui", "@vueuse/nuxt"],
-
+ 
   runtimeConfig: {
     // Clés privées (côté serveur uniquement)
     supabaseUrl: process.env.NUXT_SUPABASE_URL,

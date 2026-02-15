@@ -16,6 +16,8 @@ export default defineEventHandler(async (event) => {
   const serviceId = query.service as string | undefined;
   const startDate = query.start as string | undefined;
   const endDate = query.end as string | undefined;
+  const statusFilter = query.status as string | undefined;
+  const agentSearch = query.agent as string | undefined;
 
   const supabase = createSupabaseServerClient();
 
@@ -27,7 +29,13 @@ export default defineEventHandler(async (event) => {
         score,
         termine,
         id_agent,
-        updated_at
+        updated_at,
+        agent:id_agent (
+          code_agent,
+          nom,
+          prenom,
+          email
+        )
       `
       )
       .eq("termine", true)
@@ -44,7 +52,6 @@ export default defineEventHandler(async (event) => {
     const { data: quizResults, error } = await quizQuery;
 
     if (error) {
-      // En cas d'erreur, retourner des stats vides
       return {
         totalQuiz: 0,
         tauxReussite: 0,
@@ -64,6 +71,7 @@ export default defineEventHandler(async (event) => {
 
     let filteredResults = quizResults;
 
+    // Filtre par service
     if (serviceId && serviceId !== "") {
       const { data: agents } = await supabase
         .from("agent")
@@ -83,9 +91,41 @@ export default defineEventHandler(async (event) => {
         };
       }
 
-      filteredResults = quizResults.filter((r) =>
+      filteredResults = filteredResults.filter((r) =>
         agentIds.includes(r.id_agent)
       );
+    }
+
+    // Filtre par recherche d'agent
+    if (agentSearch) {
+      const search = agentSearch.toLowerCase();
+      filteredResults = filteredResults.filter((r: any) => {
+        if (!r.agent) return false;
+        return (
+          r.agent.nom.toLowerCase().includes(search) ||
+          r.agent.prenom.toLowerCase().includes(search) ||
+          r.agent.code_agent.toLowerCase().includes(search) ||
+          r.agent.email.toLowerCase().includes(search)
+        );
+      });
+    }
+
+    // Filtre par statut (avant de calculer les stats)
+    if (statusFilter && statusFilter !== "all") {
+      switch (statusFilter) {
+        case "passed":
+          filteredResults = filteredResults.filter((r) => Number(r.score) >= 50);
+          break;
+        case "failed":
+          filteredResults = filteredResults.filter((r) => Number(r.score) < 50);
+          break;
+        case "excellent":
+          filteredResults = filteredResults.filter((r) => Number(r.score) >= 80);
+          break;
+        case "weak":
+          filteredResults = filteredResults.filter((r) => Number(r.score) < 50);
+          break;
+      }
     }
 
     if (filteredResults.length === 0) {
@@ -116,7 +156,7 @@ export default defineEventHandler(async (event) => {
       scoreMoyen,
       quizReussis,
     };
-  } catch (err: any) { 
+  } catch (err: any) {
     return {
       totalQuiz: 0,
       tauxReussite: 0,

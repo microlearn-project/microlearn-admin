@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn } from "@nuxt/ui";
+import { getPaginationRowModel } from "@tanstack/vue-table";
 import { upperFirst } from "scule";
 import type { Tables } from "~/types/database.types";
 
@@ -48,7 +49,7 @@ const rowSelection = ref<Record<string, boolean>>({});
 const selectedRows = computed(
   () =>
     table.value?.tableApi?.getSelectedRowModel().rows.map((r) => r.original) ??
-    []
+    [],
 );
 
 /* ---------------------------------------------------
@@ -79,7 +80,7 @@ function getRowItems(row: { original: Tag }) {
           // 2. MISE À JOUR LOCALE (Suppression de l'élément)
           if (categories.value) {
             categories.value = categories.value.filter(
-              (tag) => tag.id_tag !== s.id_tag
+              (tag) => tag.id_tag !== s.id_tag,
             );
           }
 
@@ -162,7 +163,7 @@ const columns: TableColumn<Tag>[] = [
               color: "neutral",
               variant: "ghost",
               class: "ml-auto",
-            })
+            }),
         ),
       ]),
   },
@@ -177,18 +178,7 @@ const pagination = ref({
 });
 
 /*
-  7. Calculer les données de la table
-*/
-const paginatedData = computed(() => {
-  if (!categories.value) return [];
-  const start = pagination.value.pageIndex * pagination.value.pageSize;
-  const end = start + pagination.value.pageSize;
-  return categories.value.slice(start, end);
-});
-
-
-/*
-  8. Déselectionner toutes les lignes du tableau
+  7. Déselectionner toutes les lignes du tableau
 */
 function clearTableSelection() {
   // Vide la sélection TanStack Table
@@ -216,7 +206,11 @@ function clearTableSelection() {
       <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
         <!-- Barre de recherche -->
         <UInput
-          :model-value="(table?.tableApi?.getColumn('designation')?.getFilterValue() as string) ?? ''"
+          :model-value="
+            (table?.tableApi
+              ?.getColumn('designation')
+              ?.getFilterValue() as string) ?? ''
+          "
           placeholder="Rechercher une catégorie"
           icon="i-lucide-search"
           class="max-w-sm"
@@ -266,15 +260,18 @@ function clearTableSelection() {
           </CategoriesDeleteModal>
           <!-- Bouton colonnes visibles -->
           <UDropdownMenu
-            :items="table?.tableApi?.getAllColumns()
-              .filter((c: any) => c.getCanHide())
-              .map((c: any) => ({
-                label: upperFirst(c.id),
-                type: 'checkbox' as const,
-                checked: c.getIsVisible(),
-                onUpdateChecked: (v: boolean) => c.toggleVisibility(!!v),
-                onSelect: (e?: Event) => e?.preventDefault()
-              })) ?? []"
+            :items="
+              table?.tableApi
+                ?.getAllColumns()
+                .filter((c: any) => c.getCanHide())
+                .map((c: any) => ({
+                  label: upperFirst(c.id),
+                  type: 'checkbox' as const,
+                  checked: c.getIsVisible(),
+                  onUpdateChecked: (v: boolean) => c.toggleVisibility(!!v),
+                  onSelect: (e?: Event) => e?.preventDefault(),
+                })) ?? []
+            "
             :content="{ align: 'end' }"
           >
             <UButton
@@ -290,8 +287,12 @@ function clearTableSelection() {
       <!-- Tableau -->
       <UTable
         ref="table"
+        v-model:pagination="pagination"
         v-model:row-selection="rowSelection"
-        :data="paginatedData"
+        :data="categories"
+        :pagination-options="{
+          getPaginationRowModel: getPaginationRowModel(),
+        }"
         :columns="columns"
         :loading="pending"
         class="max-h-125 overflow-y-auto"
@@ -317,10 +318,10 @@ function clearTableSelection() {
         </div>
 
         <UPagination
-          :default-page="pagination.pageIndex + 1"
-          :items-per-page="pagination.pageSize"
-          :total="categories?.length || 0"
-          @update:page="(p) => (pagination.pageIndex = p - 1)"
+          :page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
+          :items-per-page="table?.tableApi?.getState().pagination.pageSize"
+          :total="table?.tableApi?.getFilteredRowModel().rows.length"
+          @update:page="(p) => table?.tableApi?.setPageIndex(p - 1)"
         />
       </div>
     </template>

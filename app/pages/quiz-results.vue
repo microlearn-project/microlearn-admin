@@ -1,16 +1,12 @@
 <script setup lang="ts">
 import type { TableColumn } from "@nuxt/ui";
 import type { Tables } from "~/types/database.types";
-import {
-  VisXYContainer,
-  VisAxis,
-  VisStackedBar,
-  VisTooltip,
-} from "@unovis/vue";
 
 type Service = Tables<"service">;
 
 const UBadge = resolveComponent("UBadge");
+const UButton = resolveComponent("UButton");
+const UIcon = resolveComponent("UIcon");
 
 interface QuizStats {
   totalQuiz: number;
@@ -27,36 +23,49 @@ interface ModuleStats {
   scoreMoyen: number;
 }
 
-interface DistributionData {
-  range: string;
-  count: number;
-}
-
 interface TopScore {
   score: number;
   code_agent: string;
   nom: string;
   prenom: string;
   module_titre: string;
+  date_soumission: string;
 }
 
+interface ModuleDetailResult {
+  code_agent: string;
+  nom: string;
+  prenom: string;
+  email: string;
+  score: number;
+  reussi: boolean;
+  date_soumission: string;
+  temps_ecoule: number;
+}
+
+/* ---------------------------------------------------
+   1. Filtres et sélection
+----------------------------------------------------*/
+const showServiceSelectModal = ref(false);
+const selectedServiceForFilter = ref<Service | null>(null);
 const selectedServiceId = ref<string>("all");
 const selectedPeriod = ref<string>("all");
+const statusFilter = ref<string>("all");
+const agentSearch = ref<string>("");
 
 const { data: services } = await useFetch<Service[]>("/api/service", {
   transform: (data) => data.filter((s) => s.actif && !s.deleted_at),
 });
 
-const serviceOptions = computed(() => {
-  if (!services.value) return [{ label: "Tous les services", value: "all" }];
-  return [
-    { label: "Tous les services", value: "all" },
-    ...services.value.map((s) => ({
-      label: s.designation,
-      value: s.id_service,
-    })),
-  ];
-});
+function handleServiceSelect(service: Service) {
+  selectedServiceForFilter.value = service;
+  selectedServiceId.value = service.id_service;
+}
+
+function clearServiceFilter() {
+  selectedServiceForFilter.value = null;
+  selectedServiceId.value = "all";
+}
 
 const periodOptions = [
   { label: "Toute la période", value: "all" },
@@ -65,6 +74,14 @@ const periodOptions = [
   { label: "3 derniers mois", value: "3m" },
   { label: "6 derniers mois", value: "6m" },
   { label: "Cette année", value: "year" },
+];
+
+const statusOptions = [
+  { label: "Tous les statuts", value: "all" },
+  { label: "✓ Réussis uniquement (≥ 50%)", value: "passed" },
+  { label: "✗ Échoués uniquement (< 50%)", value: "failed" },
+  { label: "⭐ Excellents (≥ 80%)", value: "excellent" },
+  { label: "⚠️ Faibles (< 50%)", value: "weak" },
 ];
 
 const dateRange = computed(() => {
@@ -100,8 +117,13 @@ const queryParams = computed(() => ({
   service: selectedServiceId.value === "all" ? undefined : selectedServiceId.value,
   start: dateRange.value.start,
   end: dateRange.value.end,
+  status: statusFilter.value === "all" ? undefined : statusFilter.value,
+  agent: agentSearch.value || undefined,
 }));
 
+/* ---------------------------------------------------
+   2. Récupération des données
+----------------------------------------------------*/
 const { data: stats, pending: statsPending } = await useFetch<QuizStats>(
   "/api/quiz/stats",
   {
@@ -124,14 +146,6 @@ const { data: moduleStats, pending: moduleStatsPending } = await useFetch<
   default: () => [],
 });
 
-const { data: distribution, pending: distributionPending } = await useFetch<
-  DistributionData[]
->("/api/quiz/distribution", {
-  query: queryParams,
-  lazy: true,
-  default: () => [],
-});
-
 const { data: topScores, pending: topScoresPending } = await useFetch<
   TopScore[]
 >("/api/quiz/top-scores", {
@@ -140,17 +154,116 @@ const { data: topScores, pending: topScoresPending } = await useFetch<
   default: () => [],
 });
 
+/* ---------------------------------------------------
+   3. Modal de détails par module
+----------------------------------------------------*/
+const showModuleDetailModal = ref(false);
+const selectedModuleForDetail = ref<ModuleStats | null>(null);
+const moduleDetailResults = ref<ModuleDetailResult[]>([]);
+const loadingModuleDetails = ref(false);
+
+async function openModuleDetail(module: ModuleStats) {
+  selectedModuleForDetail.value = module;
+  showModuleDetailModal.value = true;
+  loadingModuleDetails.value = true;
+
+  try {
+    // Appel API pour récupérer les détails
+    // Note: Il faudra créer cet endpoint /api/quiz/module-details
+    const response = await $fetch(`/api/quiz/module-details`, {
+      query: {
+        id_module: module.id_module,
+        service: selectedServiceId.value === "all" ? undefined : selectedServiceId.value,
+        start: dateRange.value.start,
+        end: dateRange.value.end,
+      },
+    });
+    moduleDetailResults.value = response as ModuleDetailResult[];
+  } catch (error) {
+    console.error("Erreur lors du chargement des détails:", error);
+    moduleDetailResults.value = [];
+  } finally {
+    loadingModuleDetails.value = false;
+  }
+}
+
+const detailColumns: TableColumn<ModuleDetailResult>[] = [
+  {
+    id: "agent",
+    header: "Agent",
+    cell: ({ row }: any) => {
+      const result = row.original;
+      return h("div", {}, [
+        h("p", { class: "font-medium" }, `${result.prenom} ${result.nom}`),
+        h("code", { class: "text-xs text-muted" }, result.code_agent),
+      ]);
+    },
+  },
+  {
+    accessorKey: "score",
+    header: "Score",
+    cell: ({ row }: any) => {
+      const score = row.original.score;
+      const color = score >= 80 ? "success" : score >= 50 ? "warning" : "error";
+      return h(UBadge, { color, variant: "subtle" }, () => `${score}/100`);
+    },
+  },
+  {
+    id: "resultat",
+    header: "Résultat",
+    cell: ({ row }: any) => {
+      const reussi = row.original.reussi;
+      return h(
+        UBadge,
+        { color: reussi ? "success" : "error", variant: "subtle", size: "xs" },
+        () => (reussi ? "✓ Réussi" : "✗ Échoué")
+      );
+    },
+  },
+  {
+    accessorKey: "temps_ecoule",
+    header: "Temps",
+    cell: ({ row }: any) => {
+      const secondes = row.original.temps_ecoule;
+      if (!secondes || secondes === 0) {
+        return h("span", { class: "text-muted text-xs" }, "N/A");
+      }
+      const minutes = Math.floor(secondes / 60);
+      const secs = secondes % 60;
+      return `${minutes}min ${secs}s`;
+    },
+  },
+  {
+    accessorKey: "date_soumission",
+    header: "Date de soumission",
+    cell: ({ row }: any) => {
+      const date = new Date(row.original.date_soumission);
+      return date.toLocaleString("fr-FR", {
+        dateStyle: "short",
+        timeStyle: "short",
+      });
+    },
+  },
+];
+
+/* ---------------------------------------------------
+   4. Colonnes du tableau principal
+----------------------------------------------------*/
 const moduleColumns: TableColumn<ModuleStats>[] = [
   {
     accessorKey: "titre",
     header: "Module",
     cell: ({ row }: any) =>
-      h("div", { class: "font-medium" }, row.original.titre),
+      h("div", { class: "font-medium hover:text-primary cursor-pointer" }, row.original.titre),
   },
   {
     accessorKey: "tentatives",
     header: "Tentatives",
-    cell: ({ row }: any) => row.original.tentatives,
+    cell: ({ row }: any) =>
+      h("div", { class: "flex items-center gap-2" }, [
+        h(UIcon, { name: "i-lucide-users", class: "text-muted text-sm" }),
+        h("span", {}, row.original.tentatives),
+      ]),
   },
   {
     accessorKey: "tauxReussite",
@@ -166,23 +279,218 @@ const moduleColumns: TableColumn<ModuleStats>[] = [
     header: "Score moyen",
     cell: ({ row }: any) => {
       const score = row.original.scoreMoyen;
-      const color =
-        score >= 80 ? "success" : score >= 50 ? "warning" : "error";
+      const color = score >= 80 ? "success" : score >= 50 ? "warning" : "error";
       return h(UBadge, { color, variant: "subtle" }, () => `${score}/100`);
     },
   },
+  {
+    id: "actions",
+    header: "",
+    cell: ({ row }: any) =>
+      h("div", { class: "text-right" }, [
+        h(UButton, {
+          label: "Détails",
+          icon: "i-lucide-eye",
+          color: "primary",
+          variant: "ghost",
+          size: "xs",
+          onClick: () => openModuleDetail(row.original),
+        }),
+      ]),
+  },
 ];
 
-const chartCardRef = useTemplateRef<HTMLElement | null>("chartCardRef");
-const { width } = useElementSize(chartCardRef);
+/* ---------------------------------------------------
+   5. Statistiques enrichies
+----------------------------------------------------*/
+const enrichedStats = computed(() => {
+  if (!stats.value) return null;
 
-const x = (_: DistributionData, i: number) => i;
-const y = (d: DistributionData) => d.count;
+  return {
+    ...stats.value,
+    tauxEchec: 100 - stats.value.tauxReussite,
+    quizEchoues: stats.value.totalQuiz - stats.value.quizReussis,
+    progression: stats.value.totalQuiz > 0 ?
+      Math.round((stats.value.quizReussis / stats.value.totalQuiz) * 100) : 0,
+  };
+});
 
-const xTicks = (i: number) => {
-  if (!distribution.value || !distribution.value[i]) return "";
-  return distribution.value[i].range;
-};
+/* ---------------------------------------------------
+   6. Tri et recherche dans le top scores
+----------------------------------------------------*/
+const topScoresSearch = ref("");
+const filteredTopScores = computed(() => {
+  if (!topScores.value) return [];
+
+  if (!topScoresSearch.value) return topScores.value;
+
+  const query = topScoresSearch.value.toLowerCase();
+  return topScores.value.filter(item =>
+    item.nom.toLowerCase().includes(query) ||
+    item.prenom.toLowerCase().includes(query) ||
+    item.code_agent.toLowerCase().includes(query) ||
+    item.module_titre.toLowerCase().includes(query)
+  );
+});
+
+/* ---------------------------------------------------
+   7. Réinitialisation des filtres
+----------------------------------------------------*/
+function resetAllFilters() {
+  clearServiceFilter();
+  selectedPeriod.value = "all";
+  statusFilter.value = "all";
+  agentSearch.value = "";
+}
+
+const hasActiveFilters = computed(() => {
+  return (
+    selectedServiceForFilter.value !== null ||
+    selectedPeriod.value !== "all" ||
+    statusFilter.value !== "all" ||
+    agentSearch.value !== ""
+  );
+});
+
+/* ---------------------------------------------------
+   8. Export Excel/CSV
+----------------------------------------------------*/
+const toast = useToast();
+const exportLoading = ref(false);
+
+async function exportToExcel() {
+  exportLoading.value = true;
+
+  try {
+    // Récupérer toutes les données avec les filtres actuels
+    const response = await $fetch("/api/quiz/export", {
+      query: queryParams.value,
+    });
+
+    // Créer le CSV
+    const data = response as any[];
+
+    if (data.length === 0) {
+      toast.add({
+        title: "Aucune donnée à exporter",
+        description: "Aucun résultat ne correspond aux filtres sélectionnés",
+        color: "warning",
+      });
+      return;
+    }
+
+    // Headers du CSV
+    const headers = [
+      "Module",
+      "Agent Code",
+      "Nom",
+      "Prénom",
+      "Email",
+      "Score",
+      "Statut",
+      "Date de soumission",
+      "Temps écoulé (min)",
+    ];
+
+    // Construire les lignes CSV
+    const csvRows = [
+      headers.join(","),
+      ...data.map((row) => [
+        `"${row.module_titre}"`,
+        row.code_agent,
+        `"${row.nom}"`,
+        `"${row.prenom}"`,
+        `"${row.email}"`,
+        row.score,
+        row.reussi ? "Réussi" : "Échoué",
+        new Date(row.date_soumission).toLocaleString("fr-FR"),
+        row.temps_ecoule ? Math.floor(row.temps_ecoule / 60) : "N/A",
+      ].join(",")),
+    ];
+
+    const csvContent = csvRows.join("\n");
+
+    // Créer le blob et télécharger
+    const blob = new Blob(["\ufeff" + csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+
+    // Nom du fichier avec date
+    const dateStr = new Date().toISOString().split("T")[0];
+    link.download = `resultats-quiz-${dateStr}.csv`;
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast.add({
+      title: "Export réussi",
+      description: `${data.length} résultat(s) exporté(s)`,
+      color: "success",
+    });
+  } catch (error) {
+    console.error("Erreur lors de l'export:", error);
+    toast.add({
+      title: "Erreur",
+      description: "Impossible d'exporter les données",
+      color: "error",
+    });
+  } finally {
+    exportLoading.value = false;
+  }
+}
+
+async function exportToJSON() {
+  exportLoading.value = true;
+
+  try {
+    const response = await $fetch("/api/quiz/export", {
+      query: queryParams.value,
+    });
+
+    const data = response as any[];
+
+    if (data.length === 0) {
+      toast.add({
+        title: "Aucune donnée à exporter",
+        color: "warning",
+      });
+      return;
+    }
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+
+    const dateStr = new Date().toISOString().split("T")[0];
+    link.download = `resultats-quiz-${dateStr}.json`;
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast.add({
+      title: "Export JSON réussi",
+      color: "success",
+    });
+  } catch (error) {
+    toast.add({
+      title: "Erreur",
+      description: "Impossible d'exporter les données",
+      color: "error",
+    });
+  } finally {
+    exportLoading.value = false;
+  }
+}
 </script>
 
 <template>
@@ -192,38 +500,246 @@ const xTicks = (i: number) => {
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
+        <template #right>
+          <!--
+          <UDropdownMenu
+            :items="[
+              [
+                {
+                  label: 'Exporter en CSV',
+                  icon: 'i-lucide-file-spreadsheet',
+                  click: exportToExcel,
+                },
+                {
+                  label: 'Exporter en JSON',
+                  icon: 'i-lucide-braces',
+                  click: exportToJSON,
+                },
+              ],
+            ]"
+          >
+            <UButton
+              label="Exporter"
+              icon="i-lucide-download"
+              color="primary"
+              variant="outline"
+              size="sm"
+              :loading="exportLoading"
+            />
+          </UDropdownMenu>
+          -->
+        </template>
       </UDashboardNavbar>
     </template>
 
     <template #body>
-      <div class="space-y-6">
-        <div class="flex flex-wrap items-center gap-4">
-          <UFormField label="Service" class="min-w-64">
-            <USelect
-              v-model="selectedServiceId"
-              :items="serviceOptions"
-              placeholder="Tous les services"
-            />
-          </UFormField>
+      <!-- Modal de sélection de service -->
+      <ServiceSelectModal
+        v-model:open="showServiceSelectModal"
+        v-model:selected-service="selectedServiceForFilter"
+        @select="handleServiceSelect"
+        @clear="clearServiceFilter"
+      />
 
-          <UFormField label="Période" class="min-w-64">
-            <USelect
-              v-model="selectedPeriod"
-              :items="periodOptions"
-              placeholder="Toute la période"
+      <!-- Modal de détails par module -->
+      <UModal
+        v-model:open="showModuleDetailModal"
+        :title="`Détails - ${selectedModuleForDetail?.titre}`"
+        :description="`Liste des agents ayant tenté ce module`"
+        :ui="{ width: 'sm:max-w-5xl' }"
+      >
+        <template #body>
+          <div class="space-y-4">
+            <!-- Stats du module -->
+            <div v-if="selectedModuleForDetail" class="grid grid-cols-3 gap-4 mb-4">
+              <div class="bg-elevated border border-default rounded-lg p-3">
+                <p class="text-xs text-muted mb-1">Tentatives</p>
+                <p class="text-xl font-bold">{{ selectedModuleForDetail.tentatives }}</p>
+              </div>
+              <div class="bg-elevated border border-default rounded-lg p-3">
+                <p class="text-xs text-muted mb-1">Taux de réussite</p>
+                <p class="text-xl font-bold">{{ selectedModuleForDetail.tauxReussite }}%</p>
+              </div>
+              <div class="bg-elevated border border-default rounded-lg p-3">
+                <p class="text-xs text-muted mb-1">Score moyen</p>
+                <p class="text-xl font-bold">{{ selectedModuleForDetail.scoreMoyen }}/100</p>
+              </div>
+            </div>
+
+            <!-- Tableau des résultats -->
+            <UTable
+              :data="moduleDetailResults"
+              :columns="detailColumns"
+              :loading="loadingModuleDetails"
+              class="max-h-96 overflow-y-auto"
+              :ui="{
+                base: 'table-fixed border-separate border-spacing-0',
+                thead: '[&>tr]:bg-elevated/50',
+                th: 'sticky top-0 z-10 bg-elevated first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
+                td: 'border-b border-default py-3',
+                tbody: '[&>tr:last-child>td]:border-b-0',
+              }"
             />
-          </UFormField>
+
+            <div
+              v-if="!loadingModuleDetails && moduleDetailResults.length === 0"
+              class="text-center py-8"
+            >
+              <UIcon name="i-lucide-inbox" class="text-4xl text-muted mb-2" />
+              <p class="text-sm text-muted">Aucun résultat pour ce module</p>
+            </div>
+          </div>
+        </template>
+
+        <template #footer>
+          <div class="flex justify-between items-center">
+            <p class="text-sm text-muted">
+              {{ moduleDetailResults.length }} résultat(s)
+            </p>
+            <UButton
+              label="Fermer"
+              color="neutral"
+              variant="outline"
+              @click="showModuleDetailModal = false"
+            />
+          </div>
+        </template>
+      </UModal>
+
+      <div class="space-y-6">
+        <!-- Filtres -->
+        <div class="bg-elevated border border-default rounded-lg p-4">
+          <div class="space-y-4">
+            <!-- Ligne 1 : Service et Période -->
+            <div class="flex flex-wrap items-end gap-4">
+              <UFormField label="Service" class="min-w-64">
+                <div class="flex items-center gap-2">
+                  <UButton
+                    :label="
+                      selectedServiceForFilter
+                        ? selectedServiceForFilter.designation
+                        : 'Tous les services'
+                    "
+                    :icon="selectedServiceForFilter ? 'i-lucide-briefcase' : 'i-lucide-filter'"
+                    :color="selectedServiceForFilter ? 'primary' : 'neutral'"
+                    variant="outline"
+                    class="flex-1 justify-start min-w-64"
+                    truncate
+                    @click="showServiceSelectModal = true"
+                  />
+
+                  <UButton
+                    v-if="selectedServiceForFilter"
+                    icon="i-lucide-x"
+                    color="neutral"
+                    variant="ghost"
+                    square
+                    @click="clearServiceFilter"
+                  />
+                </div>
+              </UFormField>
+
+              <UFormField label="Période" class="min-w-64">
+                <USelect
+                  v-model="selectedPeriod"
+                  :items="periodOptions"
+                  placeholder="Toute la période"
+                />
+              </UFormField>
+
+              <UFormField label="Statut" class="min-w-64">
+                <USelect
+                  v-model="statusFilter"
+                  :items="statusOptions"
+                  placeholder="Tous les statuts"
+                />
+              </UFormField>
+            </div>
+
+            <!-- Ligne 2 : Recherche d'agent -->
+            <div class="flex items-end gap-4">
+              <UFormField label="Rechercher un agent" class="flex-1 max-w-md">
+                <UInput
+                  v-model="agentSearch"
+                  placeholder="Nom, prénom ou code agent..."
+                  icon="i-lucide-user-search"
+                  :ui="{ icon: { trailing: { pointer: '' } } }"
+                >
+                  <template v-if="agentSearch" #trailing>
+                    <UButton
+                      icon="i-lucide-x"
+                      color="neutral"
+                      variant="ghost"
+                      size="2xs"
+                      @click="agentSearch = ''"
+                    />
+                  </template>
+                </UInput>
+              </UFormField>
+
+              <UButton
+                v-if="hasActiveFilters"
+                label="Réinitialiser les filtres"
+                icon="i-lucide-rotate-ccw"
+                color="neutral"
+                variant="ghost"
+                @click="resetAllFilters"
+              />
+            </div>
+
+            <!-- Badge de résumé des filtres -->
+            <div v-if="hasActiveFilters" class="flex flex-wrap gap-2 pt-2 border-t border-default">
+              <p class="text-xs text-muted mr-2">Filtres actifs :</p>
+
+              <UBadge
+                v-if="selectedServiceForFilter"
+                color="primary"
+                variant="subtle"
+                size="xs"
+              >
+                Service: {{ selectedServiceForFilter.designation }}
+              </UBadge>
+
+              <UBadge
+                v-if="selectedPeriod !== 'all'"
+                color="info"
+                variant="subtle"
+                size="xs"
+              >
+                Période: {{ periodOptions.find(p => p.value === selectedPeriod)?.label }}
+              </UBadge>
+
+              <UBadge
+                v-if="statusFilter !== 'all'"
+                color="warning"
+                variant="subtle"
+                size="xs"
+              >
+                Statut: {{ statusOptions.find(s => s.value === statusFilter)?.label }}
+              </UBadge>
+
+              <UBadge
+                v-if="agentSearch"
+                color="success"
+                variant="subtle"
+                size="xs"
+              >
+                Agent: "{{ agentSearch }}"
+              </UBadge>
+            </div>
+          </div>
         </div>
 
+        <!-- KPIs -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <UCard>
+          <UCard :ui="{ body: { padding: 'p-4' } }">
             <div class="flex items-center gap-3">
               <div
-                class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center"
+                class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0"
               >
                 <UIcon
                   name="i-lucide-file-check"
-                  class="text-primary text-xl"
+                  class="text-primary text-2xl"
                 />
               </div>
               <div>
@@ -232,7 +748,7 @@ const xTicks = (i: number) => {
                   v-if="statsPending"
                   class="text-2xl font-bold text-highlighted"
                 >
-                  ---
+                  <USkeleton class="h-8 w-16" />
                 </p>
                 <p v-else class="text-2xl font-bold text-highlighted">
                   {{ stats.totalQuiz }}
@@ -241,39 +757,49 @@ const xTicks = (i: number) => {
             </div>
           </UCard>
 
-          <UCard>
+          <UCard :ui="{ body: { padding: 'p-4' } }">
             <div class="flex items-center gap-3">
               <div
-                class="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center"
+                class="w-12 h-12 rounded-lg bg-success/10 flex items-center justify-center shrink-0"
               >
                 <UIcon
                   name="i-lucide-check-circle"
-                  class="text-success text-xl"
+                  class="text-success text-2xl"
                 />
               </div>
-              <div>
+              <div class="flex-1 min-w-0">
                 <p class="text-xs text-muted uppercase mb-1">Taux Réussite</p>
                 <p
                   v-if="statsPending"
                   class="text-2xl font-bold text-highlighted"
                 >
-                  ---
+                  <USkeleton class="h-8 w-16" />
                 </p>
-                <p v-else class="text-2xl font-bold text-highlighted">
-                  {{ stats.tauxReussite }}%
-                </p>
+                <div v-else class="flex items-center gap-2">
+                  <p class="text-2xl font-bold text-highlighted">
+                    {{ stats.tauxReussite }}%
+                  </p>
+                  <UBadge
+                    v-if="enrichedStats"
+                    :color="enrichedStats.tauxReussite >= 80 ? 'success' : enrichedStats.tauxReussite >= 50 ? 'warning' : 'error'"
+                    variant="subtle"
+                    size="xs"
+                  >
+                    {{ enrichedStats.quizReussis }}/{{ enrichedStats.totalQuiz }}
+                  </UBadge>
+                </div>
               </div>
             </div>
           </UCard>
 
-          <UCard>
+          <UCard :ui="{ body: { padding: 'p-4' } }">
             <div class="flex items-center gap-3">
               <div
-                class="w-10 h-10 rounded-lg bg-info/10 flex items-center justify-center"
+                class="w-12 h-12 rounded-lg bg-info/10 flex items-center justify-center shrink-0"
               >
                 <UIcon
                   name="i-lucide-trending-up"
-                  class="text-info text-xl"
+                  class="text-info text-2xl"
                 />
               </div>
               <div>
@@ -282,7 +808,7 @@ const xTicks = (i: number) => {
                   v-if="statsPending"
                   class="text-2xl font-bold text-highlighted"
                 >
-                  ---
+                  <USkeleton class="h-8 w-16" />
                 </p>
                 <p v-else class="text-2xl font-bold text-highlighted">
                   {{ stats.scoreMoyen }}/100
@@ -291,12 +817,12 @@ const xTicks = (i: number) => {
             </div>
           </UCard>
 
-          <UCard>
+          <UCard :ui="{ body: { padding: 'p-4' } }">
             <div class="flex items-center gap-3">
               <div
-                class="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center"
+                class="w-12 h-12 rounded-lg bg-warning/10 flex items-center justify-center shrink-0"
               >
-                <UIcon name="i-lucide-award" class="text-warning text-xl" />
+                <UIcon name="i-lucide-award" class="text-warning text-2xl" />
               </div>
               <div>
                 <p class="text-xs text-muted uppercase mb-1">Quiz Réussis</p>
@@ -304,7 +830,7 @@ const xTicks = (i: number) => {
                   v-if="statsPending"
                   class="text-2xl font-bold text-highlighted"
                 >
-                  ---
+                  <USkeleton class="h-8 w-16" />
                 </p>
                 <p v-else class="text-2xl font-bold text-highlighted">
                   {{ stats.quizReussis }}
@@ -314,9 +840,18 @@ const xTicks = (i: number) => {
           </UCard>
         </div>
 
+        <!-- Résultats par module avec indication cliquable -->
         <UCard>
           <template #header>
-            <p class="text-sm font-medium">Résultats par module</p>
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium">Résultats par module</p>
+                <p class="text-xs text-muted mt-1">
+                  Cliquez sur le bouton "Détails" pour voir les résultats individuels par module
+                </p>
+              </div>
+              <UIcon name="i-lucide-info" class="text-muted" />
+            </div>
           </template>
 
           <UTable
@@ -327,9 +862,10 @@ const xTicks = (i: number) => {
               base: 'table-fixed border-separate border-spacing-0',
               thead: '[&>tr]:bg-elevated/50',
               th: 'first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-              td: 'border-b border-default py-3',
+              td: 'border-b border-default py-3 cursor-pointer hover:bg-elevated/50 transition-colors',
               tbody: '[&>tr:last-child>td]:border-b-0',
             }"
+            @row-click="(row: any) => openModuleDetail(row.original)"
           />
 
           <div
@@ -341,97 +877,86 @@ const xTicks = (i: number) => {
           </div>
         </UCard>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <UCard ref="chartCardRef">
-            <template #header>
-              <p class="text-sm font-medium">Distribution des scores</p>
-            </template>
-
-            <div v-if="distributionPending" class="h-64 flex items-center justify-center">
-              <UIcon name="i-lucide-loader-2" class="animate-spin text-4xl text-muted" />
-            </div>
-
-            <VisXYContainer
-              v-else
-              :data="distribution"
-              :padding="{ top: 20, bottom: 40 }"
-              class="h-64"
-              :width="width"
-            >
-              <VisStackedBar :x="x" :y="y" color="var(--ui-primary)" />
-
-              <VisAxis type="x" :x="x" :tick-format="xTicks" />
-              <VisAxis type="y" :y="y" />
-
-              <VisTooltip />
-            </VisXYContainer>
-          </UCard>
-
-          <UCard>
-            <template #header>
-              <div class="flex items-center justify-between">
+        <!-- Top Scores avec recherche -->
+        <UCard>
+          <template #header>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
                 <p class="text-sm font-medium">Top 10 Meilleurs Scores</p>
                 <UIcon name="i-lucide-trophy" class="text-warning text-xl" />
               </div>
-            </template>
-
-            <div v-if="topScoresPending" class="space-y-3">
-              <div v-for="i in 5" :key="i" class="flex items-center gap-3">
-                <USkeleton class="w-6 h-6 rounded-full" />
-                <USkeleton class="h-4 w-full" />
-              </div>
+              <UInput
+                v-model="topScoresSearch"
+                placeholder="Rechercher..."
+                icon="i-lucide-search"
+                size="xs"
+                class="w-64"
+              />
             </div>
+          </template>
 
+          <div v-if="topScoresPending" class="space-y-3">
+            <div v-for="i in 5" :key="i" class="flex items-center gap-3">
+              <USkeleton class="w-8 h-8 rounded-full" />
+              <USkeleton class="h-4 w-full" />
+            </div>
+          </div>
+
+          <div
+            v-else-if="filteredTopScores.length === 0"
+            class="text-center py-8"
+          >
+            <UIcon name="i-lucide-inbox" class="text-4xl text-muted mb-2" />
+            <p class="text-sm text-muted">
+              {{ topScoresSearch ? 'Aucun résultat trouvé' : 'Aucun score disponible' }}
+            </p>
+          </div>
+
+          <div v-else class="space-y-2">
             <div
-              v-else-if="topScores.length === 0"
-              class="text-center py-8"
+              v-for="(item, index) in filteredTopScores"
+              :key="index"
+              class="flex items-center gap-3 group hover:bg-elevated/50 -mx-4 px-4 py-3 rounded-lg transition-all"
             >
-              <UIcon name="i-lucide-inbox" class="text-4xl text-muted mb-2" />
-              <p class="text-sm text-muted">Aucun score disponible</p>
-            </div>
-
-            <div v-else class="space-y-3">
               <div
-                v-for="(item, index) in topScores"
-                :key="index"
-                class="flex items-center gap-3 group hover:bg-elevated/50 -mx-4 px-4 py-2 rounded-lg transition-colors"
+                class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
+                :class="{
+                  'bg-warning/20 text-warning': index === 0,
+                  'bg-neutral/20 text-neutral': index === 1,
+                  'bg-primary/20 text-primary': index === 2,
+                  'bg-muted/20 text-muted': index > 2,
+                }"
               >
-                <div
-                  class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
-                  :class="{
-                    'bg-warning/20 text-warning': index === 0,
-                    'bg-neutral/20 text-neutral': index === 1,
-                    'bg-primary/20 text-primary': index === 2,
-                    'bg-muted/20 text-muted': index > 2,
-                  }"
-                >
-                  {{ index + 1 }}
-                </div>
-                <div class="flex-1 min-w-0">
-                  <p class="text-sm font-medium truncate">
-                    {{ item.prenom }} {{ item.nom }}
-                    <span class="text-xs text-muted">({{ item.code_agent }})</span>
-                  </p>
-                  <p class="text-xs text-muted truncate">
-                    {{ item.module_titre }}
-                  </p>
-                </div>
-                <UBadge color="success" variant="subtle" class="shrink-0">
-                  {{ item.score }}/100
-                </UBadge>
+                <UIcon
+                  v-if="index === 0"
+                  name="i-lucide-crown"
+                  class="text-lg"
+                />
+                <span v-else>{{ index + 1 }}</span>
               </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium truncate">
+                  {{ item.prenom }} {{ item.nom }}
+                  <span class="text-xs text-muted">({{ item.code_agent }})</span>
+                </p>
+                <p class="text-xs text-muted truncate">
+                  {{ item.module_titre }}
+                </p>
+                <p class="text-xs text-muted">
+                  {{ new Date(item.date_soumission).toLocaleDateString('fr-FR', { dateStyle: 'medium' }) }}
+                </p>
+              </div>
+              <UBadge
+                :color="item.score >= 90 ? 'success' : item.score >= 80 ? 'primary' : 'warning'"
+                variant="subtle"
+                class="shrink-0"
+              >
+                {{ item.score }}/100
+              </UBadge>
             </div>
-          </UCard>
-        </div>
+          </div>
+        </UCard>
       </div>
     </template>
   </UDashboardPanel>
 </template>
-
-<style scoped>
-.unovis-xy-container {
-  --vis-axis-grid-color: var(--ui-border);
-  --vis-axis-tick-color: var(--ui-border);
-  --vis-axis-tick-label-color: var(--ui-text-dimmed);
-}
-</style>

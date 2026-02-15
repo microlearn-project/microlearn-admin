@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn } from "@nuxt/ui";
+import { getPaginationRowModel } from "@tanstack/vue-table";
 import { upperFirst } from "scule";
 import type { Tables } from "~/types/database.types";
 
@@ -316,17 +317,7 @@ watch(
 );
 
 /* ---------------------------------------------------
-   8. Données paginées
-----------------------------------------------------*/
-const paginatedData = computed(() => {
-  if (!modules.value) return [];
-  const start = pagination.value.pageIndex * pagination.value.pageSize;
-  const end = start + pagination.value.pageSize;
-  return modules.value.slice(start, end);
-});
-
-/* ---------------------------------------------------
-   9. Déselectionner toutes les lignes
+   8. Déselectionner toutes les lignes
 ----------------------------------------------------*/
 function clearTableSelection() {
   table.value?.tableApi?.resetRowSelection();
@@ -581,8 +572,12 @@ async function toggleDownloadable(id: string, enabled: boolean) {
       <!-- Tableau -->
       <UTable
         ref="table"
+      v-model:pagination="pagination"
         v-model:row-selection="rowSelection"
-        :data="paginatedData"
+        :data="modules"
+        :pagination-options="{
+          getPaginationRowModel: getPaginationRowModel(),
+        }"
         :columns="columns"
         :loading="pending"
         class="max-h-125 overflow-y-auto"
@@ -608,10 +603,10 @@ async function toggleDownloadable(id: string, enabled: boolean) {
         </div>
 
         <UPagination
-          :default-page="pagination.pageIndex + 1"
-          :items-per-page="pagination.pageSize"
-          :total="modules?.length || 0"
-          @update:page="(p) => (pagination.pageIndex = p - 1)"
+          :page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
+          :items-per-page="table?.tableApi?.getState().pagination.pageSize"
+          :total="table?.tableApi?.getFilteredRowModel().rows.length"
+          @update:page="(p) => table?.tableApi?.setPageIndex(p - 1)"
         />
       </div>
     </template>

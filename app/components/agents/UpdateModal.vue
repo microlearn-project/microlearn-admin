@@ -18,37 +18,31 @@ const toast = useToast();
 const open = ref(false);
 const loading = ref(false);
 
-// Récupérer les départements
+// Modals de sélection
+const showDepartementModal = ref(false);
+const showServiceModal = ref(false);
+
+// Éléments sélectionnés
+const selectedDepartement = ref<Departement | null>(null);
+const selectedService = ref<Service | null>(null);
+
+// Transformer le nom en majuscules automatiquement
+const nomUppercase = computed({
+  get: () => form.value.nom,
+  set: (value: string) => {
+    form.value.nom = value.toUpperCase();
+  },
+});
+
+// Récupérer les départements et services pour l'affichage initial
 const { data: departements } = await useFetch<Departement[]>("/api/departement", {
   server: true,
   lazy: true,
 });
 
-// Récupérer les services
 const { data: services } = await useFetch<Service[]>("/api/service", {
   server: true,
   lazy: true,
-});
-
-// Options pour les selects
-const departementOptions = computed(() => {
-  if (!departements.value) return [];
-  return departements.value
-    .filter((d) => !d.deleted_at)
-    .map((d) => ({
-      label: d.designation,
-      value: d.id_departement,
-    }));
-});
-
-const serviceOptions = computed(() => {
-  if (!services.value) return [];
-  return services.value
-    .filter((s) => !s.deleted_at && s.actif)
-    .map((s) => ({
-      label: s.designation,
-      value: s.id_service,
-    }));
 });
 
 // Formulaire pré-rempli avec l'agent sélectionné
@@ -59,6 +53,27 @@ const form = ref({
   id_departement: "",
   id_service: "",
 });
+
+// Handlers de sélection
+function handleDepartementSelect(departement: Departement) {
+  selectedDepartement.value = departement;
+  form.value.id_departement = departement.id_departement;
+}
+
+function clearDepartement() {
+  selectedDepartement.value = null;
+  form.value.id_departement = "";
+}
+
+function handleServiceSelect(service: Service) {
+  selectedService.value = service;
+  form.value.id_service = service.id_service;
+}
+
+function clearService() {
+  selectedService.value = null;
+  form.value.id_service = "";
+}
 
 // Remplir le formulaire quand l'agent change
 watch(
@@ -73,6 +88,20 @@ watch(
         id_departement: agent.id_departement,
         id_service: agent.id_service,
       };
+
+      // Trouver et définir le département sélectionné
+      if (departements.value) {
+        selectedDepartement.value = departements.value.find(
+          (d) => d.id_departement === agent.id_departement
+        ) || null;
+      }
+
+      // Trouver et définir le service sélectionné
+      if (services.value) {
+        selectedService.value = services.value.find(
+          (s) => s.id_service === agent.id_service
+        ) || null;
+      }
     }
   },
   { immediate: true }
@@ -89,6 +118,21 @@ function openModal() {
       id_departement: agent.id_departement,
       id_service: agent.id_service,
     };
+
+    // Trouver et définir le département sélectionné
+    if (departements.value) {
+      selectedDepartement.value = departements.value.find(
+        (d) => d.id_departement === agent.id_departement
+      ) || null;
+    }
+
+    // Trouver et définir le service sélectionné
+    if (services.value) {
+      selectedService.value = services.value.find(
+        (s) => s.id_service === agent.id_service
+      ) || null;
+    }
+
     open.value = true;
   }
 }
@@ -151,13 +195,13 @@ async function submit() {
   }
 }
 
-// Obtenir le nom du département actuel
+// Obtenir le nom du département actuel (pour affichage de comparaison)
 const currentDepartement = computed(() => {
   if (!departements.value || props.rows.length !== 1) return null;
   return departements.value.find((d) => d.id_departement === props.rows[0].id_departement);
 });
 
-// Obtenir le nom du service actuel
+// Obtenir le nom du service actuel (pour affichage de comparaison)
 const currentService = computed(() => {
   if (!services.value || props.rows.length !== 1) return null;
   return services.value.find((s) => s.id_service === props.rows[0].id_service);
@@ -168,6 +212,19 @@ const currentService = computed(() => {
   <div @click="openModal">
     <slot />
   </div>
+
+  <!-- Modals de sélection -->
+  <AgentsDepartementSelectModal
+    v-model:open="showDepartementModal"
+    v-model:selected-departement="selectedDepartement"
+    @select="handleDepartementSelect"
+  />
+
+  <AgentsServiceSelectModal
+    v-model:open="showServiceModal"
+    v-model:selected-service="selectedService"
+    @select="handleServiceSelect"
+  />
 
   <UModal v-model:open="open" title="Modifier l'agent" :description="rows.length === 1 ? `Modification de l'agent ${rows[0].prenom} ${rows[0].nom}` : ''">
     <template #body>
@@ -197,7 +254,7 @@ const currentService = computed(() => {
           </p>
           <div class="grid grid-cols-2 gap-4 p-3 bg-muted/10 rounded-lg">
             <UFormField label="Nom" required>
-              <UInput v-model="form.nom" placeholder="Nom de famille" />
+              <UInput v-model="nomUppercase" placeholder="Nom de famille" />
             </UFormField>
 
             <UFormField label="Prénom" required>
@@ -217,21 +274,69 @@ const currentService = computed(() => {
             <UIcon name="i-lucide-building-2" />
             Affectation
           </p>
-          <div class="grid grid-cols-2 gap-4 p-3 bg-muted/10 rounded-lg">
+          <div class="space-y-3 p-3 bg-muted/10 rounded-lg">
+            <!-- Sélection du département -->
             <UFormField label="Département" required>
-              <USelect
-                v-model="form.id_departement"
-                :items="departementOptions"
-                placeholder="Sélectionner"
-              />
+              <div class="flex items-center gap-2">
+                <UButton
+                  :label="
+                    selectedDepartement
+                      ? selectedDepartement.designation
+                      : 'Sélectionner un département'
+                  "
+                  :icon="selectedDepartement ? 'i-lucide-building-2' : 'i-lucide-search'"
+                  :color="selectedDepartement ? 'primary' : 'neutral'"
+                  variant="outline"
+                  class="flex-1 justify-start"
+                  truncate
+                  @click="showDepartementModal = true"
+                />
+
+                <UButton
+                  v-if="selectedDepartement"
+                  icon="i-lucide-x"
+                  color="neutral"
+                  variant="ghost"
+                  square
+                  @click="clearDepartement"
+                />
+              </div>
+
+              <p v-if="selectedDepartement && selectedDepartement.designation" class="text-xs text-muted mt-1">
+                {{ selectedDepartement.designation }}
+              </p>
             </UFormField>
 
+            <!-- Sélection du service -->
             <UFormField label="Service" required>
-              <USelect
-                v-model="form.id_service"
-                :items="serviceOptions"
-                placeholder="Sélectionner"
-              />
+              <div class="flex items-center gap-2">
+                <UButton
+                  :label="
+                    selectedService
+                      ? selectedService.designation
+                      : 'Sélectionner un service'
+                  "
+                  :icon="selectedService ? 'i-lucide-briefcase' : 'i-lucide-search'"
+                  :color="selectedService ? 'primary' : 'neutral'"
+                  variant="outline"
+                  class="flex-1 justify-start"
+                  truncate
+                  @click="showServiceModal = true"
+                />
+
+                <UButton
+                  v-if="selectedService"
+                  icon="i-lucide-x"
+                  color="neutral"
+                  variant="ghost"
+                  square
+                  @click="clearService"
+                />
+              </div>
+
+              <p v-if="selectedService && selectedService.designation" class="text-xs text-muted mt-1">
+                {{ selectedService.designation }}
+              </p>
             </UFormField>
           </div>
         </div>
