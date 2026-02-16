@@ -7,10 +7,30 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "13.0.5"
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -115,6 +135,110 @@ export type Database = {
           },
         ]
       }
+      agent_new: {
+        Row: {
+          actif: boolean
+          code_agent: string
+          created_at: string
+          deleted_at: string | null
+          email: string
+          id_agent: string
+          id_departement: string
+          id_direction: string
+          last_login: string | null
+          nom: string
+          password_hash: string
+          prenom: string
+          updated_at: string
+        }
+        Insert: {
+          actif?: boolean
+          code_agent: string
+          created_at?: string
+          deleted_at?: string | null
+          email: string
+          id_agent?: string
+          id_departement: string
+          id_direction: string
+          last_login?: string | null
+          nom: string
+          password_hash: string
+          prenom: string
+          updated_at?: string
+        }
+        Update: {
+          actif?: boolean
+          code_agent?: string
+          created_at?: string
+          deleted_at?: string | null
+          email?: string
+          id_agent?: string
+          id_departement?: string
+          id_direction?: string
+          last_login?: string | null
+          nom?: string
+          password_hash?: string
+          prenom?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_new_id_departement_fkey"
+            columns: ["id_departement"]
+            isOneToOne: false
+            referencedRelation: "departement_new"
+            referencedColumns: ["id_departement"]
+          },
+          {
+            foreignKeyName: "agent_new_id_departement_fkey"
+            columns: ["id_departement"]
+            isOneToOne: false
+            referencedRelation: "vue_hierarchie_complete"
+            referencedColumns: ["id_departement"]
+          },
+          {
+            foreignKeyName: "agent_new_id_direction_fkey"
+            columns: ["id_direction"]
+            isOneToOne: false
+            referencedRelation: "direction_new"
+            referencedColumns: ["id_direction"]
+          },
+          {
+            foreignKeyName: "agent_new_id_direction_fkey"
+            columns: ["id_direction"]
+            isOneToOne: false
+            referencedRelation: "vue_hierarchie_complete"
+            referencedColumns: ["id_direction"]
+          },
+        ]
+      }
+      autorite_superieure: {
+        Row: {
+          actif: boolean
+          code: string
+          created_at: string
+          designation: string
+          id_autorite: string
+          updated_at: string
+        }
+        Insert: {
+          actif?: boolean
+          code: string
+          created_at?: string
+          designation: string
+          id_autorite?: string
+          updated_at?: string
+        }
+        Update: {
+          actif?: boolean
+          code?: string
+          created_at?: string
+          designation?: string
+          id_autorite?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cours: {
         Row: {
           created_at: string
@@ -185,6 +309,96 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      departement_new: {
+        Row: {
+          actif: boolean
+          created_at: string
+          deleted_at: string | null
+          designation: string
+          id_departement: string
+          id_direction: string
+          updated_at: string
+        }
+        Insert: {
+          actif?: boolean
+          created_at?: string
+          deleted_at?: string | null
+          designation: string
+          id_departement?: string
+          id_direction: string
+          updated_at?: string
+        }
+        Update: {
+          actif?: boolean
+          created_at?: string
+          deleted_at?: string | null
+          designation?: string
+          id_departement?: string
+          id_direction?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "departement_new_id_direction_fkey"
+            columns: ["id_direction"]
+            isOneToOne: false
+            referencedRelation: "direction_new"
+            referencedColumns: ["id_direction"]
+          },
+          {
+            foreignKeyName: "departement_new_id_direction_fkey"
+            columns: ["id_direction"]
+            isOneToOne: false
+            referencedRelation: "vue_hierarchie_complete"
+            referencedColumns: ["id_direction"]
+          },
+        ]
+      }
+      direction_new: {
+        Row: {
+          actif: boolean
+          created_at: string
+          deleted_at: string | null
+          designation: string
+          id_autorite: string
+          id_direction: string
+          updated_at: string
+        }
+        Insert: {
+          actif?: boolean
+          created_at?: string
+          deleted_at?: string | null
+          designation: string
+          id_autorite: string
+          id_direction?: string
+          updated_at?: string
+        }
+        Update: {
+          actif?: boolean
+          created_at?: string
+          deleted_at?: string | null
+          designation?: string
+          id_autorite?: string
+          id_direction?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "direction_new_id_autorite_fkey"
+            columns: ["id_autorite"]
+            isOneToOne: false
+            referencedRelation: "autorite_superieure"
+            referencedColumns: ["id_autorite"]
+          },
+          {
+            foreignKeyName: "direction_new_id_autorite_fkey"
+            columns: ["id_autorite"]
+            isOneToOne: false
+            referencedRelation: "vue_hierarchie_complete"
+            referencedColumns: ["id_autorite"]
+          },
+        ]
       }
       document: {
         Row: {
@@ -268,6 +482,46 @@ export type Database = {
           },
         ]
       }
+      module_departement_new: {
+        Row: {
+          date_attribution: string
+          id_departement: string
+          id_module: string
+        }
+        Insert: {
+          date_attribution?: string
+          id_departement: string
+          id_module: string
+        }
+        Update: {
+          date_attribution?: string
+          id_departement?: string
+          id_module?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "module_departement_new_id_departement_fkey"
+            columns: ["id_departement"]
+            isOneToOne: false
+            referencedRelation: "departement_new"
+            referencedColumns: ["id_departement"]
+          },
+          {
+            foreignKeyName: "module_departement_new_id_departement_fkey"
+            columns: ["id_departement"]
+            isOneToOne: false
+            referencedRelation: "vue_hierarchie_complete"
+            referencedColumns: ["id_departement"]
+          },
+          {
+            foreignKeyName: "module_departement_new_id_module_fkey"
+            columns: ["id_module"]
+            isOneToOne: false
+            referencedRelation: "module"
+            referencedColumns: ["id_module"]
+          },
+        ]
+      }
       module_service: {
         Row: {
           date_attribution: string
@@ -300,6 +554,24 @@ export type Database = {
             referencedColumns: ["id_service"]
           },
         ]
+      }
+      module_service_backup: {
+        Row: {
+          date_attribution: string | null
+          id_module: string | null
+          id_service: string | null
+        }
+        Insert: {
+          date_attribution?: string | null
+          id_module?: string | null
+          id_service?: string | null
+        }
+        Update: {
+          date_attribution?: string | null
+          id_module?: string | null
+          id_service?: string | null
+        }
+        Relationships: []
       }
       module_tag: {
         Row: {
@@ -701,10 +973,109 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      vue_hierarchie_complete: {
+        Row: {
+          actif: boolean | null
+          autorite_code: string | null
+          autorite_designation: string | null
+          code_agent: string | null
+          departement_designation: string | null
+          direction_designation: string | null
+          email: string | null
+          id_agent: string | null
+          id_autorite: string | null
+          id_departement: string | null
+          id_direction: string | null
+          nom: string | null
+          prenom: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
-      [_ in never]: never
+      count_modules_for_service: {
+        Args: { p_service_ids?: string[] }
+        Returns: number
+      }
+      fn_compter_migrations: {
+        Args: never
+        Returns: {
+          ancien_count: number
+          nouveau_count: number
+          statut: string
+          table_name: string
+        }[]
+      }
+      get_cours_with_quiz_status: {
+        Args: { p_agent_id: string; p_module_id: string }
+        Returns: {
+          description: string
+          documents: string[]
+          duree_lecture: string
+          id_cours: string
+          is_completed: boolean
+          ordre: number
+          quiz_id: string
+          quiz_score: number
+          titre: string
+        }[]
+      }
+      get_modules_in_progress: {
+        Args: { p_agent_id: string; p_limit?: number }
+        Returns: {
+          cours_completes: number
+          created_at: string
+          description: string
+          download_enabled: boolean
+          duree_lecture: string
+          id_module: string
+          progression: number
+          publish: boolean
+          publish_at: string
+          tags: string[]
+          titre: string
+          total_cours: number
+        }[]
+      }
+      get_modules_with_progress: {
+        Args: {
+          p_agent_id: string
+          p_limit?: number
+          p_offset?: number
+          p_service_ids?: string[]
+        }
+        Returns: {
+          cours_completes: number
+          created_at: string
+          description: string
+          download_enabled: boolean
+          duree_lecture: string
+          id_module: string
+          progression: number
+          publish: boolean
+          publish_at: string
+          tags: string[]
+          titre: string
+          total_cours: number
+        }[]
+      }
+      get_recommended_modules: {
+        Args: { p_agent_id: string; p_limit?: number; p_service_id: string }
+        Returns: {
+          cours_completes: number
+          created_at: string
+          description: string
+          download_enabled: boolean
+          duree_lecture: string
+          id_module: string
+          progression: number
+          publish: boolean
+          publish_at: string
+          tags: string[]
+          titre: string
+          total_cours: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
@@ -833,7 +1204,11 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },
 } as const
+

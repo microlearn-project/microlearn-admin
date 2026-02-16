@@ -7,17 +7,17 @@ export default defineEventHandler(async (event) => {
   if (!id_module || !id_service) {
     throw createError({
       statusCode: 400,
-      statusMessage: "ID du module et ID du service requis",
+      statusMessage: "ID du module et ID du département requis",
     });
   }
 
   const supabase = createSupabaseServerClient();
 
   const { data, error } = await supabase
-    .from("module_service")
+    .from("module_departement_new")
     .delete()
     .eq("id_module", id_module)
-    .eq("id_service", id_service)
+    .eq("id_departement", id_service)
     .select();
 
   if (error) {

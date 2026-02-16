@@ -20,9 +20,9 @@ export default defineEventHandler(async (event) => {
 
   const supabase = createSupabaseServerClient();
 
-  // Récupérer les services associés au module via la table module_service
+  // Récupérer les services associés au module via la table module_departement_new
   const { data, error } = await supabase
-    .from("module_service")
+    .from("module_departement_new")
     .select("service(*), date_attribution")
     .eq("id_module", id_module);
 

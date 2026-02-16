@@ -33,8 +33,8 @@ export default defineEventHandler(async (event) => {
 
   // 2. Récupérer les services déjà associés au module
   const { data: associatedServices, error: associatedError } = await supabase
-    .from("module_service")
-    .select("id_service")
+    .from("module_departement_new")
+    .select("id_departement")
     .eq("id_module", id_module);
 
   if (associatedError) {
@@ -46,7 +46,7 @@ export default defineEventHandler(async (event) => {
 
   // 3. Créer un Set des IDs déjà associés
   const associatedIds = new Set(
-    (associatedServices ?? []).map((item) => item.id_service)
+    (associatedServices ?? []).map((item) => item.id_departement),
   );
 
   // 4. Filtrer pour ne garder que les services non associés

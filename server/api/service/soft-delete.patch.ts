@@ -6,14 +6,14 @@ import { logActivity } from "~~/server/utils/activityLog";
 
 type ServiceUpdate = TablesUpdate<"service">;
 
-// Fonction de vérification de l'existence dans module_service
+// Fonction de vérification de l'existence dans module_departement_new
 async function isServiceUsed_service(id_service: string): Promise<boolean> {
   const supabase = createSupabaseServerClient();
 
-  let { data: module_service, error } = await supabase
-    .from("module_service")
-    .select("id_service")
-    .eq("id_service", id_service)
+  let { data: module_departement_new, error } = await supabase
+    .from("module_departement_new")
+    .select("id_departement")
+    .eq("id_departement", id_service)
     .limit(1);
 
   if (error) {
@@ -22,7 +22,7 @@ async function isServiceUsed_service(id_service: string): Promise<boolean> {
       statusMessage: error.message,
     });
   }
-  if (module_service && module_service.length > 0) {
+  if (module_departement_new && module_departement_new.length > 0) {
     return true;
   } else {
     return false;

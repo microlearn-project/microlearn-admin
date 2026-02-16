@@ -2,7 +2,7 @@
 import { createSupabaseServerClient } from "~~/server/utils/supabase";
 import type { TablesInsert } from "~/types/database.types";
 
-type ModuleServiceInsert = TablesInsert<"module_service">;
+type ModuleServiceInsert = TablesInsert<"module_departement_new">;
 
 export default defineEventHandler(async (event) => {
   const { id_module, id_service } = await readBody(event);
@@ -15,15 +15,18 @@ export default defineEventHandler(async (event) => {
   }
 
   const supabase = createSupabaseServerClient();
-
-  const payload: ModuleServiceInsert = {
+  console.log("Payload reçu pour l'ajout du service au module:", {
     id_module,
     id_service,
+  });
+  const payload: ModuleServiceInsert = {
+    id_module,
+    id_departement: id_service,
     date_attribution: new Date().toISOString(),
   };
 
   const { data, error } = await supabase
-    .from("module_service")
+    .from("module_departement_new")
     .insert(payload)
     .select();
 
