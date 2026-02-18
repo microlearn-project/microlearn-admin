@@ -2,8 +2,8 @@
 import type { Tables } from "~/types/database.types";
 
 type Agent = Tables<"agent">;
+type Direction = Tables<"direction">;
 type Departement = Tables<"departement">;
-type Service = Tables<"service">;
 
 const props = defineProps<{
   rows: Agent[];
@@ -23,8 +23,8 @@ const showDepartementModal = ref(false);
 const showServiceModal = ref(false);
 
 // Éléments sélectionnés
-const selectedDepartement = ref<Departement | null>(null);
-const selectedService = ref<Service | null>(null);
+const selectedDepartement = ref<Direction | null>(null);
+const selectedService = ref<Departement | null>(null);
 
 // Transformer le nom en majuscules automatiquement
 const nomUppercase = computed({
@@ -34,13 +34,13 @@ const nomUppercase = computed({
   },
 });
 
-// Récupérer les départements et services pour l'affichage initial
-const { data: departements } = await useFetch<Departement[]>("/api/departement", {
+// Récupérer les directions et départements pour l'affichage initial
+const { data: directions } = await useFetch<Direction[]>("/api/departement", {
   server: true,
   lazy: true,
 });
 
-const { data: services } = await useFetch<Service[]>("/api/service", {
+const { data: departements } = await useFetch<Departement[]>("/api/service", {
   server: true,
   lazy: true,
 });
@@ -50,29 +50,29 @@ const form = ref({
   nom: "",
   prenom: "",
   email: "",
+  id_direction: "",
   id_departement: "",
-  id_service: "",
 });
 
 // Handlers de sélection
-function handleDepartementSelect(departement: Departement) {
-  selectedDepartement.value = departement;
-  form.value.id_departement = departement.id_departement;
+function handleDepartementSelect(direction: Direction) {
+  selectedDepartement.value = direction;
+  form.value.id_direction = direction.id_direction;
 }
 
 function clearDepartement() {
   selectedDepartement.value = null;
-  form.value.id_departement = "";
+  form.value.id_direction = "";
 }
 
-function handleServiceSelect(service: Service) {
-  selectedService.value = service;
-  form.value.id_service = service.id_service;
+function handleServiceSelect(departement: Departement) {
+  selectedService.value = departement;
+  form.value.id_departement = departement.id_departement;
 }
 
 function clearService() {
   selectedService.value = null;
-  form.value.id_service = "";
+  form.value.id_departement = "";
 }
 
 // Remplir le formulaire quand l'agent change
@@ -85,26 +85,27 @@ watch(
         nom: agent.nom,
         prenom: agent.prenom,
         email: agent.email,
+        id_direction: agent.id_direction,
         id_departement: agent.id_departement,
-        id_service: agent.id_service,
       };
+
+      // Trouver et définir la direction sélectionné
+      if (directions.value) {
+        selectedDepartement.value =
+          directions.value.find((d) => d.id_direction === agent.id_direction) ||
+          null;
+      }
 
       // Trouver et définir le département sélectionné
       if (departements.value) {
-        selectedDepartement.value = departements.value.find(
-          (d) => d.id_departement === agent.id_departement
-        ) || null;
-      }
-
-      // Trouver et définir le service sélectionné
-      if (services.value) {
-        selectedService.value = services.value.find(
-          (s) => s.id_service === agent.id_service
-        ) || null;
+        selectedService.value =
+          departements.value.find(
+            (s) => s.id_departement === agent.id_departement,
+          ) || null;
       }
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 // Ouvrir le modal quand on clique sur le slot
@@ -115,22 +116,23 @@ function openModal() {
       nom: agent.nom,
       prenom: agent.prenom,
       email: agent.email,
+      id_direction: agent.id_direction,
       id_departement: agent.id_departement,
-      id_service: agent.id_service,
     };
+
+    // Trouver et définir la direction sélectionné
+    if (directions.value) {
+      selectedDepartement.value =
+        directions.value.find((d) => d.id_direction === agent.id_direction) ||
+        null;
+    }
 
     // Trouver et définir le département sélectionné
     if (departements.value) {
-      selectedDepartement.value = departements.value.find(
-        (d) => d.id_departement === agent.id_departement
-      ) || null;
-    }
-
-    // Trouver et définir le service sélectionné
-    if (services.value) {
-      selectedService.value = services.value.find(
-        (s) => s.id_service === agent.id_service
-      ) || null;
+      selectedService.value =
+        departements.value.find(
+          (s) => s.id_departement === agent.id_departement,
+        ) || null;
     }
 
     open.value = true;
@@ -144,23 +146,43 @@ async function submit() {
 
   // Validation
   if (!form.value.nom.trim()) {
-    toast.add({ title: "Erreur", description: "Le nom est requis", color: "error" });
+    toast.add({
+      title: "Erreur",
+      description: "Le nom est requis",
+      color: "error",
+    });
     return;
   }
   if (!form.value.prenom.trim()) {
-    toast.add({ title: "Erreur", description: "Le prénom est requis", color: "error" });
+    toast.add({
+      title: "Erreur",
+      description: "Le prénom est requis",
+      color: "error",
+    });
     return;
   }
   if (!form.value.email.trim()) {
-    toast.add({ title: "Erreur", description: "L'email est requis", color: "error" });
+    toast.add({
+      title: "Erreur",
+      description: "L'email est requis",
+      color: "error",
+    });
+    return;
+  }
+  if (!form.value.id_direction) {
+    toast.add({
+      title: "Erreur",
+      description: "La direction est requise",
+      color: "error",
+    });
     return;
   }
   if (!form.value.id_departement) {
-    toast.add({ title: "Erreur", description: "Le département est requis", color: "error" });
-    return;
-  }
-  if (!form.value.id_service) {
-    toast.add({ title: "Erreur", description: "Le service est requis", color: "error" });
+    toast.add({
+      title: "Erreur",
+      description: "Le département est requis",
+      color: "error",
+    });
     return;
   }
 
@@ -187,7 +209,8 @@ async function submit() {
   } catch (err: any) {
     toast.add({
       title: "Erreur",
-      description: err?.data?.statusMessage || "Impossible de mettre à jour l'agent",
+      description:
+        err?.data?.statusMessage || "Impossible de mettre à jour l'agent",
       color: "error",
     });
   } finally {
@@ -195,16 +218,20 @@ async function submit() {
   }
 }
 
-// Obtenir le nom du département actuel (pour affichage de comparaison)
+// Obtenir le nom de la direction actuel (pour affichage de comparaison)
 const currentDepartement = computed(() => {
-  if (!departements.value || props.rows.length !== 1) return null;
-  return departements.value.find((d) => d.id_departement === props.rows[0].id_departement);
+  if (!directions.value || props.rows.length !== 1) return null;
+  return directions.value.find(
+    (d) => d.id_direction === props.rows[0].id_direction,
+  );
 });
 
-// Obtenir le nom du service actuel (pour affichage de comparaison)
+// Obtenir le nom du département actuel (pour affichage de comparaison)
 const currentService = computed(() => {
-  if (!services.value || props.rows.length !== 1) return null;
-  return services.value.find((s) => s.id_service === props.rows[0].id_service);
+  if (!departements.value || props.rows.length !== 1) return null;
+  return departements.value.find(
+    (s) => s.id_departement === props.rows[0].id_departement,
+  );
 });
 </script>
 
@@ -226,19 +253,31 @@ const currentService = computed(() => {
     @select="handleServiceSelect"
   />
 
-  <UModal v-model:open="open" title="Modifier l'agent" :description="rows.length === 1 ? `Modification de l'agent ${rows[0].prenom} ${rows[0].nom}` : ''">
+  <UModal
+    v-model:open="open"
+    title="Modifier l'agent"
+    :description="
+      rows.length === 1
+        ? `Modification de l'agent ${rows[0].prenom} ${rows[0].nom}`
+        : ''
+    "
+  >
     <template #body>
       <div class="space-y-4">
         <!-- Info agent -->
         <div v-if="rows.length === 1" class="bg-muted/30 rounded-lg p-4 mb-4">
           <div class="flex items-center gap-3">
-            <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium text-lg">
+            <div
+              class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium text-lg"
+            >
               {{ rows[0].prenom[0] }}{{ rows[0].nom[0] }}
             </div>
             <div>
               <p class="font-medium">{{ rows[0].prenom }} {{ rows[0].nom }}</p>
               <div class="flex items-center gap-2 mt-1">
-                <code class="text-xs bg-muted/50 px-2 py-0.5 rounded">{{ rows[0].code_agent }}</code>
+                <code class="text-xs bg-muted/50 px-2 py-0.5 rounded">{{
+                  rows[0].code_agent
+                }}</code>
                 <span class="text-xs text-muted">•</span>
                 <span class="text-xs text-muted">{{ rows[0].email }}</span>
               </div>
@@ -265,7 +304,11 @@ const currentService = computed(() => {
 
         <!-- Email -->
         <UFormField label="Email" required>
-          <UInput v-model="form.email" type="email" placeholder="email@exemple.com" />
+          <UInput
+            v-model="form.email"
+            type="email"
+            placeholder="email@exemple.com"
+          />
         </UFormField>
 
         <!-- Affectation -->
@@ -275,16 +318,20 @@ const currentService = computed(() => {
             Affectation
           </p>
           <div class="space-y-3 p-3 bg-muted/10 rounded-lg">
-            <!-- Sélection du département -->
-            <UFormField label="Département" required>
+            <!-- Sélection de la direction -->
+            <UFormField label="Direction" required>
               <div class="flex items-center gap-2">
                 <UButton
                   :label="
                     selectedDepartement
                       ? selectedDepartement.designation
-                      : 'Sélectionner un département'
+                      : 'Sélectionner une direction'
                   "
-                  :icon="selectedDepartement ? 'i-lucide-building-2' : 'i-lucide-search'"
+                  :icon="
+                    selectedDepartement
+                      ? 'i-lucide-building-2'
+                      : 'i-lucide-search'
+                  "
                   :color="selectedDepartement ? 'primary' : 'neutral'"
                   variant="outline"
                   class="flex-1 justify-start"
@@ -301,22 +348,20 @@ const currentService = computed(() => {
                   @click="clearDepartement"
                 />
               </div>
-
-              <p v-if="selectedDepartement && selectedDepartement.designation" class="text-xs text-muted mt-1">
-                {{ selectedDepartement.designation }}
-              </p>
             </UFormField>
 
-            <!-- Sélection du service -->
-            <UFormField label="Service" required>
+            <!-- Sélection du département -->
+            <UFormField label="Département" required>
               <div class="flex items-center gap-2">
                 <UButton
                   :label="
                     selectedService
                       ? selectedService.designation
-                      : 'Sélectionner un service'
+                      : 'Sélectionner un département'
                   "
-                  :icon="selectedService ? 'i-lucide-briefcase' : 'i-lucide-search'"
+                  :icon="
+                    selectedService ? 'i-lucide-briefcase' : 'i-lucide-search'
+                  "
                   :color="selectedService ? 'primary' : 'neutral'"
                   variant="outline"
                   class="flex-1 justify-start"
@@ -332,11 +377,7 @@ const currentService = computed(() => {
                   square
                   @click="clearService"
                 />
-              </div>
-
-              <p v-if="selectedService && selectedService.designation" class="text-xs text-muted mt-1">
-                {{ selectedService.designation }}
-              </p>
+              </div> 
             </UFormField>
           </div>
         </div>
@@ -344,10 +385,14 @@ const currentService = computed(() => {
         <!-- Info sur les changements -->
         <div v-if="rows.length === 1" class="text-xs text-muted space-y-1">
           <p v-if="currentDepartement">
-            Département actuel : <span class="font-medium">{{ currentDepartement.designation }}</span>
+            Direction actuel :
+            <span class="font-medium">{{
+              currentDepartement.designation
+            }}</span>
           </p>
           <p v-if="currentService">
-            Service actuel : <span class="font-medium">{{ currentService.designation }}</span>
+            Département actuel :
+            <span class="font-medium">{{ currentService.designation }}</span>
           </p>
         </div>
       </div>

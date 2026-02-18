@@ -125,15 +125,15 @@ export default defineEventHandler(async (event) => {
         nom,
         prenom,
         email,
-        service:id_service (
+        departement:id_departement (
           designation
         ),
-        departement:id_departement (
+        direction:id_direction (
           designation
         )
       )
     `,
-      { count: "exact" }
+      { count: "exact" },
     )
     .eq("id_module", moduleId)
     .order("date_debut", { ascending: false })
@@ -171,7 +171,7 @@ export default defineEventHandler(async (event) => {
       const quizScore =
         moduleQuiz?.find((q: any) => q.termine)?.score || null;
 
-      // Compter les cours complétés (on suppose qu'un cours est complété si le quiz est fait ou si la progression est 100)
+      // Compter les cours complétés
       const coursCompletes =
         suivi.progression === 100 ? totalCours || 0 : 0;
 
@@ -181,8 +181,8 @@ export default defineEventHandler(async (event) => {
         nom: agent.nom,
         prenom: agent.prenom,
         email: agent.email,
-        service: agent.service?.designation || "N/A",
         departement: agent.departement?.designation || "N/A",
+        direction: agent.direction?.designation || "N/A",      
         date_debut: suivi.date_debut,
         date_fin: suivi.date_fin,
         progression: suivi.progression || 0,

@@ -47,14 +47,14 @@ export default defineEventHandler(async (event) => {
         nom,
         prenom,
         email,
-        service:id_service (
+        departement:id_departement (
           designation
         ),
-        departement:id_departement (
+        direction:id_direction (
           designation
         )
       )
-    `
+    `,
     )
     .eq("id_module", moduleId);
 
@@ -122,8 +122,8 @@ export default defineEventHandler(async (event) => {
       nom: agent.nom,
       prenom: agent.prenom,
       email: agent.email,
-      service: agent.service?.designation || "N/A",
       departement: agent.departement?.designation || "N/A",
+      direction: agent.direction?.designation || "N/A",       
       date_debut: suivi.date_debut,
       date_fin: suivi.date_fin,
       progression: suivi.progression || 0,

@@ -14,26 +14,26 @@ export default defineEventHandler(async (event) => {
 
   const supabase = createSupabaseServerClient();
 
-  // Récupérer tous les services actifs
-  const { data: services } = await supabase
-    .from("service")
-    .select("id_service, designation")
+  // Récupérer tous les départements actifs
+  const { data: departements } = await supabase
+    .from("departement")
+    .select("id_departement, designation")
     .eq("actif", true)
     .is("deleted_at", null)
     .order("designation", { ascending: true });
 
-  if (!services) {
+  if (!departements) {
     return [];
   }
 
-  const servicesProgress = [];
+  const departementsProgress = [];
 
-  for (const service of services) {
-    // Récupérer les agents de ce service
+  for (const departement of departements) {
+    // Récupérer les agents de ce département
     const { data: agents } = await supabase
       .from("agent")
       .select("id_agent")
-      .eq("id_service", service.id_service)
+      .eq("id_departement", departement.id_departement)
       .eq("actif", true)
       .is("deleted_at", null);
 
@@ -41,8 +41,8 @@ export default defineEventHandler(async (event) => {
     const agentIds = agents?.map((a) => a.id_agent) || [];
 
     if (agentIds.length === 0) {
-      servicesProgress.push({
-        service: service.designation,
+      departementsProgress.push({
+        departement: departement.designation,
         totalAgents: 0,
         activeAgents: 0,
         participationRate: 0,
@@ -58,7 +58,7 @@ export default defineEventHandler(async (event) => {
 
     // Nombre d'agents uniques ayant participé
     const uniqueActiveAgents = new Set(
-      activeAgents?.map((a) => a.id_agent) || []
+      activeAgents?.map((a) => a.id_agent) || [],
     ).size;
 
     // Calculer le taux de participation
@@ -67,13 +67,13 @@ export default defineEventHandler(async (event) => {
         ? Math.round((uniqueActiveAgents / totalAgents) * 100)
         : 0;
 
-    servicesProgress.push({
-      service: service.designation,
+    departementsProgress.push({
+      departement: departement.designation,
       totalAgents,
       activeAgents: uniqueActiveAgents,
       participationRate,
     });
   }
 
-  return servicesProgress;
+  return departementsProgress;
 });

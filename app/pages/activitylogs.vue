@@ -45,8 +45,8 @@ const actionOptions = [
   { label: "Rôle supprimé", value: "role_supprime" },
   { label: "Catégorie créée", value: "categorie_creee" },
   { label: "Catégorie supprimée", value: "categorie_supprimee" },
-  { label: "Service créé", value: "service_cree" },
-  { label: "Service supprimé", value: "service_supprime" },
+  { label: "Direction créé", value: "direction_cree" },
+  { label: "Direction supprimé", value: "direction_supprime" },
   { label: "Département créé", value: "departement_cree" },
   { label: "Département supprimé", value: "departement_supprime" },
 ];
@@ -56,7 +56,7 @@ const objetTypeOptions = [
   { label: "User Role", value: "user_role" },
   { label: "Session", value: "session" },
   { label: "Catégorie", value: "tag" },
-  { label: "Service", value: "service" },
+  { label: "Direction", value: "direction" },
   { label: "Département", value: "departement" },
 ];
 
@@ -163,8 +163,8 @@ function formatAction(action: string) {
     role_supprime: "Rôle supprimé",
     categorie_creee: "Catégorie créée",
     categorie_supprimee: "Catégorie supprimée",
-    service_cree: "Service créé",
-    service_supprime: "Service supprimé",
+    direction_cree: "Direction créé",
+    direction_supprime: "Direction supprimé",
     departement_cree: "Département créé",
     departement_supprime: "Département supprimé",
   };
@@ -190,7 +190,7 @@ function getActionIcon(action: string) {
   if (action.includes("agent")) return "i-lucide-user-plus";
   if (action.includes("role")) return "i-lucide-shield";
   if (action.includes("categorie")) return "i-lucide-tag";
-  if (action.includes("service")) return "i-lucide-briefcase";
+  if (action.includes("direction")) return "i-heroicons-building-office";
   if (action.includes("departement")) return "i-lucide-building-2";
   return "i-lucide-activity";
 }

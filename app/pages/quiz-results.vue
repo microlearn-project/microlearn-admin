@@ -2,7 +2,7 @@
 import type { TableColumn } from "@nuxt/ui";
 import type { Tables } from "~/types/database.types";
 
-type Service = Tables<"service">;
+type Departement = Tables<"departement">;
 
 const UBadge = resolveComponent("UBadge");
 const UButton = resolveComponent("UButton");
@@ -46,25 +46,25 @@ interface ModuleDetailResult {
 /* ---------------------------------------------------
    1. Filtres et sélection
 ----------------------------------------------------*/
-const showServiceSelectModal = ref(false);
-const selectedServiceForFilter = ref<Service | null>(null);
-const selectedServiceId = ref<string>("all");
+const showDepartementSelectModal = ref(false);
+const selectedDepartementForFilter = ref<Departement | null>(null);
+const selectedDepartementId = ref<string>("all");
 const selectedPeriod = ref<string>("all");
 const statusFilter = ref<string>("all");
 const agentSearch = ref<string>("");
 
-const { data: services } = await useFetch<Service[]>("/api/service", {
-  transform: (data) => data.filter((s) => s.actif && !s.deleted_at),
+const { data: departements } = await useFetch<Departement[]>("/api/service", {
+  transform: (data) => data.filter((d) => d.actif && !d.deleted_at),
 });
 
-function handleServiceSelect(service: Service) {
-  selectedServiceForFilter.value = service;
-  selectedServiceId.value = service.id_service;
+function handleDepartementSelect(departement: Departement) {
+  selectedDepartementForFilter.value = departement;
+  selectedDepartementId.value = departement.id_departement;
 }
 
-function clearServiceFilter() {
-  selectedServiceForFilter.value = null;
-  selectedServiceId.value = "all";
+function clearDepartementFilter() {
+  selectedDepartementForFilter.value = null;
+  selectedDepartementId.value = "all";
 }
 
 const periodOptions = [
@@ -78,10 +78,10 @@ const periodOptions = [
 
 const statusOptions = [
   { label: "Tous les statuts", value: "all" },
-  { label: "✓ Réussis uniquement (≥ 50%)", value: "passed" },
-  { label: "✗ Échoués uniquement (< 50%)", value: "failed" },
-  { label: "⭐ Excellents (≥ 80%)", value: "excellent" },
-  { label: "⚠️ Faibles (< 50%)", value: "weak" },
+  { label: "Réussis uniquement (≥ 50%)", value: "passed" },
+  { label: "Échoués uniquement (< 50%)", value: "failed" },
+  { label: "Excellents (≥ 80%)", value: "excellent" },
+  { label: "Faibles (< 50%)", value: "weak" },
 ];
 
 const dateRange = computed(() => {
@@ -114,7 +114,7 @@ const dateRange = computed(() => {
 });
 
 const queryParams = computed(() => ({
-  service: selectedServiceId.value === "all" ? undefined : selectedServiceId.value,
+  departement: selectedDepartementId.value === "all" ? undefined : selectedDepartementId.value,
   start: dateRange.value.start,
   end: dateRange.value.end,
   status: statusFilter.value === "all" ? undefined : statusFilter.value,
@@ -168,12 +168,10 @@ async function openModuleDetail(module: ModuleStats) {
   loadingModuleDetails.value = true;
 
   try {
-    // Appel API pour récupérer les détails
-    // Note: Il faudra créer cet endpoint /api/quiz/module-details
     const response = await $fetch(`/api/quiz/module-details`, {
       query: {
         id_module: module.id_module,
-        service: selectedServiceId.value === "all" ? undefined : selectedServiceId.value,
+        departement: selectedDepartementId.value === "all" ? undefined : selectedDepartementId.value,
         start: dateRange.value.start,
         end: dateRange.value.end,
       },
@@ -337,7 +335,7 @@ const filteredTopScores = computed(() => {
    7. Réinitialisation des filtres
 ----------------------------------------------------*/
 function resetAllFilters() {
-  clearServiceFilter();
+  clearDepartementFilter();  // ← CHANGÉ
   selectedPeriod.value = "all";
   statusFilter.value = "all";
   agentSearch.value = "";
@@ -345,7 +343,7 @@ function resetAllFilters() {
 
 const hasActiveFilters = computed(() => {
   return (
-    selectedServiceForFilter.value !== null ||
+    selectedDepartementForFilter.value !== null ||
     selectedPeriod.value !== "all" ||
     statusFilter.value !== "all" ||
     agentSearch.value !== ""
@@ -362,12 +360,10 @@ async function exportToExcel() {
   exportLoading.value = true;
 
   try {
-    // Récupérer toutes les données avec les filtres actuels
     const response = await $fetch("/api/quiz/export", {
       query: queryParams.value,
     });
 
-    // Créer le CSV
     const data = response as any[];
 
     if (data.length === 0) {
@@ -379,7 +375,6 @@ async function exportToExcel() {
       return;
     }
 
-    // Headers du CSV
     const headers = [
       "Module",
       "Agent Code",
@@ -392,7 +387,6 @@ async function exportToExcel() {
       "Temps écoulé (min)",
     ];
 
-    // Construire les lignes CSV
     const csvRows = [
       headers.join(","),
       ...data.map((row) => [
@@ -410,7 +404,6 @@ async function exportToExcel() {
 
     const csvContent = csvRows.join("\n");
 
-    // Créer le blob et télécharger
     const blob = new Blob(["\ufeff" + csvContent], {
       type: "text/csv;charset=utf-8;",
     });
@@ -418,7 +411,6 @@ async function exportToExcel() {
     const link = document.createElement("a");
     link.href = url;
 
-    // Nom du fichier avec date
     const dateStr = new Date().toISOString().split("T")[0];
     link.download = `resultats-quiz-${dateStr}.csv`;
 
@@ -500,45 +492,16 @@ async function exportToJSON() {
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
-        <template #right>
-          <!--
-          <UDropdownMenu
-            :items="[
-              [
-                {
-                  label: 'Exporter en CSV',
-                  icon: 'i-lucide-file-spreadsheet',
-                  click: exportToExcel,
-                },
-                {
-                  label: 'Exporter en JSON',
-                  icon: 'i-lucide-braces',
-                  click: exportToJSON,
-                },
-              ],
-            ]"
-          >
-            <UButton
-              label="Exporter"
-              icon="i-lucide-download"
-              color="primary"
-              variant="outline"
-              size="sm"
-              :loading="exportLoading"
-            />
-          </UDropdownMenu>
-          -->
-        </template>
       </UDashboardNavbar>
     </template>
 
     <template #body>
-      <!-- Modal de sélection de service -->
-      <ServiceSelectModal
-        v-model:open="showServiceSelectModal"
-        v-model:selected-service="selectedServiceForFilter"
-        @select="handleServiceSelect"
-        @clear="clearServiceFilter"
+      <!-- Modal de sélection de département -->
+      <DepartementSelectModal
+        v-model:open="showDepartementSelectModal"
+        v-model:selected-departement="selectedDepartementForFilter"
+        @select="handleDepartementSelect"
+        @clear="clearDepartementFilter"
       />
 
       <!-- Modal de détails par module -->
@@ -550,7 +513,6 @@ async function exportToJSON() {
       >
         <template #body>
           <div class="space-y-4">
-            <!-- Stats du module -->
             <div v-if="selectedModuleForDetail" class="grid grid-cols-3 gap-4 mb-4">
               <div class="bg-elevated border border-default rounded-lg p-3">
                 <p class="text-xs text-muted mb-1">Tentatives</p>
@@ -566,7 +528,6 @@ async function exportToJSON() {
               </div>
             </div>
 
-            <!-- Tableau des résultats -->
             <UTable
               :data="moduleDetailResults"
               :columns="detailColumns"
@@ -610,31 +571,31 @@ async function exportToJSON() {
         <!-- Filtres -->
         <div class="bg-elevated border border-default rounded-lg p-4">
           <div class="space-y-4">
-            <!-- Ligne 1 : Service et Période -->
+            <!-- Ligne 1 : Département et Période -->
             <div class="flex flex-wrap items-end gap-4">
-              <UFormField label="Service" class="min-w-64">
+              <UFormField label="Département" class="min-w-64">
                 <div class="flex items-center gap-2">
                   <UButton
                     :label="
-                      selectedServiceForFilter
-                        ? selectedServiceForFilter.designation
-                        : 'Tous les services'
+                      selectedDepartementForFilter
+                        ? selectedDepartementForFilter.designation
+                        : 'Tous les départements'
                     "
-                    :icon="selectedServiceForFilter ? 'i-lucide-briefcase' : 'i-lucide-filter'"
-                    :color="selectedServiceForFilter ? 'primary' : 'neutral'"
+                    :icon="selectedDepartementForFilter ? 'i-lucide-briefcase' : 'i-lucide-filter'"
+                    :color="selectedDepartementForFilter ? 'primary' : 'neutral'"
                     variant="outline"
                     class="flex-1 justify-start min-w-64"
                     truncate
-                    @click="showServiceSelectModal = true"
+                    @click="showDepartementSelectModal = true"
                   />
 
                   <UButton
-                    v-if="selectedServiceForFilter"
+                    v-if="selectedDepartementForFilter"
                     icon="i-lucide-x"
                     color="neutral"
                     variant="ghost"
                     square
-                    @click="clearServiceFilter"
+                    @click="clearDepartementFilter"
                   />
                 </div>
               </UFormField>
@@ -692,12 +653,12 @@ async function exportToJSON() {
               <p class="text-xs text-muted mr-2">Filtres actifs :</p>
 
               <UBadge
-                v-if="selectedServiceForFilter"
+                v-if="selectedDepartementForFilter"
                 color="primary"
                 variant="subtle"
                 size="xs"
               >
-                Service: {{ selectedServiceForFilter.designation }}
+                Département: {{ selectedDepartementForFilter.designation }}
               </UBadge>
 
               <UBadge
@@ -840,7 +801,7 @@ async function exportToJSON() {
           </UCard>
         </div>
 
-        <!-- Résultats par module avec indication cliquable -->
+        <!-- Résultats par module -->
         <UCard>
           <template #header>
             <div class="flex items-center justify-between">
@@ -877,7 +838,7 @@ async function exportToJSON() {
           </div>
         </UCard>
 
-        <!-- Top Scores avec recherche -->
+        <!-- Top Scores -->
         <UCard>
           <template #header>
             <div class="flex items-center justify-between">

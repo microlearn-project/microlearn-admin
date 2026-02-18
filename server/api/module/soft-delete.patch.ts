@@ -96,12 +96,12 @@ async function isModuleUsed_tag(id_module: string): Promise<boolean> {
   return !!(module_tag && module_tag.length > 0);
 }
 
-// Fonction de vérification de l'existence dans module_departement_new
+// Fonction de vérification de l'existence dans module_departement
 async function isModuleUsed_service(id_module: string): Promise<boolean> {
   const supabase = createSupabaseServerClient();
 
-  const { data: module_departement_new, error } = await supabase
-    .from("module_departement_new")
+  const { data: module_departement, error } = await supabase
+    .from("module_departement")
     .select("id_module")
     .eq("id_module", id_module)
     .limit(1);
@@ -112,7 +112,7 @@ async function isModuleUsed_service(id_module: string): Promise<boolean> {
       statusMessage: error.message,
     });
   }
-  return !!(module_departement_new && module_departement_new.length > 0);
+  return !!(module_departement && module_departement.length > 0);
 }
 
 export default defineEventHandler(async (event) => {

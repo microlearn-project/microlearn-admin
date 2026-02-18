@@ -30,17 +30,17 @@ export default defineEventHandler(async (event) => {
       actif,
       last_login,
       created_at,
+      id_direction,
       id_departement,
-      id_service,
+      direction:id_direction (
+        id_direction,
+        designation
+      ),
       departement:id_departement (
         id_departement,
         designation
-      ),
-      service:id_service (
-        id_service,
-        designation
       )
-    `
+    `,
     )
     .eq("id_agent", currentUserId)
     .single();

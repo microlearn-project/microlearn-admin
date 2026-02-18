@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
         email
       )
     `,
-      { count: "exact" }
+      { count: "exact" },
     )
     .order("created_at", { ascending: false });
 

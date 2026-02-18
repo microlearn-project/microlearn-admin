@@ -50,10 +50,10 @@ const types: TypeOption[] = [
     description: "Gestion des catégories/tags"
   },
   {
-    label: "Service",
-    value: "service",
-    icon: "i-lucide-briefcase",
-    description: "Gestion des services"
+    label: "Direction",
+    value: "direction",
+    icon: "i-heroicons-building-office",
+    description: "Gestion des directions"
   },
   {
     label: "Département",

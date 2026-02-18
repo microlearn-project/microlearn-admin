@@ -42,7 +42,7 @@ export default defineEventHandler(async (event) => {
           )
         )
       )
-    `
+    `,
     )
     .eq("termine", true)
     .not("score", "is", null);
@@ -67,7 +67,7 @@ export default defineEventHandler(async (event) => {
     const { data: agents } = await supabase
       .from("agent")
       .select("id_agent")
-      .eq("id_service", serviceId);
+      .eq("id_departement", serviceId);
 
     const agentIds = agents?.map((a) => a.id_agent) || [];
     filteredResults = quizResults.filter((r) => agentIds.includes(r.id_agent));

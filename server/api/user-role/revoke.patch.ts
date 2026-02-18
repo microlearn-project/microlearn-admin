@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
       *,
       agent:id_agent (id_agent, code_agent, nom, prenom),
       role:id_role (id_role, designation)
-    `
+    `,
     )
     .eq("id_user_role", id)
     .single();

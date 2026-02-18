@@ -1,4 +1,4 @@
-// server/api/service/updatetag.patch.ts
+// server/api/departement/updatetag.patch.ts
 import { createSupabaseServerClient } from "~~/server/utils/supabase";
 import type { TablesUpdate } from "~/types/database.types";
 

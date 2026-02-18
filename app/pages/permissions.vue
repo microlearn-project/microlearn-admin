@@ -52,7 +52,7 @@ const rowSelection = ref<Record<string, boolean>>({});
 const selectedRows = computed(
   () =>
     table.value?.tableApi?.getSelectedRowModel().rows.map((r) => r.original) ??
-    []
+    [],
 );
 
 /* ---------------------------------------------------
@@ -88,7 +88,9 @@ function getStatusLabel(ur: UserRole): string {
   return "Actif";
 }
 
-function getStatusColor(ur: UserRole): "success" | "warning" | "error" | "info" {
+function getStatusColor(
+  ur: UserRole,
+): "success" | "warning" | "error" | "info" {
   const status = getStatusLabel(ur);
   switch (status) {
     case "Actif":
@@ -127,7 +129,7 @@ async function revokeRole(id: string) {
       userRoles.value = userRoles.value.map((ur) =>
         ur.id_user_role === id
           ? { ...ur, valide: false, date_to: new Date().toISOString() }
-          : ur
+          : ur,
       );
     }
 
@@ -151,9 +153,7 @@ async function reactivateRole(id: string) {
     // Mise à jour locale
     if (userRoles.value) {
       userRoles.value = userRoles.value.map((ur) =>
-        ur.id_user_role === id
-          ? { ...ur, valide: true, date_to: null }
-          : ur
+        ur.id_user_role === id ? { ...ur, valide: true, date_to: null } : ur,
       );
     }
 
@@ -228,8 +228,9 @@ const columns: TableColumn<UserRole>[] = [
   },
   {
     id: "agent",
-    accessorFn: (row: UserRole) => `${row.agent.nom} ${row.agent.prenom}`,
-    header: "Agent",
+    accessorFn: (row: UserRole) =>
+      `${row.agent?.nom ?? ""} ${row.agent?.prenom ?? ""}`,
+    header: "Agent", 
     cell: ({ row }: any) => {
       const ur = row.original as UserRole;
       return h("div", { class: "flex items-center gap-3" }, [
@@ -239,7 +240,7 @@ const columns: TableColumn<UserRole>[] = [
             class:
               "w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium text-sm",
           },
-          `${ur.agent.prenom[0]}${ur.agent.nom[0]}`
+          `${ur.agent.prenom?.[0] ?? ""}${ur.agent.nom?.[0] ?? ""}`
         ),
         h("div", {}, [
           h("p", { class: "font-medium" }, `${ur.agent.prenom} ${ur.agent.nom}`),
@@ -257,7 +258,7 @@ const columns: TableColumn<UserRole>[] = [
       return h(
         UBadge,
         { color: "primary", variant: "subtle" },
-        () => ur.role.designation
+        () => ur.role.designation,
       );
     },
   },
@@ -267,10 +268,8 @@ const columns: TableColumn<UserRole>[] = [
     header: "Statut",
     cell: ({ row }: any) => {
       const ur = row.original as UserRole;
-      return h(
-        UBadge,
-        { color: getStatusColor(ur), variant: "subtle" },
-        () => getStatusLabel(ur)
+      return h(UBadge, { color: getStatusColor(ur), variant: "subtle" }, () =>
+        getStatusLabel(ur),
       );
     },
   },
@@ -321,7 +320,7 @@ const columns: TableColumn<UserRole>[] = [
               color: "neutral",
               variant: "ghost",
               class: "ml-auto",
-            })
+            }),
         ),
       ]),
   },
@@ -455,7 +454,9 @@ const stats = computed(() => {
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         <div class="bg-elevated border border-default rounded-lg p-4">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+            <div
+              class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center"
+            >
               <UIcon name="i-lucide-shield" class="text-primary text-xl" />
             </div>
             <div>
@@ -467,8 +468,13 @@ const stats = computed(() => {
 
         <div class="bg-elevated border border-default rounded-lg p-4">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
-              <UIcon name="i-lucide-shield-check" class="text-success text-xl" />
+            <div
+              class="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center"
+            >
+              <UIcon
+                name="i-lucide-shield-check"
+                class="text-success text-xl"
+              />
             </div>
             <div>
               <p class="text-2xl font-bold">{{ stats.active }}</p>
@@ -479,7 +485,9 @@ const stats = computed(() => {
 
         <div class="bg-elevated border border-default rounded-lg p-4">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
+            <div
+              class="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center"
+            >
               <UIcon name="i-lucide-clock" class="text-warning text-xl" />
             </div>
             <div>
@@ -491,7 +499,9 @@ const stats = computed(() => {
 
         <div class="bg-elevated border border-default rounded-lg p-4">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-lg bg-error/10 flex items-center justify-center">
+            <div
+              class="w-10 h-10 rounded-lg bg-error/10 flex items-center justify-center"
+            >
               <UIcon name="i-lucide-shield-off" class="text-error text-xl" />
             </div>
             <div>
@@ -522,14 +532,14 @@ const stats = computed(() => {
             @clear-selection="clearTableSelection"
           >
             <UButton
-              v-if="selectedRows.length && selectedRows.some(r => r.valide)"
+              v-if="selectedRows.length && selectedRows.some((r) => r.valide)"
               label="Révoquer"
               color="warning"
               variant="subtle"
               icon="i-lucide-shield-off"
             >
               <template #trailing>
-                <UKbd>{{ selectedRows.filter(r => r.valide).length }}</UKbd>
+                <UKbd>{{ selectedRows.filter((r) => r.valide).length }}</UKbd>
               </template>
             </UButton>
           </PermissionsDeleteModal>
@@ -566,7 +576,8 @@ const stats = computed(() => {
               { label: 'Planifié', value: 'scheduled' },
             ]"
             :ui="{
-              trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200',
+              trailingIcon:
+                'group-data-[state=open]:rotate-180 transition-transform duration-200',
             }"
             placeholder="Filtrer statut"
             class="min-w-40"
@@ -603,15 +614,22 @@ const stats = computed(() => {
         v-if="!pending && filteredData.length === 0"
         class="text-center py-16 border-2 border-dashed border-default rounded-lg"
       >
-        <UIcon name="i-lucide-shield-question" class="text-5xl text-muted mb-4" />
+        <UIcon
+          name="i-lucide-shield-question"
+          class="text-5xl text-muted mb-4"
+        />
         <p class="font-medium mb-2">Aucune attribution trouvée</p>
         <p class="text-muted text-sm mb-4">
-          {{ searchQuery || statusFilter !== 'all'
-            ? 'Essayez de modifier vos filtres'
-            : 'Commencez par attribuer un rôle à un agent'
+          {{
+            searchQuery || statusFilter !== "all"
+              ? "Essayez de modifier vos filtres"
+              : "Commencez par attribuer un rôle à un agent"
           }}
         </p>
-        <PermissionsAddModal v-if="!searchQuery && statusFilter === 'all'" @created="refresh()" />
+        <PermissionsAddModal
+          v-if="!searchQuery && statusFilter === 'all'"
+          @created="refresh()"
+        />
       </div>
 
       <!-- Tableau -->

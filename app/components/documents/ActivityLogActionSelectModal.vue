@@ -35,10 +35,10 @@ const actions: ActionOption[] = [
   { label: "Rôle supprimé", value: "role_supprime", icon: "i-lucide-shield-x", color: "error" },
   { label: "Catégorie créée", value: "categorie_creee", icon: "i-lucide-tag", color: "info" },
   { label: "Catégorie supprimée", value: "categorie_supprimee", icon: "i-lucide-x", color: "error" },
-  { label: "Service créé", value: "service_cree", icon: "i-lucide-briefcase", color: "info" },
-  { label: "Service supprimé", value: "service_supprime", icon: "i-lucide-briefcase-business", color: "error" },
+  { label: "Direction créé", value: "direction_cree", icon: "i-heroicons-building-office", color: "info" },
+  { label: "Direction supprimé", value: "direction_supprime", icon: "i-heroicons-building-office", color: "error" },
   { label: "Département créé", value: "departement_cree", icon: "i-lucide-building-2", color: "info" },
-  { label: "Département supprimé", value: "departement_supprime", icon: "i-lucide-building", color: "error" },
+  { label: "Département supprimé", value: "departement_supprime", icon: "i-lucide-building-2", color: "error" },
 ];
 
 function selectAction(action: ActionOption) {

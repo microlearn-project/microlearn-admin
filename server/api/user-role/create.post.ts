@@ -111,24 +111,24 @@ export default defineEventHandler(async (event) => {
     .insert(payload)
     .select(
       `
-      *,
-      agent:id_agent (
-        id_agent,
-        code_agent,
-        nom,
-        prenom,
-        email
-      ),
-      role:id_role (
-        id_role,
-        designation
-      ),
-      granter:granted_by (
-        id_agent,
-        nom,
-        prenom
-      )
-    `
+  *,
+  agent:id_agent (
+    id_agent,
+    code_agent,
+    nom,
+    prenom,
+    email
+  ),
+  role:id_role (
+    id_role,
+    designation
+  ),
+  granter:granted_by (
+    id_agent,
+    nom,
+    prenom
+  )
+`,
     )
     .single();
 

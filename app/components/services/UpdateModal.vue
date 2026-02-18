@@ -3,13 +3,14 @@ import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
 import type { Tables } from "~/types/database.types";
 
-type Service = Tables<"service">;
+type Departement = Tables<"departement">;
+type Direction = Tables<"direction">;
 
 /* -------------------------
    Props
 --------------------------*/
 const props = defineProps<{
-  rows: Service[];
+  rows: Departement[];
 }>();
 
 /* -------------------------
@@ -25,16 +26,25 @@ const emit = defineEmits<{
 --------------------------*/
 const schema = z.object({
   designation: z.string().max(50),
+  id_direction: z.string().uuid("Veuillez sélectionner une direction"),   
   actif: z.boolean().default(false),
 });
 
 type Schema = z.output<typeof schema>;
 
 /* -------------------------
+   Récupération directions
+--------------------------*/
+const { data: directions } = await useFetch<Direction[]>("/api/direction", {
+  transform: (data) => data.filter((d) => d.actif && !d.deleted_at),
+});
+
+/* -------------------------
    State du formulaire
 --------------------------*/
 const state = reactive<Partial<Schema>>({
   designation: "",
+  id_direction: undefined,   
   actif: false,
 });
 
@@ -47,7 +57,7 @@ const designationUppercase = computed({
 });
 
 /* -------------------------
-   Service courant (1 seul)
+   Département courant (1 seul)
 --------------------------*/
 const currentService = computed(() => props.rows[0]);
 
@@ -60,6 +70,7 @@ watch(
     if (!service) return;
 
     state.designation = service.designation;
+    state.id_direction = service.id_direction;  
     state.actif = service.actif;
   },
   { immediate: true },
@@ -75,18 +86,19 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   if (!currentService.value) return;
 
   try {
-    await $fetch("/api/service/updateservice", {
+    await $fetch("/api/service/updateservice", {   
       method: "PATCH",
       body: {
-        id: currentService.value.id_service,
+        id: currentService.value.id_departement,
         designation: event.data.designation,
+        id_direction: event.data.id_direction, 
         actif: event.data.actif,
       },
     });
 
     toast.add({
       title: "Succès",
-      description: `Service « ${event.data.designation} » mis à jour`,
+      description: `Département « ${event.data.designation} » mis à jour`,
       color: "success",
     });
 
@@ -117,24 +129,22 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
 // Fonction pour nettoyer la sélection
 function clear_selection() {
-  // Fermer la modale
   open.value = false;
-  // Désélectionner toutes les lignes
   emit("clear-selection");
 }
 
 watch(open, (newValue) => {
   if (!newValue) {
-    // La modale vient d'être fermée (par la croix, Esc, overlay, etc.)
     emit("clear-selection");
   }
 });
 </script>
+
 <template>
   <UModal
     v-model:open="open"
-    title="Modifier le service"
-    :description="`Modifier le service sélectionné.`"
+    title="Modifier le département"
+    :description="`Modifier le département sélectionné.`"
   >
     <slot />
 
@@ -145,8 +155,23 @@ watch(open, (newValue) => {
         @submit="onSubmit"
         class="space-y-4"
       >
-        <UFormField label="Désignation" name="designation">
+        <UFormField label="Désignation" name="designation" required>
           <UInput v-model="designationUppercase" class="w-full" />
+        </UFormField>
+
+        <!-- ← AJOUTÉ : Sélection de direction -->
+        <UFormField
+          label="Direction"
+          name="id_direction"
+          required
+          description="Rattacher ce département à une direction"
+        >
+          <USelect
+            v-model="state.id_direction"
+            :items="directions?.map(d => ({ label: d.designation, value: d.id_direction })) ?? []"
+            placeholder="Sélectionner une direction"
+            class="w-full"
+          />
         </UFormField>
 
         <UCheckbox

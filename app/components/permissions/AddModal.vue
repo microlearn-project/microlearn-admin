@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Tables } from "~/types/database.types";
 
-type Agent = Tables<"agent">;
+type Agent = Tables<"agent_new">;
 type Role = Tables<"role">;
 
 const emit = defineEmits<{
@@ -188,7 +188,7 @@ watch(open, (isOpen) => {
           </div>
 
           <p v-if="selectedAgent" class="text-xs text-muted mt-1">
-            {{ selectedAgent.email || "Aucun email" }} 
+            {{ selectedAgent.email || "Aucun email" }}
           </p>
         </UFormField>
 

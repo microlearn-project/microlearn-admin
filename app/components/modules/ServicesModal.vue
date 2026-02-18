@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import type { TableColumn } from "@nuxt/ui";
-import { getPaginationRowModel } from "@tanstack/vue-table"; 
+import { getPaginationRowModel } from "@tanstack/vue-table";
 import type { Tables } from "~/types/database.types";
 
 type Module = Tables<"module">;
-type Service = Tables<"service">;
+type Departement = Tables<"departement">;
 
-// Type pour les services avec date_attribution
-interface ServiceWithAttribution extends Service {
+// Type pour les départements avec date_attribution
+interface DepartementWithAttribution extends Departement {
   date_attribution?: string;
 }
 
@@ -24,24 +24,24 @@ const UButton = resolveComponent("UButton");
 const table = useTemplateRef<any>("table");
 
 /* ---------------------------------------------------
-   1. Récupération des services du module
+   1. Récupération des départements du module
 ----------------------------------------------------*/
 const {
-  data: services,
+  data: departements,
   pending,
   refresh,
   error,
-} = useFetch<ServiceWithAttribution[]>(
+} = useFetch<DepartementWithAttribution[]>(
   () => `/api/module/services/${props.module.id_module}`,
   {
     server: false,
     lazy: true,
     immediate: false,
     watch: false,
-  }
+  },
 );
 
-// Charger les services quand le modal s'ouvre
+// Charger les départements quand le modal s'ouvre
 watch(
   open,
   async (isOpen) => {
@@ -49,7 +49,7 @@ watch(
       await refresh();
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 /* ---------------------------------------------------
@@ -60,48 +60,48 @@ const rowSelection = ref<Record<string, boolean>>({});
 const selectedRows = computed(
   () =>
     table.value?.tableApi?.getSelectedRowModel().rows.map((r) => r.original) ??
-    []
+    [],
 );
 
 /* ---------------------------------------------------
-   3. Modal d'ajout de services
+   3. Modal d'ajout de départements
 ----------------------------------------------------*/
 const showAddModal = ref(false);
 
 /* ---------------------------------------------------
-   4. Retirer des services
+   4. Retirer des départements
 ----------------------------------------------------*/
 const removing = ref(false);
 
 async function removeServices() {
   if (selectedRows.value.length === 0) return;
 
-  const idsToRemove = selectedRows.value.map((s) => s.id_service);
+  const idsToRemove = selectedRows.value.map((s) => s.id_departement);
   removing.value = true;
 
   try {
     await Promise.all(
-      selectedRows.value.map((service) =>
+      selectedRows.value.map((departement) =>
         $fetch(`/api/module/services/remove`, {
           method: "DELETE",
           body: {
             id_module: props.module.id_module,
-            id_service: service.id_service,
+            id_departement: departement.id_departement,
           },
-        })
-      )
+        }),
+      ),
     );
 
     // --- MISE À JOUR LOCALE ---
-    if (services.value) {
-      services.value = services.value.filter(
-        (s) => !idsToRemove.includes(s.id_service)
+    if (departements.value) {
+      departements.value = departements.value.filter(
+        (d) => !idsToRemove.includes(d.id_departement),
       );
     }
 
     toast.add({
       title: "Succès",
-      description: `${idsToRemove.length} service(s) retiré(s)`,
+      description: `${idsToRemove.length} département(s) retiré(s)`,
       color: "success",
     });
 
@@ -120,7 +120,7 @@ async function removeServices() {
 /* ---------------------------------------------------
    5. Colonnes du tableau
 ----------------------------------------------------*/
-const columns: TableColumn<ServiceWithAttribution>[] = [
+const columns: TableColumn<DepartementWithAttribution>[] = [
   {
     id: "select",
     header: ({ table }: any) =>
@@ -178,8 +178,8 @@ function clearTableSelection() {
 <template>
   <UModal
     v-model:open="open"
-    :title="`Services du module « ${module.titre} »`"
-    description="Gérer les services associés à ce module"
+    :title="`Départements du module « ${module.titre} »`"
+    description="Gérer les départements associés à ce module"
     :ui="{ width: 'sm:max-w-4xl' }"
   >
     <slot />
@@ -190,7 +190,7 @@ function clearTableSelection() {
         <div class="flex items-center justify-between gap-3">
           <!-- Recherche -->
           <UInput
-            placeholder="Rechercher un service..."
+            placeholder="Rechercher un département..."
             :model-value="
               (table?.tableApi
                 ?.getColumn('designation')
@@ -232,12 +232,12 @@ function clearTableSelection() {
         <!-- Tableau -->
         <UTable
           ref="table"
-      v-model:pagination="pagination"
+          v-model:pagination="pagination"
           v-model:row-selection="rowSelection"
-        :data="services"
-        :pagination-options="{
-          getPaginationRowModel: getPaginationRowModel(),
-        }"
+          :data="departements"
+          :pagination-options="{
+            getPaginationRowModel: getPaginationRowModel(),
+          }"
           :columns="columns"
           :loading="pending"
           class="max-h-100 overflow-y-auto"
@@ -256,30 +256,30 @@ function clearTableSelection() {
 
         <!-- Pied de page -->
         <div
-          v-if="services && services.length > 0"
+          v-if="departements && departements.length > 0"
           class="flex items-center justify-between gap-4 border-t border-default pt-4"
         >
           <div class="text-sm text-muted">
-            {{ selectedRows.length || 0 }} service(s) sélectionné(s)
+            {{ selectedRows.length || 0 }} département(s) sélectionné(s)
           </div>
 
           <UPagination
-          :page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
-          :items-per-page="table?.tableApi?.getState().pagination.pageSize"
-          :total="table?.tableApi?.getFilteredRowModel().rows.length"
-          @update:page="(p) => table?.tableApi?.setPageIndex(p - 1)"
-        />
+            :page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
+            :items-per-page="table?.tableApi?.getState().pagination.pageSize"
+            :total="table?.tableApi?.getFilteredRowModel().rows.length"
+            @update:page="(p) => table?.tableApi?.setPageIndex(p - 1)"
+          />
         </div>
 
         <!-- Message si aucun service -->
         <div
-          v-if="!pending && (!services || services.length === 0)"
+          v-if="!pending && (!departements || departements.length === 0)"
           class="text-center py-8 text-muted"
         >
           <UIcon name="i-lucide-briefcase" class="mx-auto mb-2 text-4xl" />
-          <p>Aucun service associé à ce module</p>
+          <p>Aucun département associé à ce module</p>
           <UButton
-            label="Ajouter un service"
+            label="Ajouter un département"
             icon="i-lucide-plus"
             color="primary"
             variant="subtle"

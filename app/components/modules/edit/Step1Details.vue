@@ -140,12 +140,12 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             />
           </div>
 
-          <!-- Services -->
+          <!-- Départements -->
           <div class="border border-default rounded-lg p-4">
             <div class="flex items-center justify-between mb-3">
               <div class="flex items-center gap-2">
                 <UIcon name="i-lucide-briefcase" class="text-primary" />
-                <span class="font-medium">Services</span>
+                <span class="font-medium">Départements</span>
               </div>
             </div>
             <UButton

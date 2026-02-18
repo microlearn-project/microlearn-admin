@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import type { Tables } from "~/types/database.types";
 
-type Service = Tables<"service">;
+type Departement = Tables<"departement">;
 
 withDefaults(
   defineProps<{
-    rows: Service[];
+    rows: Departement[];
     count?: number;
   }>(),
   {
@@ -32,7 +32,7 @@ const softDelete = async (id: string) => {
 };
 
 // Le texte de confirmation
-function confirmationLines(rows: Service[]): string[] {
+function confirmationLines(rows: Departement[]): string[] {
   return rows.map((r) => `« ${r.designation} »`);
 }
 
@@ -49,8 +49,8 @@ watch(open, (newValue) => {
 // Soumission de la suppression
 async function onSubmit(rows: Array<any>) {
   try {
-    await Promise.all(rows.map((r) => softDelete(String(r.id_service))));
-    toast.add({ title: `${rows.length} service(s) supprimé(s)` });
+    await Promise.all(rows.map((r) => softDelete(String(r.id_departement))));
+    toast.add({ title: `${rows.length} département(s) supprimé(s)` });
     emit("deleted");
     emit("clear-selection");
   } catch (err) {
@@ -65,9 +65,7 @@ async function onSubmit(rows: Array<any>) {
 
 // Fonction pour nettoyer la sélection
 function clear_selection() {
-  // Fermer la modale
   open.value = false;
-  // Désélectionner toutes les lignes
   emit("clear-selection");
 }
 </script>
@@ -75,14 +73,14 @@ function clear_selection() {
 <template>
   <UModal
     v-model:open="open"
-    :title="`Supprimer ${count} service${count > 1 ? 's' : ''}`"
+    :title="`Supprimer ${count} département${count > 1 ? 's' : ''}`"
     :description="`Êtes-vous sûr ? `"
   >
     <slot />
     <template #body>
       <div class="space-y-4">
         <div v-if="rows.length > 1">
-          <p class="font-medium">Les services suivants seront supprimés :</p>
+          <p class="font-medium">Les départements suivants seront supprimés :</p>
           <ul class="list-disc pl-5 space-y-1">
             <li v-for="(line, i) in confirmationLines(rows)" :key="i">
               {{ line }}
@@ -92,7 +90,7 @@ function clear_selection() {
 
         <div v-else>
           <p>
-            Le service <strong>« {{ rows[0]?.designation }} »</strong> sera
+            Le département <strong>« {{ rows[0]?.designation }} »</strong> sera
             supprimé.
           </p>
         </div>

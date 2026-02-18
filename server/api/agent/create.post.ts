@@ -16,15 +16,16 @@ export default defineEventHandler(async (event) => {
   const currentUserId = session?.user?.id_agent || null;
 
   const body = await readBody(event);
-  const { nom, prenom, email, id_departement, id_service } = body;
+  const { nom, prenom, email, id_direction, id_departement } = body;
 
   // Validation des champs requis
-  if (!nom || !prenom || !email || !id_departement || !id_service) {
+  if (!nom || !prenom || !email || !id_direction || !id_departement) {
     throw createError({
       statusCode: 400,
-      statusMessage: "Nom, prénom, email, département et service sont requis",
+      statusMessage: "Nom, prénom, email, direction et département sont requis",
     });
   }
+
 
   // Validation email
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -95,8 +96,8 @@ export default defineEventHandler(async (event) => {
     prenom,
     email,
     actif: true,
+    id_direction,
     id_departement,
-    id_service,
   };
 
   const { data, error } = await supabase
@@ -152,8 +153,8 @@ export default defineEventHandler(async (event) => {
         prenom: data.prenom,
         email: data.email,
       },
+      id_direction,
       id_departement,
-      id_service,
     },
   });
 

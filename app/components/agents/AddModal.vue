@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { Tables } from "~/types/database.types";
 
+type Direction = Tables<"direction">;
 type Departement = Tables<"departement">;
-type Service = Tables<"service">;
 
 const emit = defineEmits<{
   (e: "addagent"): void;
@@ -17,16 +17,16 @@ const showDepartementModal = ref(false);
 const showServiceModal = ref(false);
 
 // Éléments sélectionnés
-const selectedDepartement = ref<Departement | null>(null);
-const selectedService = ref<Service | null>(null);
+const selectedDepartement = ref<Direction | null>(null);
+const selectedService = ref<Departement | null>(null);
 
 // Formulaire
 const form = ref({
   nom: "",
   prenom: "",
   email: "",
+  id_direction: "",
   id_departement: "",
-  id_service: "",
 });
 
 // Transformer le nom en majuscules automatiquement
@@ -47,24 +47,24 @@ const generatedAgent = ref<{
 } | null>(null);
 
 // Handlers de sélection
-function handleDepartementSelect(departement: Departement) {
-  selectedDepartement.value = departement;
-  form.value.id_departement = departement.id_departement;
+function handleDepartementSelect(direction: Direction) {
+  selectedDepartement.value = direction;
+  form.value.id_direction = direction.id_direction;
 }
 
 function clearDepartement() {
   selectedDepartement.value = null;
-  form.value.id_departement = "";
+  form.value.id_direction = "";
 }
 
-function handleServiceSelect(service: Service) {
-  selectedService.value = service;
-  form.value.id_service = service.id_service;
+function handleServiceSelect(departement: Departement) {
+  selectedService.value = departement;
+  form.value.id_departement = departement.id_departement;
 }
 
 function clearService() {
   selectedService.value = null;
-  form.value.id_service = "";
+  form.value.id_departement = "";
 }
 
 async function submit() {
@@ -93,18 +93,18 @@ async function submit() {
     });
     return;
   }
-  if (!form.value.id_departement) {
+  if (!form.value.id_direction) {
     toast.add({
       title: "Erreur",
-      description: "Le département est requis",
+      description: "La direction est requise",
       color: "error",
     });
     return;
   }
-  if (!form.value.id_service) {
+  if (!form.value.id_departement) {
     toast.add({
       title: "Erreur",
-      description: "Le service est requis",
+      description: "Le département est requis",
       color: "error",
     });
     return;
@@ -151,8 +151,8 @@ function resetForm() {
     nom: "",
     prenom: "",
     email: "",
+    id_direction: "",
     id_departement: "",
-    id_service: "",
   };
   selectedDepartement.value = null;
   selectedService.value = null;
@@ -214,18 +214,18 @@ watch(open, (isOpen) => {
           <UInput
             v-model="form.email"
             type="email"
-            placeholder="jean.dupont@entreprise.com"
+            placeholder="jean.dupont@mail.com"
           />
         </UFormField>
 
-        <!-- Sélection du département -->
-        <UFormField label="Département" required>
+        <!-- Sélection de la direction -->
+        <UFormField label="Direction" required>
           <div class="flex items-center gap-2">
             <UButton
               :label="
                 selectedDepartement
                   ? selectedDepartement.designation
-                  : 'Sélectionner un département'
+                  : 'Sélectionner une direction'
               "
               :icon="
                 selectedDepartement ? 'i-lucide-building-2' : 'i-lucide-search'
@@ -246,23 +246,16 @@ watch(open, (isOpen) => {
               @click="clearDepartement"
             />
           </div>
-
-          <p
-            v-if="selectedDepartement && selectedDepartement.designation"
-            class="text-xs text-muted mt-1"
-          >
-            {{ selectedDepartement.designation }}
-          </p>
         </UFormField>
 
-        <!-- Sélection du service -->
-        <UFormField label="Service" required>
+        <!-- Sélection du département -->
+        <UFormField label="Département" required>
           <div class="flex items-center gap-2">
             <UButton
               :label="
                 selectedService
                   ? selectedService.designation
-                  : 'Sélectionner un service'
+                  : 'Sélectionner un département'
               "
               :icon="selectedService ? 'i-lucide-briefcase' : 'i-lucide-search'"
               :color="selectedService ? 'primary' : 'neutral'"
@@ -281,13 +274,6 @@ watch(open, (isOpen) => {
               @click="clearService"
             />
           </div>
-
-          <p
-            v-if="selectedService && selectedService.designation"
-            class="text-xs text-muted mt-1"
-          >
-            {{ selectedService.designation }}
-          </p>
         </UFormField>
 
         <div class="bg-info/10 border border-info/20 rounded-lg p-4 text-sm">

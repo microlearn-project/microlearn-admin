@@ -1,18 +1,31 @@
 <script setup lang="ts">
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
+import type { Tables } from "~/types/database.types";
+
+type AutoriteSuperieure = Tables<"autorite_superieure">;
 
 const emit = defineEmits(["adddepartement"]);
 
 const schema = z.object({
   designation: z.string().max(50, "Le nombre maximum de caractères est de 50"),
+  id_autorite: z.string().uuid("Veuillez sélectionner une autorité supérieure"),   
+  actif: z.boolean().default(true),   
 });
+
 const open = ref(false);
 
 type Schema = z.output<typeof schema>;
 
 const state = reactive<Partial<Schema>>({
   designation: undefined,
+  id_autorite: undefined,  
+  actif: true,   
+});
+
+// Récupérer les autorités supérieures disponibles
+const { data: autorites } = await useFetch<AutoriteSuperieure[]>("/api/autorite-superieure", {
+  transform: (data) => data.filter((a) => a.actif),
 });
 
 // Transformer la désignation en majuscules automatiquement
@@ -24,47 +37,47 @@ const designationUppercase = computed({
 });
 
 const toast = useToast();
+
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   try {
-    await $fetch("/api/departement/adddepartement", {
+    await $fetch("/api/departement/adddepartement", {   
       method: "POST",
       body: {
         designation: event.data.designation,
+        id_autorite: event.data.id_autorite,   
+        actif: event.data.actif,  
       },
     });
 
-    // SUCCESS → toast + reset
     toast.add({
       title: "Succès",
-      description: `Nouveau département « ${event.data.designation} » ajouté`,
+      description: `Nouvelle direction « ${event.data.designation} » ajoutée`,
       color: "success",
     });
 
     emit("adddepartement");
     state.designation = "";
+    state.id_autorite = undefined;  
+    state.actif = true;  
     open.value = false;
 
   } catch (err: any) {
-
     const message = err?.data?.message || err?.statusMessage || err?.message || "";
 
-    // Cas 1 → Duplicate key PostgreSQL
     if (message.includes("duplicate key") || message.includes("unique constraint")) {
       toast.add({
         title: "Échec",
-        description: "Ce département est déjà en place! Veuillez en ajouter un autre.",
+        description: "Cette direction existe déjà!",
         color: "error",
       });
       return;
     }
 
-    // Cas 2 → Autres erreurs connues
     if (err?.statusCode === 400) {
       toast.add({ title: "Erreur", description: "Requête invalide.", color: "error" });
       return;
     }
 
-    // Cas 3 → erreur inconnue
     toast.add({
       title: "Erreur inattendue",
       description: "Veuillez réessayer plus tard.",
@@ -74,21 +87,20 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 }
 
 function resetForm() {
-  // Vider les champs du formulaire
   state.designation = "";
-  // Fermer la modale
+  state.id_autorite = undefined;   
+  state.actif = true;   
   open.value = false;
 }
-
 </script>
 
 <template>
   <UModal
     v-model:open="open"
-    title="Nouveau Département"
-    description="Ajouter un nouveau département"
+    title="Nouvelle direction"
+    description="Ajouter une nouvelle direction"
   >
-    <UButton label="Nouveau Département" icon="i-lucide-plus" />
+    <UButton label="Nouvelle direction" icon="i-lucide-plus" />
 
     <template #body>
       <UForm
@@ -98,11 +110,43 @@ function resetForm() {
         @submit="onSubmit"
       >
         <UFormField
-          label="Designation"
+          label="Désignation"
           name="designation"
+          required
         >
-          <UInput v-model="designationUppercase" class="w-full" placeholder="Désignation du département" />
+          <UInput 
+            v-model="designationUppercase" 
+            class="w-full" 
+            placeholder="DIRECTION DES RESSOURCES HUMAINES" 
+          />
         </UFormField>
+
+        <!-- ← AJOUTÉ : Sélection autorité supérieure -->
+        <UFormField
+          label="Autorité Supérieure"
+          name="id_autorite"
+          required
+          description="Rattacher cette direction au SG ou à la DG"
+        >
+          <USelect
+            v-model="state.id_autorite"
+            :items="autorites?.map(a => ({ 
+              label: `${a.code} - ${a.designation}`, 
+              value: a.id_autorite 
+            })) ?? []"
+            placeholder="Sélectionner une autorité"
+            class="w-full"
+          />
+        </UFormField>
+
+        <!-- ← AJOUTÉ : Checkbox actif -->
+        <UCheckbox 
+          v-model="state.actif" 
+          indicator="end" 
+          label="Actif ?" 
+          variant="card" 
+        />
+
         <div class="flex justify-end gap-2">
           <UButton
             label="Annuler"

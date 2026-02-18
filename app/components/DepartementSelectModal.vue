@@ -3,15 +3,15 @@ import type { TableColumn } from "@nuxt/ui";
 import type { Tables } from "~/types/database.types";
 import { getPaginationRowModel } from "@tanstack/vue-table";
 
-type Service = Tables<"service">;
+type Departement = Tables<"departement">;
 
 const open = defineModel<boolean>("open", { default: false });
-const selectedService = defineModel<Service | null>("selectedService", {
+const selectedDepartement = defineModel<Departement | null>("selectedDepartement", {
   default: null,
 });
 
 const emit = defineEmits<{
-  (e: "select", service: Service): void;
+  (e: "select", departement: Departement): void;
   (e: "clear"): void;
 }>();
 
@@ -20,15 +20,15 @@ const UButton = resolveComponent("UButton");
 const UBadge = resolveComponent("UBadge");
 
 const {
-  data: services,
+  data: departements,
   pending,
   refresh,
-} = useFetch<Service[]>("/api/service", {
+} = useFetch<Departement[]>("/api/service", {
   server: false,
   lazy: true,
   immediate: false,
   watch: false,
-  transform: (data) => data.filter((s) => !s.deleted_at && s.actif),
+  transform: (data) => data.filter((d) => !d.deleted_at && d.actif),
 });
 
 watch(
@@ -41,32 +41,32 @@ watch(
   { immediate: true },
 );
 
-function selectService(service: Service) {
-  selectedService.value = service;
-  emit("select", service);
+function selectDepartement(departement: Departement) {
+  selectedDepartement.value = departement;
+  emit("select", departement);
   open.value = false;
 }
 
 function clearSelection() {
-  selectedService.value = null;
+  selectedDepartement.value = null;
   emit("clear");
   open.value = false;
 }
 
-const columns: TableColumn<Service>[] = [
+const columns: TableColumn<Departement>[] = [
   {
     accessorKey: "designation",
     header: "Désignation",
     cell: ({ row }: any) => {
-      const svc = row.original;
+      const dept = row.original;
       return h("div", {}, [
-        h("p", { class: "font-medium" }, svc.designation), 
+        h("p", { class: "font-medium" }, dept.designation),
       ]);
     },
   },
   {
     id: "statut",
-    accessorFn: (row: Service) => row.actif,
+    accessorFn: (row: Departement) => row.actif,
     header: "Statut",
     cell: ({ row }: any) =>
       h(
@@ -97,7 +97,7 @@ const columns: TableColumn<Service>[] = [
           color: "primary",
           variant: "ghost",
           size: "xs",
-          onClick: () => selectService(row.original),
+          onClick: () => selectDepartement(row.original),   
         }),
       ]),
   },
@@ -116,8 +116,8 @@ const globalFilter = ref("");
     <Teleport to="body">
       <UModal
         v-model:open="open"
-        title="Sélectionner un service"
-        description="Filtrez les résultats par service"
+        title="Sélectionner un département"
+        description="Filtrez les résultats par département"
         :overlay="false"
         :ui="{
           width: 'sm:max-w-3xl',
@@ -129,13 +129,13 @@ const globalFilter = ref("");
             <div class="flex items-center gap-3">
               <UInput
                 v-model="globalFilter"
-                placeholder="Rechercher un service..."
+                placeholder="Rechercher un département..."
                 icon="i-lucide-search"
                 class="flex-1"
               />
 
               <UButton
-                label="Tous les services"
+                label="Tous les départements"
                 icon="i-lucide-x"
                 color="neutral"
                 variant="outline"
@@ -147,7 +147,7 @@ const globalFilter = ref("");
               ref="table"
               v-model:pagination="pagination"
               v-model:global-filter="globalFilter"
-              :data="services"
+              :data="departements"
               :columns="columns"
               :loading="pending"
               class="max-h-100 overflow-y-auto"
@@ -164,11 +164,11 @@ const globalFilter = ref("");
             />
 
             <div
-              v-if="services && services.length > 0"
+              v-if="departements && departements.length > 0"
               class="flex items-center justify-between gap-4 border-t border-default pt-4"
             >
               <div class="text-sm text-muted">
-                {{ services.length }} service(s) disponible(s)
+                {{ departements.length }} département(s) disponible(s)
               </div>
 
               <UPagination
@@ -184,11 +184,11 @@ const globalFilter = ref("");
             </div>
 
             <div
-              v-if="!pending && (!services || services.length === 0)"
+              v-if="!pending && (!departements || departements.length === 0)"
               class="text-center py-8 text-muted"
             >
               <UIcon name="i-lucide-inbox" class="mx-auto mb-2 text-4xl" />
-              <p>Aucun service disponible</p>
+              <p>Aucun département disponible</p>
             </div>
 
             <div class="flex justify-end pt-4">

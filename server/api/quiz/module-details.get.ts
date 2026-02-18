@@ -46,7 +46,8 @@ export default defineEventHandler(async (event) => {
   // Construction de la requête pour les résultats
   let dbQuery = supabase
     .from("resultat_quiz")
-    .select(`
+    .select(
+      `
       score,
       termine,
       date_debut,
@@ -57,9 +58,10 @@ export default defineEventHandler(async (event) => {
         nom,
         prenom,
         email,
-        id_service
+        id_departement
       )
-    `)
+    `,
+    )
     .in("id_quiz", quizIds)
     .eq("termine", true)
     .not("score", "is", null)
@@ -78,7 +80,9 @@ export default defineEventHandler(async (event) => {
   let filteredData = data || [];
 
   if (service) {
-    filteredData = filteredData.filter((item: any) => item.agent.id_service === service);
+    filteredData = filteredData.filter(
+      (item: any) => item.agent.id_departement === service,
+    );
   }
 
   // Filtrer par période

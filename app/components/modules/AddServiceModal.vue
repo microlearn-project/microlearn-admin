@@ -4,7 +4,7 @@ import { getPaginationRowModel } from "@tanstack/vue-table";
 import type { Tables } from "~/types/database.types";
 
 type Module = Tables<"module">;
-type Service = Tables<"service">;
+type Departement = Tables<"departement">;
 
 const props = defineProps<{
   module: Module;
@@ -28,7 +28,7 @@ const {
   pending,
   refresh,
   error,
-} = useFetch<Service[]>(
+} = useFetch<Departement[]>(
   () => `/api/module/services-available/${props.module.id_module}`,
   {
     server: false,
@@ -54,20 +54,20 @@ watch(
 ----------------------------------------------------*/
 const adding = ref<string | null>(null);
 
-async function addService(service: Service) {
-  adding.value = service.id_service;
+async function addService(departement: Departement) {
+  adding.value = departement.id_departement;
   try {
     await $fetch(`/api/module/services/add`, {
       method: "POST",
       body: {
         id_module: props.module.id_module,
-        id_service: service.id_service,
+        id_departement: departement.id_departement,
       },
     });
 
     toast.add({
       title: "Succès",
-      description: `Service « ${service.designation} » ajouté`,
+      description: `Département « ${departement.designation} » ajouté`,
       color: "success",
     });
 
@@ -80,13 +80,13 @@ async function addService(service: Service) {
     if (message.includes("duplicate") || message.includes("unique")) {
       toast.add({
         title: "Échec",
-        description: "Ce service est déjà associé au module",
+        description: "Ce département est déjà associé au module",
         color: "error",
       });
     } else {
       toast.add({
         title: "Erreur",
-        description: "Impossible d'ajouter le service",
+        description: "Impossible d'ajouter le département",
         color: "error",
       });
     }
@@ -98,7 +98,7 @@ async function addService(service: Service) {
 /* ---------------------------------------------------
    3. Colonnes du tableau
 ----------------------------------------------------*/
-const columns: TableColumn<Service>[] = [
+const columns: TableColumn<Departement>[] = [
   {
     accessorKey: "designation",
     header: "Désignation",
@@ -114,7 +114,7 @@ const columns: TableColumn<Service>[] = [
           color: "primary",
           variant: "ghost",
           size: "xs",
-          loading: adding.value === row.original.id_service,
+          loading: adding.value === row.original.id_departement,
           onClick: () => addService(row.original),
         }),
       ]),
@@ -184,7 +184,7 @@ const pagination = ref({
           class="flex items-center justify-between gap-4 border-t border-default pt-4"
         >
           <div class="text-sm text-muted">
-            {{ availableServices.length }} service(s) disponible(s)
+            {{ availableServices.length }} département(s) disponible(s)
           </div>
 
           <UPagination
@@ -195,7 +195,7 @@ const pagination = ref({
           />
         </div>
 
-        <!-- Message si aucun service disponible -->
+        <!-- Message si aucun département disponible -->
         <div
           v-if="
             !pending && (!availableServices || availableServices.length === 0)
@@ -203,7 +203,7 @@ const pagination = ref({
           class="text-center py-8 text-muted"
         >
           <UIcon name="i-lucide-check-circle" class="mx-auto mb-2 text-4xl" />
-          <p>Tous les services sont déjà associés à ce module</p>
+          <p>Tous les départements sont déjà associés à ce module</p>
         </div>
 
         <!-- Bouton fermer -->

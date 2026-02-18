@@ -4,10 +4,10 @@ import { upperFirst } from "scule";
 import type { Tables } from "~/types/database.types";
 
 type Agent = Tables<"agent">;
-type Service = Tables<"service">;
+type Departement = Tables<"departement">;
 
-// Type pour les services avec date_attribution
-interface ServiceWithAttribution extends Service {
+// Type pour les départements avec date_attribution
+interface ServiceWithAttribution extends Departement {
   date_attribution?: string;
 }
 
@@ -24,24 +24,24 @@ const UButton = resolveComponent("UButton");
 const table = useTemplateRef<any>("table");
 
 /* ---------------------------------------------------
-   1. Récupération du service associés à l'agent
+   1. Récupération du département associés à l'agent
 ----------------------------------------------------*/
 const {
-  data: services,
+  data: departements,
   pending,
   refresh,
   error,
 } = useFetch<ServiceWithAttribution[]>(
-  () => `/api/module/services/${props.agent.id_service}`,
+  () => `/api/module/services/${props.agent.id_departement}`,
   {
     server: false,
     lazy: true,
     immediate: false,
     watch: false,
-  }
+  },
 );
 
-// Charger les services quand le modal s'ouvre
+// Charger les départements quand le modal s'ouvre
 watch(
   open,
   async (isOpen) => {
@@ -49,7 +49,7 @@ watch(
       await refresh();
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 /* ---------------------------------------------------
@@ -60,7 +60,7 @@ const rowSelection = ref<Record<string, boolean>>({});
 const selectedRows = computed(
   () =>
     table.value?.tableApi?.getSelectedRowModel().rows.map((r) => r.original) ??
-    []
+    [],
 );
 
 /* ---------------------------------------------------
@@ -86,13 +86,13 @@ async function removeServices() {
             id_module: props.module.id_module,
             id_service: service.id_service,
           },
-        })
-      )
+        }),
+      ),
     );
 
     toast.add({
       title: "Succès",
-      description: `${selectedRows.value.length} service(s) retiré(s)`,
+      description: `${selectedRows.value.length} département(s) retiré(s)`,
       color: "success",
     });
 
@@ -159,10 +159,10 @@ const pagination = ref({
 });
 
 const paginatedData = computed(() => {
-  if (!services.value) return [];
+  if (!departements.value) return [];
   const start = pagination.value.pageIndex * pagination.value.pageSize;
   const end = start + pagination.value.pageSize;
-  return services.value.slice(start, end);
+  return departements.value.slice(start, end);
 });
 
 /* ---------------------------------------------------
@@ -236,7 +236,7 @@ function clearTableSelection() {
           :data="paginatedData"
           :columns="columns"
           :loading="pending"
-          class="max-h-[400px] overflow-y-auto"
+          class="max-h-100 overflow-y-auto"
           :ui="{
             base: 'table-fixed border-separate border-spacing-0',
             thead: '[&>tr]:bg-elevated/50',
@@ -252,7 +252,7 @@ function clearTableSelection() {
 
         <!-- Pied de page -->
         <div
-          v-if="services && services.length > 0"
+          v-if="departements && departements.length > 0"
           class="flex items-center justify-between gap-4 border-t border-default pt-4"
         >
           <div class="text-sm text-muted">
@@ -262,14 +262,14 @@ function clearTableSelection() {
           <UPagination
             :default-page="pagination.pageIndex + 1"
             :items-per-page="pagination.pageSize"
-            :total="services?.length || 0"
+            :total="departements?.length || 0"
             @update:page="(p) => (pagination.pageIndex = p - 1)"
           />
         </div>
 
         <!-- Message si aucun service -->
         <div
-          v-if="!pending && (!services || services.length === 0)"
+          v-if="!pending && (!departements || departements.length === 0)"
           class="text-center py-8 text-muted"
         >
           <UIcon name="i-lucide-briefcase" class="mx-auto mb-2 text-4xl" />

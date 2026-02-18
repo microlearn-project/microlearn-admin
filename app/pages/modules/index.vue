@@ -152,8 +152,8 @@ function getRowItems(row: { original: Module }) {
       },
     },
     {
-      label: "Services",
-      icon: "i-lucide-briefcase",
+      label: "Départements",
+      icon: "i-heroicons-squares-2x2",
       onSelect: () => {
         moduleForServices.value = m;
         showServicesModal.value = true;

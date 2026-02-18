@@ -1,10 +1,10 @@
-// server/api/module/services/[id].get.ts
+// server/api/module/departements/[id].get.ts
 import { createSupabaseServerClient } from "~~/server/utils/supabase";
 import type { Tables } from "~/types/database.types";
 
-type Service = Tables<"service">;
+type Departement = Tables<"departement">;
 
-interface ServiceWithAttribution extends Service {
+interface DepartementWithAttribution extends Departement {
   date_attribution?: string;
 }
 
@@ -20,10 +20,10 @@ export default defineEventHandler(async (event) => {
 
   const supabase = createSupabaseServerClient();
 
-  // Récupérer les services associés au module via la table module_departement_new
+  // Récupérer les départements associés au module via la table module_departement
   const { data, error } = await supabase
-    .from("module_departement_new")
-    .select("service(*), date_attribution")
+    .from("module_departement")
+    .select("departement(*), date_attribution")
     .eq("id_module", id_module);
 
   if (error) {
@@ -33,16 +33,16 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  // Extraire les services et ajouter la date_attribution
-  const services: ServiceWithAttribution[] = (data ?? [])
+  // Extraire les départements et ajouter la date_attribution
+  const departements: DepartementWithAttribution[] = (data ?? [])
     .map((item: any) => {
-      if (!item.service) return null;
+      if (!item.departement) return null;
       return {
-        ...item.service,
+        ...item.departement,
         date_attribution: item.date_attribution,
       };
     })
     .filter(Boolean);
 
-  return services;
+  return departements;
 });

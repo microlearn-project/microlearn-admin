@@ -3,7 +3,7 @@ import type { TableColumn } from "@nuxt/ui";
 import type { Tables } from "~/types/database.types";
 import { getPaginationRowModel } from "@tanstack/vue-table";
 
-type Agent = Tables<"agent">;
+type Agent = Tables<"agent_new">;
 
 const open = defineModel<boolean>("open", { default: false });
 const selectedAgent = defineModel<Agent | null>("selectedAgent", {

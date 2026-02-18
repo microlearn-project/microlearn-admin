@@ -74,11 +74,11 @@ export default defineEventHandler(async (event) => {
       nom,
       prenom,
       email,
+      id_direction,
       id_departement,
-      id_service,
-      departement:id_departement (designation),
-      service:id_service (designation)
-    `
+      direction:id_direction (designation),
+      departement:id_departement (designation)
+    `,
     )
     .single();
 

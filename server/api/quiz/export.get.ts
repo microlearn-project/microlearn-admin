@@ -36,7 +36,7 @@ export default defineEventHandler(async (event) => {
         nom,
         prenom,
         email,
-        id_service
+        id_departement
       ),
       quiz:id_quiz (
         titre,
@@ -79,7 +79,7 @@ export default defineEventHandler(async (event) => {
   // Filtre par service
   if (serviceId) {
     filteredResults = filteredResults.filter(
-      (r: any) => r.agent?.id_service === serviceId
+      (r: any) => r.agent?.id_departement === serviceId,
     );
   }
 

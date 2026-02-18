@@ -72,7 +72,7 @@ export default defineEventHandler(async (event) => {
     });
 
     return formattedActivities || [];
-  } catch (err: any) { 
+  } catch (err: any) {
     throw createError({
       statusCode: 500,
       statusMessage: err.message || "Erreur serveur",

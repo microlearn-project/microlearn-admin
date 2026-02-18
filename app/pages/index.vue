@@ -75,8 +75,8 @@ const { isNotificationsSlideoverOpen } = useDashboard();
             />
 
             <UButton
-              label="Les services"
-              icon="i-heroicons-building-office"
+              label="Les départements"
+              icon="i-heroicons-squares-2x2"
               size="lg"
               color="neutral"
               variant="outline"

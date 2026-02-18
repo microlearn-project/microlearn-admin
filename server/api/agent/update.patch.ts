@@ -9,7 +9,7 @@ type AgentUpdate = TablesUpdate<"agent">;
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
-  const { id, nom, prenom, email, id_departement, id_service } = body;
+  const { id, nom, prenom, email, id_direction, id_departement } = body;
 
   if (!id) {
     throw createError({
@@ -80,11 +80,11 @@ export default defineEventHandler(async (event) => {
     authPayload.email = email;
   }
 
-  if (id_departement !== undefined) {
+  if (id_direction !== undefined) {
     const { data: dept } = await supabase
-      .from("departement")
-      .select("id_departement")
-      .eq("id_departement", id_departement)
+      .from("direction")
+      .select("id_direction")
+      .eq("id_direction", id_direction)
       .is("deleted_at", null)
       .maybeSingle();
 
@@ -95,14 +95,14 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    payload.id_departement = id_departement;
+    payload.id_direction = id_direction;
   }
 
-  if (id_service !== undefined) {
+  if (id_departement !== undefined) {
     const { data: svc } = await supabase
-      .from("service")
-      .select("id_service")
-      .eq("id_service", id_service)
+      .from("departement")
+      .select("id_departement")
+      .eq("id_departement", id_departement)
       .eq("actif", true)
       .is("deleted_at", null)
       .maybeSingle();
@@ -110,11 +110,11 @@ export default defineEventHandler(async (event) => {
     if (!svc) {
       throw createError({
         statusCode: 400,
-        statusMessage: "Service invalide ou inactif",
+        statusMessage: "Département invalide ou inactif",
       });
     }
 
-    payload.id_service = id_service;
+    payload.id_departement = id_departement;
   }
 
   payload.updated_at = new Date().toISOString();
@@ -131,7 +131,7 @@ export default defineEventHandler(async (event) => {
         await supabaseAdmin.auth.admin.updateUserById(authUser.id, authPayload);
 
       if (authError) {
-        // Error handling commented out to avoid exposing sensitive info 
+        // Error handling commented out to avoid exposing sensitive info
       }
     }
   }

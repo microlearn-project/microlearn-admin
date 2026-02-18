@@ -2,10 +2,10 @@
 import { createSupabaseServerClient } from "~~/server/utils/supabase";
 import type { TablesUpdate } from "~/types/database.types";
 
-type DepartementUpdate = TablesUpdate<"departement">;
+type DirectionUpdate = TablesUpdate<"direction">;
 
 // Fonction de vérification de l'existence dans agent
-async function isDepartementUsed(id_agent: string): Promise<boolean> {
+async function isDirectionUsed(id_agent: string): Promise<boolean> {
   const supabase = createSupabaseServerClient();
 
   let { data: agent, error } = await supabase
@@ -31,31 +31,31 @@ export default defineEventHandler(async (event) => {
   const { id } = await readBody(event);
   const supabase = createSupabaseServerClient();
 
-  const payload: DepartementUpdate = {
+  const payload: DirectionUpdate = {
     deleted_at: new Date().toISOString(),
   };
 
-  // Verification de l'utilisation du département
-  const isUsed = await isDepartementUsed(id);
+  // Verification de l'utilisation de la direction dans agent
+  const isUsed = await isDirectionUsed(id);
 
   if (isUsed) {
     // Soft delete
     const { data, error } = await supabase
-      .from("departement")
+      .from("direction")
       .update(payload)
-      .eq("id_departement", id)
+      .eq("id_direction", id)
       .select()
       .single();
 
     if (error)
       throw createError({ statusCode: 500, statusMessage: error.message });
 
-    // Log de l'activité de suppression de département
+    // Log de l'activité de suppression de la direction
     const session = getUserSession(event);
     await logActivity({
       user_id: session?.user?.id_agent || null,
-      action: "departement_supprime",
-      objet_type: "departement",
+      action: "direction_supprime",
+      objet_type: "direction",
       objet_id: id,
       meta: {
         designation: data?.designation,
@@ -66,30 +66,30 @@ export default defineEventHandler(async (event) => {
   } else {
     // Hard delete
     const { data, error } = await supabase
-      .from("departement")
+      .from("direction")
       .delete()
-      .eq("id_departement", id)
+      .eq("id_direction", id)
       .select();
 
     if (error) {
       throw createError({
         statusCode: 500,
-        statusMessage: error.message,
+        statusMessage: "fuck" + error.message,
       });
     }
 
-    // Log de l'activité de suppression de département
+    // Log de l'activité de suppression de la direction
     const session = getUserSession(event);
     await logActivity({
       user_id: session?.user?.id_agent || null,
-      action: "departement_supprime",
-      objet_type: "departement",
+      action: "direction_supprime",
+      objet_type: "direction",
       objet_id: id,
       meta: {
         designation: data ? data[0].designation : null,
       },
-    }); 
+    });
 
-    return (data ?? []) as DepartementUpdate[];
+    return (data ?? []) as DirectionUpdate[];
   }
 });

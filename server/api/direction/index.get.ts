@@ -1,18 +1,17 @@
-// server/api/departement/index.get.ts
+// server/api/direction/index.get.ts
 import { createSupabaseServerClient } from "~~/server/utils/supabase";
 import type { Tables } from "~/types/database.types";
 
-type Departement = Tables<"departement">;
+type Direction = Tables<"direction">;
 
 export default defineEventHandler(async () => {
   const supabase = createSupabaseServerClient();
 
   const { data, error } = await supabase
-    .from("departement")
+    .from("direction")
     .select("*")
     .is("deleted_at", null)
-    .order("created_at", { ascending: false });
-
+    .order("designation", { ascending: true });
 
   if (error) {
     throw createError({
@@ -21,5 +20,5 @@ export default defineEventHandler(async () => {
     });
   }
 
-  return (data ?? []) as Departement[];
+  return (data ?? []) as Direction[];
 });

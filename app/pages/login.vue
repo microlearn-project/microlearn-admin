@@ -1,5 +1,4 @@
 <script setup lang="ts">
-// Désactiver le layout par défaut pour cette page
 definePageMeta({
   layout: false,
 });
@@ -7,15 +6,12 @@ definePageMeta({
 const { login, authenticated } = useAuth();
 const toast = useToast();
 
-// Si déjà connecté, rediriger
 if (authenticated.value) {
   navigateTo("/");
 }
 
-// Type de connexion : email ou code
 const loginType = ref<"email" | "code">("code");
 
-// Formulaire
 const form = ref({
   identifier: "",
   password: "",
@@ -24,7 +20,10 @@ const form = ref({
 
 const loading = ref(false);
 
-// Labels dynamiques selon le type
+// ← AJOUTÉ : État pour la confirmation de session active
+const sessionConflict = ref(false);
+const sessionInfo = ref<any>(null);
+
 const identifierLabel = computed(() =>
   loginType.value === "email" ? "Adresse email" : "Code agent"
 );
@@ -37,15 +36,13 @@ const identifierIcon = computed(() =>
   loginType.value === "email" ? "i-lucide-mail" : "i-lucide-hash"
 );
 
-// Basculer le type de connexion
 function toggleLoginType() {
   loginType.value = loginType.value === "email" ? "code" : "email";
   form.value.identifier = "";
 }
 
-// Soumettre le formulaire
-async function handleSubmit() {
-  // Validation
+// ← MODIFIÉ : Gestion de la connexion avec confirmation
+async function handleSubmit(forceLogin = false) {
   if (!form.value.identifier.trim()) {
     toast.add({
       title: "Erreur",
@@ -69,10 +66,23 @@ async function handleSubmit() {
   const result = await login(
     form.value.identifier.trim(),
     form.value.password,
-    loginType.value
+    loginType.value,
+    forceLogin  // ← AJOUTÉ
   );
 
   loading.value = false;
+
+  // ← AJOUTÉ : Gestion du conflit de session
+  if (!result.success && result.requiresConfirmation) {
+    sessionConflict.value = true;
+    sessionInfo.value = result.sessionInfo;
+    toast.add({
+      title: "Session active détectée",
+      description: result.message,
+      color: "warning",
+    });
+    return;
+  }
 
   if (result.success) {
     toast.add({
@@ -80,8 +90,6 @@ async function handleSubmit() {
       description: "Bienvenue sur l'interface d'administration",
       color: "success",
     });
-
-    // Rediriger vers le dashboard
     navigateTo("/");
   } else {
     toast.add({
@@ -90,6 +98,19 @@ async function handleSubmit() {
       color: "error",
     });
   }
+}
+
+// ← AJOUTÉ : Forcer la connexion en fermant la session active
+function confirmForceLogin() {
+  sessionConflict.value = false;
+  handleSubmit(true);
+}
+
+// ← AJOUTÉ : Annuler la connexion forcée
+function cancelForceLogin() {
+  sessionConflict.value = false;
+  sessionInfo.value = null;
+  form.value.password = "";
 }
 </script>
 
@@ -104,6 +125,63 @@ async function handleSubmit() {
         <h1 class="text-2xl font-bold">UTB Learn Administration</h1>
         <p class="text-muted mt-2">Connectez-vous pour accéder au tableau de bord</p>
       </div>
+
+      <!-- ← AJOUTÉ : Modal de confirmation session active -->
+      <UModal
+        v-model:open="sessionConflict"
+        title="Session active détectée"
+        :ui="{ width: 'sm:max-w-lg' }"
+      >
+        <template #body>
+          <div class="space-y-4">
+            <div class="flex items-start gap-3 p-4 bg-warning/10 border border-warning/20 rounded-lg">
+              <UIcon name="i-lucide-alert-triangle" class="text-warning text-xl mt-0.5" />
+              <div class="flex-1">
+                <p class="font-medium text-warning mb-1">Une session est déjà ouverte</p>
+                <p class="text-sm text-muted">
+                  Vous êtes déjà connecté sur un autre navigateur ou appareil.
+                </p>
+              </div>
+            </div>
+
+            <div v-if="sessionInfo" class="space-y-2 text-sm">
+              <div class="flex justify-between">
+                <span class="text-muted">Connecté depuis :</span>
+                <span class="font-medium">
+                  {{ new Date(sessionInfo.created_at).toLocaleString("fr-FR") }}
+                </span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-muted">Dernière activité :</span>
+                <span class="font-medium">
+                  {{ new Date(sessionInfo.last_activity).toLocaleString("fr-FR") }}
+                </span>
+              </div>
+            </div>
+
+            <p class="text-sm">
+              Si vous continuez, l'autre session sera automatiquement fermée.
+            </p>
+          </div>
+        </template>
+
+        <template #footer>
+          <div class="flex justify-end gap-2">
+            <UButton
+              label="Annuler"
+              color="neutral"
+              variant="subtle"
+              @click="cancelForceLogin"
+            />
+            <UButton
+              label="Continuer et fermer l'autre session"
+              color="warning"
+              icon="i-lucide-log-in"
+              @click="confirmForceLogin"
+            />
+          </div>
+        </template>
+      </UModal>
 
       <!-- Carte de connexion -->
       <div class="bg-elevated border border-default rounded-xl p-6 shadow-lg">
@@ -138,8 +216,7 @@ async function handleSubmit() {
         </div>
 
         <!-- Formulaire -->
-        <form @submit.prevent="handleSubmit" class="space-y-4">
-          <!-- Identifiant -->
+        <form @submit.prevent="handleSubmit(false)" class="space-y-4">
           <UFormField :label="identifierLabel">
             <UInput
               v-model="form.identifier"
@@ -147,11 +224,10 @@ async function handleSubmit() {
               :icon="identifierIcon"
               size="lg"
               autocomplete="username"
-               class="w-full"
+              class="w-full"
             />
           </UFormField>
 
-          <!-- Mot de passe -->
           <UFormField label="Mot de passe">
             <UInput
               v-model="form.password"
@@ -160,7 +236,7 @@ async function handleSubmit() {
               icon="i-lucide-lock"
               size="lg"
               autocomplete="current-password"
-               class="w-full"
+              class="w-full"
             >
               <template #trailing>
                 <UButton
@@ -175,7 +251,6 @@ async function handleSubmit() {
             </UInput>
           </UFormField>
 
-          <!-- Bouton connexion -->
           <UButton
             type="submit"
             label="Se connecter"
@@ -188,9 +263,8 @@ async function handleSubmit() {
         </form>
       </div>
 
-      <!-- Footer -->
       <p class="text-center text-sm text-muted mt-6">
-        © {{ new Date().getFullYear() }} UTB Learn Administration - Système de gestion des formations
+        © {{ new Date().getFullYear() }} UTB Learn Administration
       </p>
     </div>
   </div>

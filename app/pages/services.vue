@@ -4,7 +4,8 @@ import { getPaginationRowModel } from "@tanstack/vue-table";
 import { upperFirst } from "scule";
 import type { Tables } from "~/types/database.types";
 
-type Service = Tables<"service">;
+type Departement = Tables<"departement">;
+type Direction = Tables<"direction">;
 
 const toast = useToast();
 
@@ -16,34 +17,43 @@ const UDropdownMenu = resolveComponent("UDropdownMenu");
 const UButton = resolveComponent("UButton");
 
 /* ---------------------------------------------------
-   1. Récupération des services
+   1. Récupération des départements avec directions
 ----------------------------------------------------*/
 const {
-  data: services,
+  data: departements,
   pending,
   error,
   refresh,
-} = await useFetch<Service[]>("/api/service", {
+} = await useFetch<Departement[]>("/api/service", { 
   server: true,
   lazy: false,
+});
+
+// Récupérer les directions pour affichage
+const { data: directions } = await useFetch<Direction[]>("/api/direction");
+
+// Créer un map pour accès rapide aux directions
+const directionsMap = computed(() => {
+  if (!directions.value) return new Map();
+  return new Map(directions.value.map(d => [d.id_direction, d]));
 });
 
 /* ---------------------------------------------------
    2. Actions API
 ----------------------------------------------------*/
-// Activer un service
+// Activer un département
 const activate = async (id: string) => {
-  await $fetch(`/api/service/${id}/activate`, { method: "PATCH" });
+  await $fetch(`/api/service/${id}/activate`, { method: "PATCH" });  
 };
 
-// Désactiver un service
+// Désactiver un département
 const deactivate = async (id: string) => {
-  await $fetch(`/api/service/${id}/deactivate`, { method: "PATCH" });
+  await $fetch(`/api/service/${id}/deactivate`, { method: "PATCH" });   
 };
 
-// Supprimer un service
+// Supprimer un département
 const softDelete = async (id: string) => {
-  await $fetch(`/api/service/soft-delete`, {
+  await $fetch(`/api/service/soft-delete`, {   
     method: "PATCH",
     body: {
       id: id,
@@ -59,21 +69,21 @@ const rowSelection = ref<Record<string, boolean>>({});
 const selectedRows = computed(
   () =>
     table.value?.tableApi?.getSelectedRowModel().rows.map((r) => r.original) ??
-    []
+    [],
 );
 
 /* ---------------------------------------------------
      4. Items du menu sur chaque ligne
 ----------------------------------------------------*/
-function getRowItems(row: { original: Service }) {
+function getRowItems(row: { original: Departement }) {
   const s = row.original;
   return [
-    { type: "label", label: "Actions sur le service" },
+    { type: "label", label: "Actions sur le département" },
     {
-      label: "Copier l’ID",
+      label: "Copier l'ID",
       icon: "i-lucide-copy",
       onSelect: () => {
-        navigator.clipboard.writeText(String(s.id_service));
+        navigator.clipboard.writeText(String(s.id_departement));
         toast.add({ title: "ID copié dans le presse-papier" });
       },
     },
@@ -87,31 +97,31 @@ function getRowItems(row: { original: Service }) {
 
         try {
           if (newStatus) {
-            await activate(s.id_service);
+            await activate(s.id_departement);
           } else {
-            await deactivate(s.id_service);
+            await deactivate(s.id_departement);
           }
 
           // MISE À JOUR LOCALE
-          if (!services.value) return;
+          if (!departements.value) return;
 
-          services.value = services.value.map((srv) =>
-            srv.id_service === s.id_service
+          departements.value = departements.value.map((srv) =>
+            srv.id_departement === s.id_departement
               ? {
                   ...srv,
                   actif: newStatus,
                   updated_at: new Date().toISOString(),
                 }
-              : srv
+              : srv,
           );
 
           toast.add({
-            title: newStatus ? "Service activé" : "Service désactivé",
+            title: newStatus ? "Département activé" : "Département désactivé",
           });
         } catch (e) {
           toast.add({
             title: "Erreur",
-            description: "Impossible de modifier le service",
+            description: "Impossible de modifier le département",
             color: "error",
           });
         }
@@ -124,13 +134,13 @@ function getRowItems(row: { original: Service }) {
       color: "error",
       onSelect: async () => {
         try {
-          await softDelete(s.id_service);
+          await softDelete(s.id_departement);
 
-          services.value = services.value?.filter(
-            (srv) => srv.id_service !== s.id_service
+          departements.value = departements.value?.filter(
+            (srv) => srv.id_departement !== s.id_departement,
           );
 
-          toast.add({ title: "Service supprimé" });
+          toast.add({ title: "Département supprimé" });
           clearTableSelection();
         } catch {
           toast.add({
@@ -147,7 +157,7 @@ function getRowItems(row: { original: Service }) {
 /* ---------------------------------------------------
      5. Colonnes du tableau
 ----------------------------------------------------*/
-const columns: TableColumn<Service>[] = [
+const columns: TableColumn<Departement>[] = [
   {
     id: "select",
     header: ({ table }: any) =>
@@ -172,8 +182,19 @@ const columns: TableColumn<Service>[] = [
       h("div", { class: "font-medium" }, row.original.designation),
   },
   {
+    id: "direction",  // ← AJOUTÉ : Colonne Direction
+    accessorFn: (row: Departement) => row.id_direction,
+    header: "Direction",
+    cell: ({ row }: any) => {
+      const direction = directionsMap.value.get(row.original.id_direction);
+      return h("div", { class: "text-sm" }, 
+        direction?.designation || "Non affecté"
+      );
+    },
+  },
+  {
     id: "statut",
-    accessorFn: (row: Service) => row.actif, // valeur filtrable
+    accessorFn: (row: Departement) => row.actif,
     header: "Statut",
     cell: ({ row }: any) =>
       h(
@@ -182,7 +203,7 @@ const columns: TableColumn<Service>[] = [
           color: row.original.actif ? "success" : "error",
           variant: "subtle",
         },
-        () => (row.original.actif ? "Actif" : "Inactif")
+        () => (row.original.actif ? "Actif" : "Inactif"),
       ),
   },
   {
@@ -223,14 +244,14 @@ const columns: TableColumn<Service>[] = [
               color: "neutral",
               variant: "ghost",
               class: "ml-auto",
-            })
+            }),
         ),
       ]),
   },
 ];
 
 /* ---------------------------------------------------
-     6. Pagination (10 services par page)
+     6. Pagination (10 départements par page)
 ----------------------------------------------------*/
 const pagination = ref({
   pageIndex: 0,
@@ -254,22 +275,19 @@ watch(
     } else {
       statusColumn.setFilterValue(newVal === "actif");
     }
-  }
+  },
 );
 
 // Déselectionner toutes les lignes du tableau
 function clearTableSelection() {
-  // Vide la sélection TanStack Table
   table.value?.tableApi?.resetRowSelection();
-
-  // Sécurité supplémentaire (état local)
   rowSelection.value = {};
 }
 </script>
 <template>
-  <UDashboardPanel id="services">
+  <UDashboardPanel id="departements">
     <template #header>
-      <UDashboardNavbar title="Services">
+      <UDashboardNavbar title="Départements">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
@@ -284,8 +302,12 @@ function clearTableSelection() {
       <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
         <!-- Barre de recherche  -->
         <UInput
-          placeholder="Rechercher un service..."
-          :model-value="(table?.tableApi?.getColumn('designation')?.getFilterValue() as string) ?? ''"
+          placeholder="Rechercher un département..."
+          :model-value="
+            (table?.tableApi
+              ?.getColumn('designation')
+              ?.getFilterValue() as string) ?? ''
+          "
           icon="i-lucide-search"
           class="max-w-sm"
           @update:model-value="
@@ -351,15 +373,18 @@ function clearTableSelection() {
 
           <!-- Bouton colonnes visibles -->
           <UDropdownMenu
-            :items="table?.tableApi?.getAllColumns()
-              .filter((c: any) => c.getCanHide())
-              .map((c: any) => ({
-                label: upperFirst(c.id),
-                type: 'checkbox' as const,
-                checked: c.getIsVisible(),
-                onUpdateChecked: (v: boolean) => c.toggleVisibility(!!v),
-                onSelect: (e?: Event) => e?.preventDefault()
-              })) ?? []"
+            :items="
+              table?.tableApi
+                ?.getAllColumns()
+                .filter((c: any) => c.getCanHide())
+                .map((c: any) => ({
+                  label: upperFirst(c.id),
+                  type: 'checkbox' as const,
+                  checked: c.getIsVisible(),
+                  onUpdateChecked: (v: boolean) => c.toggleVisibility(!!v),
+                  onSelect: (e?: Event) => e?.preventDefault(),
+                })) ?? []
+            "
             :content="{ align: 'end' }"
           >
             <UButton
@@ -375,9 +400,9 @@ function clearTableSelection() {
       <!-- Tableau -->
       <UTable
         ref="table"
-      v-model:pagination="pagination"
+        v-model:pagination="pagination"
         v-model:row-selection="rowSelection"
-        :data="services"
+        :data="departements"
         :pagination-options="{
           getPaginationRowModel: getPaginationRowModel(),
         }"

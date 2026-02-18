@@ -11,9 +11,6 @@ export type ActivityAction =
   | "role_supprime"
   | "categorie_creee"
   | "categorie_supprimee"
-  | "service_cree"
-  | "service_supprime"
-  | "departement_cree"
   | "module_telechargeable_active"
   | "module_telechargeable_desactive"
   | "module_publie"
@@ -22,17 +19,26 @@ export type ActivityAction =
   | "module_modifie"
   | "module_supprime"
   | "module_republie"
+  | "agent_supprime"
+  | "agent_desactive"
   | "agent_password_reset"
+  | "direction_cree"
+  | "direction_modifie"
+  | "direction_supprime"
+  | "departement_cree"
+  | "departement_modifie"
   | "departement_supprime";
 
 export type ObjetType =
   | "agent"
   | "user_role"
   | "tag"
-  | "service"
+  | "direction"
   | "departement"
   | "session"
   | "module"
+  | "soft_delete"
+  | "hard_delete"
   | null;
 
 export interface ActivityLogEntry {

@@ -1,6 +1,4 @@
 <script setup lang="ts">
-// Le middleware gère toute l'authentification
-// app.vue gère uniquement le loading initial et le SEO
 
 const isInitialLoading = ref(true);
 
@@ -49,11 +47,12 @@ useSeoMeta({
       <!-- Loading  -->
       <AuthLoadingScreen v-if="isInitialLoading" />
 
-      <!-- Le contenu - le middleware protège les routes -->
+      <!-- Le contenu -->
       <UTooltipProvider>
         <div v-show="!isInitialLoading">
           <NuxtLoadingIndicator />
           <NuxtLayout>
+            <SessionWatcher />
             <NuxtPage />
           </NuxtLayout>
           <ShortcutsHelpModal />

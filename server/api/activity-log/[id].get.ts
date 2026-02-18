@@ -25,7 +25,7 @@ export default defineEventHandler(async (event) => {
         prenom,
         email
       )
-    `
+    `,
     )
     .eq("id_activity_log", id)
     .single();

@@ -76,7 +76,7 @@ export default defineEventHandler(async (event) => {
       const { data: agents } = await supabase
         .from("agent")
         .select("id_agent")
-        .eq("id_service", serviceId)
+        .eq("id_departement", serviceId)
         .eq("actif", true)
         .is("deleted_at", null);
 

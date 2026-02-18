@@ -159,41 +159,7 @@ const showServicesModal = ref(false);
 
 /* ---------------------------------------------------
    5. Items du menu sur chaque ligne
-----------------------------------------------------
-function getRowItems(row: { original: Agent }) {
-  const a = row.original;
-  return [
-    { type: "label", label: "Actions sur l'agent" },
-    {
-      label: "Copier le code agent",
-      icon: "i-lucide-key",
-      onSelect: () => {
-        navigator.clipboard.writeText(a.code_agent);
-        toast.add({ title: "Code agent copié dans le presse-papier" });
-      },
-    },
-    { type: "separator" },
-    {
-      label: a.actif ? "Désactiver" : "Activer",
-      icon: a.actif ? "i-lucide-user-x" : "i-lucide-user-check",
-      color: a.actif ? "warning" : "success",
-      onSelect: () => {
-        if (a.actif) {
-          deactivate(a.id_agent);
-        } else {
-          activate(a.id_agent);
-        }
-      },
-    },
-    { type: "separator" },
-    {
-      label: "Supprimer",
-      icon: "i-lucide-trash-2",
-      color: "error",
-      onSelect: () => softDelete(a.id_agent),
-    },
-  ];
-}
+---------------------------------------------------- 
 */
 function getRowItems(row: { original: Agent }) {
   const a = row.original;

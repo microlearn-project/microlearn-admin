@@ -4,7 +4,8 @@ import { getPaginationRowModel } from "@tanstack/vue-table";
 import { upperFirst } from "scule";
 import type { Tables } from "~/types/database.types";
 
-type Departement = Tables<"departement">;
+type Direction = Tables<"direction">;
+type AutoriteSuperieure = Tables<"autorite_superieure">;
 
 const toast = useToast();
 
@@ -16,24 +17,33 @@ const UDropdownMenu = resolveComponent("UDropdownMenu");
 const UButton = resolveComponent("UButton");
 
 /* ---------------------------------------------------
-   1. Récupération des services
+   1. Récupération des directions avec autorités
 ----------------------------------------------------*/
 const {
-  data: departements,
+  data: directions,
   pending,
   error,
   refresh,
-} = await useFetch<Departement[]>("/api/departement", {
+} = await useFetch<Direction[]>("/api/departement", {  
   server: true,
   lazy: false,
+});
+
+// Récupérer les autorités supérieures pour affichage
+const { data: autorites } = await useFetch<AutoriteSuperieure[]>("/api/autorite-superieure");
+
+// Map pour accès rapide aux autorités
+const autoritesMap = computed(() => {
+  if (!autorites.value) return new Map();
+  return new Map(autorites.value.map(a => [a.id_autorite, a]));
 });
 
 /* ---------------------------------------------------
    2. Actions API
 ----------------------------------------------------*/
-// Supprimer un departement
+// Supprimer une direction
 const softDelete = async (id: string) => {
-  await $fetch(`/api/departement/soft-delete`, {
+  await $fetch(`/api/departement/soft-delete`, {  
     method: "PATCH",
     body: {
       id: id,
@@ -49,21 +59,21 @@ const rowSelection = ref<Record<string, boolean>>({});
 const selectedRows = computed(
   () =>
     table.value?.tableApi?.getSelectedRowModel().rows.map((r) => r.original) ??
-    []
+    [],
 );
 
 /* ---------------------------------------------------
      4. Items du menu sur chaque ligne
 ----------------------------------------------------*/
-function getRowItems(row: { original: Departement }) {
+function getRowItems(row: { original: Direction }) {
   const s = row.original;
   return [
-    { type: "label", label: "Actions sur le département" },
+    { type: "label", label: "Actions sur la direction" },
     {
-      label: "Copier l’ID",
+      label: "Copier l'ID",
       icon: "i-lucide-copy",
       onSelect: () => {
-        navigator.clipboard.writeText(String(s.id_departement));
+        navigator.clipboard.writeText(String(s.id_direction));
         toast.add({ title: "ID copié dans le presse-papier" });
       },
     },
@@ -74,22 +84,20 @@ function getRowItems(row: { original: Departement }) {
       color: "error",
       onSelect: async () => {
         try {
-          // 1. Appel API
-          await softDelete(s.id_departement);
+          await softDelete(s.id_direction);
 
-          // 2. MISE À JOUR LOCALE
-          if (departements.value) {
-            departements.value = departements.value.filter(
-              (dept) => dept.id_departement !== s.id_departement
+          if (directions.value) {
+            directions.value = directions.value.filter(
+              (dir) => dir.id_direction !== s.id_direction,
             );
           }
 
-          toast.add({ title: "Département supprimé" });
+          toast.add({ title: "Direction supprimée" });
           clearTableSelection();
         } catch (error) {
           toast.add({
             title: "Erreur",
-            description: "Impossible de supprimer le département",
+            description: "Impossible de supprimer la direction",
             color: "error",
           });
         }
@@ -101,7 +109,7 @@ function getRowItems(row: { original: Departement }) {
 /* ---------------------------------------------------
      5. Colonnes du tableau
 ----------------------------------------------------*/
-const columns: TableColumn<Departement>[] = [
+const columns: TableColumn<Direction>[] = [
   {
     id: "select",
     header: ({ table }: any) =>
@@ -124,6 +132,45 @@ const columns: TableColumn<Departement>[] = [
     header: "Désignation",
     cell: ({ row }: any) =>
       h("div", { class: "font-medium" }, row.original.designation),
+  },
+  {
+    id: "autorite",   
+    accessorFn: (row: Direction) => row.id_autorite,
+    header: "Autorité Supérieure",
+    cell: ({ row }: any) => {
+      const autorite = autoritesMap.value.get(row.original.id_autorite);
+      if (!autorite) {
+        return h("div", { class: "text-sm text-muted" }, "Non affecté");
+      }
+      return h("div", { class: "flex items-center gap-2" }, [
+        h(
+          "span",
+          {
+            class: `inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+              autorite.code === "DG"
+                ? "bg-primary/10 text-primary"
+                : "bg-info/10 text-info"
+            }`,
+          },
+          autorite.code
+        ),
+        h("span", { class: "text-sm" }, autorite.designation),
+      ]);
+    },
+  },
+  {
+    id: "statut",   
+    accessorFn: (row: Direction) => row.actif,
+    header: "Statut",
+    cell: ({ row }: any) =>
+      h(
+        UBadge,
+        {
+          color: row.original.actif ? "success" : "error",
+          variant: "subtle",
+        },
+        () => (row.original.actif ? "Actif" : "Inactif"),
+      ),
   },
   {
     accessorKey: "Dernière modification",
@@ -163,14 +210,14 @@ const columns: TableColumn<Departement>[] = [
               color: "neutral",
               variant: "ghost",
               class: "ml-auto",
-            })
+            }),
         ),
       ]),
   },
 ];
 
 /* ---------------------------------------------------
-     6. Pagination (10 services par page)
+     6. Pagination (10 directions par page)
 ----------------------------------------------------*/
 const pagination = ref({
   pageIndex: 0,
@@ -194,23 +241,19 @@ watch(
     } else {
       statusColumn.setFilterValue(newVal === "actif");
     }
-  }
+  },
 );
-
 
 // Déselectionner toutes les lignes du tableau
 function clearTableSelection() {
-  // Vide la sélection TanStack Table
   table.value?.tableApi?.resetRowSelection();
-
-  // Sécurité supplémentaire (état local)
   rowSelection.value = {};
 }
 </script>
 <template>
-  <UDashboardPanel id="departements">
+  <UDashboardPanel id="directions">
     <template #header>
-      <UDashboardNavbar title="Départements">
+      <UDashboardNavbar title="Directions">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
@@ -225,8 +268,12 @@ function clearTableSelection() {
       <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
         <!-- Barre de recherche -->
         <UInput
-          :model-value="(table?.tableApi?.getColumn('designation')?.getFilterValue() as string) ?? ''"
-          placeholder="Rechercher "
+          :model-value="
+            (table?.tableApi
+              ?.getColumn('designation')
+              ?.getFilterValue() as string) ?? ''
+          "
+          placeholder="Rechercher une direction..."
           icon="i-lucide-search"
           class="max-w-sm"
           @update:model-value="
@@ -274,17 +321,32 @@ function clearTableSelection() {
             </UButton>
           </DepartementsDeleteModal>
 
+          <!-- Bouton de filtre statut -->
+          <USelect
+            v-model="statusFilter"
+            :items="[
+              { label: 'All', value: 'all' },
+              { label: 'Actif', value: 'actif' },
+              { label: 'Inactif', value: 'inactif' },
+            ]"
+            placeholder="Filtrer par statut"
+            class="min-w-28"
+          />
+
           <!-- Bouton colonnes visibles -->
           <UDropdownMenu
-            :items="table?.tableApi?.getAllColumns()
-              .filter((c: any) => c.getCanHide())
-              .map((c: any) => ({
-                label: upperFirst(c.id),
-                type: 'checkbox' as const,
-                checked: c.getIsVisible(),
-                onUpdateChecked: (v: boolean) => c.toggleVisibility(!!v),
-                onSelect: (e?: Event) => e?.preventDefault()
-              })) ?? []"
+            :items="
+              table?.tableApi
+                ?.getAllColumns()
+                .filter((c: any) => c.getCanHide())
+                .map((c: any) => ({
+                  label: upperFirst(c.id),
+                  type: 'checkbox' as const,
+                  checked: c.getIsVisible(),
+                  onUpdateChecked: (v: boolean) => c.toggleVisibility(!!v),
+                  onSelect: (e?: Event) => e?.preventDefault(),
+                })) ?? []
+            "
             :content="{ align: 'end' }"
           >
             <UButton
@@ -300,9 +362,9 @@ function clearTableSelection() {
       <!-- Tableau -->
       <UTable
         ref="table"
-      v-model:pagination="pagination"
+        v-model:pagination="pagination"
         v-model:row-selection="rowSelection"
-        :data="departements"
+        :data="directions ?? []"
         :pagination-options="{
           getPaginationRowModel: getPaginationRowModel(),
         }"

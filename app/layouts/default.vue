@@ -52,7 +52,7 @@ const links = computed<NavigationMenuItem[][]>(() => {
         to: '/permissions',
         onSelect: () => { open.value = false }
       }
-    ]; 
+    ];
 
     // Bouton Rôles uniquement pour SUPERADMIN
     // Finalement NON
@@ -95,14 +95,14 @@ const links = computed<NavigationMenuItem[][]>(() => {
       type: 'trigger',
       children: [
         {
-          label: 'Services',
-          icon: 'i-heroicons-building-office',
+          label: 'Départements',
+          icon: 'i-heroicons-squares-2x2',
           to: '/services',
           onSelect: () => { open.value = false }
         },
         {
-          label: 'Départements',
-          icon: 'i-heroicons-squares-2x2',
+          label: 'Directions',
+          icon: 'i-heroicons-building-office',
           to: '/departements',
           onSelect: () => { open.value = false }
         }

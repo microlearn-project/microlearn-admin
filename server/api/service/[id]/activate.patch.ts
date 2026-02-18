@@ -1,4 +1,4 @@
-// server/api/service/[id]/activate.patch.ts
+// server/api/departement/[id]/activate.patch.ts
 import { createSupabaseServerClient } from "~~/server/utils/supabase";
 
 export default defineEventHandler(async (event) => {
@@ -7,16 +7,16 @@ export default defineEventHandler(async (event) => {
   if (!id) {
     throw createError({
       statusCode: 400,
-      statusMessage: "Missing service ID",
+      statusMessage: "Missing departement ID",
     });
   }
   const supabase = createSupabaseServerClient();
 
 
   const { data, error } = await supabase
-    .from("service")
+    .from("departement")
     .update({ actif: true })
-    .eq("id_service", id)
+    .eq("id_departement", id)
     .select()
     .single();
 

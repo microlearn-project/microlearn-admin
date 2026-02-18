@@ -1,8 +1,8 @@
-// server/api/module/services-available/[id].get.ts
+// server/api/module/departements-available/[id].get.ts
 import { createSupabaseServerClient } from "~~/server/utils/supabase";
 import type { Tables } from "~/types/database.types";
 
-type Service = Tables<"service">;
+type Departement = Tables<"departement">;
 
 export default defineEventHandler(async (event) => {
   const id_module = getRouterParam(event, "id");
@@ -16,24 +16,24 @@ export default defineEventHandler(async (event) => {
 
   const supabase = createSupabaseServerClient();
 
-  // 1. Récupérer tous les services actifs et non supprimés
-  const { data: allServices, error: servicesError } = await supabase
-    .from("service")
+  // 1. Récupérer tous les départements actifs et non supprimés
+  const { data: allDepartements, error: departementsError } = await supabase
+    .from("departement")
     .select("*")
     .eq("actif", true)
     .is("deleted_at", null)
     .order("designation", { ascending: true });
 
-  if (servicesError) {
+  if (departementsError) {
     throw createError({
       statusCode: 500,
-      statusMessage: servicesError.message,
+      statusMessage: departementsError.message,
     });
   }
 
-  // 2. Récupérer les services déjà associés au module
-  const { data: associatedServices, error: associatedError } = await supabase
-    .from("module_departement_new")
+  // 2. Récupérer les départements déjà associés au module
+  const { data: associatedDepartements, error: associatedError } = await supabase
+    .from("module_departement")
     .select("id_departement")
     .eq("id_module", id_module);
 
@@ -46,13 +46,13 @@ export default defineEventHandler(async (event) => {
 
   // 3. Créer un Set des IDs déjà associés
   const associatedIds = new Set(
-    (associatedServices ?? []).map((item) => item.id_departement),
+    (associatedDepartements ?? []).map((item) => item.id_departement),
   );
 
-  // 4. Filtrer pour ne garder que les services non associés
-  const availableServices = (allServices ?? []).filter(
-    (service) => !associatedIds.has(service.id_service)
+  // 4. Filtrer pour ne garder que les départements non associés
+  const availableDepartements = (allDepartements ?? []).filter(
+    (departement) => !associatedIds.has(departement.id_departement),
   );
 
-  return availableServices as Service[];
+  return availableDepartements as Departement[];
 });

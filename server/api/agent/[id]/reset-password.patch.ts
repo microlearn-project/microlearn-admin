@@ -89,7 +89,7 @@ export default defineEventHandler(async (event) => {
       success: true,
       message: `Mot de passe réinitialisé au code agent: ${newPassword}`,
     };
-  } catch (err: any) { 
+  } catch (err: any) {
     throw createError({
       statusCode: 500,
       statusMessage: err.message || "Erreur lors de la réinitialisation du mot de passe",

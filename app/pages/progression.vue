@@ -13,8 +13,8 @@ interface AgentProgression {
   nom: string;
   prenom: string;
   email: string;
-  service: string;
   departement: string;
+  direction: string;      
   date_debut: string | null;
   date_fin: string | null;
   progression: number;
@@ -185,9 +185,14 @@ const columns: TableColumn<AgentProgression>[] = [
     },
   },
   {
-    accessorKey: "service",
-    header: "Service",
-    cell: ({ row }: any) => row.original.service,
+    accessorKey: "departement",
+    header: "Département",
+    cell: ({ row }: any) => row.original.departement,
+  },
+  {
+    accessorKey: "direction",
+    header: "Direction",
+    cell: ({ row }: any) => row.original.direction,
   },
   {
     accessorKey: "progression",

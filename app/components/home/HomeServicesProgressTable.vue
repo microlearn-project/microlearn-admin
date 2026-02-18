@@ -212,7 +212,7 @@ const participantColumns: TableColumn<Agent>[] = [
     <template #header>
       <div class="flex items-center justify-between">
         <div>
-          <h3 class="text-lg font-semibold">Progression par service</h3>
+          <h3 class="text-lg font-semibold">Progression par département</h3>
           <p class="text-sm text-muted mt-1">
             Vue d'ensemble de la participation aux formations
           </p>
@@ -274,15 +274,15 @@ const participantColumns: TableColumn<Agent>[] = [
       class="text-center py-12"
     >
       <UIcon name="i-lucide-inbox" class="text-4xl text-muted mb-2" />
-      <p class="text-sm text-muted">Aucun service disponible</p>
+      <p class="text-sm text-muted">Aucun département disponible</p>
     </div>
   </UCard>
 
-  <!-- Modal de détails du service -->
+  <!-- Modal de détails du département -->
   <UModal
     v-model:open="showDetailModal"
     :title="selectedService?.designation"
-    :description="`Détails de participation au service`"
+    :description="`Détails de participation au département ${selectedService?.designation}`"
     :ui="{ width: 'sm:max-w-5xl' }"
   >
     <template #body>

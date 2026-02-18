@@ -8,14 +8,20 @@ interface AuthState {
   expiresAt: string | null;
 }
 
+interface LoginResponse {
+  success: boolean;
+  error?: string;
+  requiresConfirmation?: boolean; // ← AJOUTÉ
+  message?: string; // ← AJOUTÉ
+  sessionInfo?: any; // ← AJOUTÉ
+  user?: SessionUser;
+}
+
 export const useAuth = () => {
   const user = useState<SessionUser | null>("auth_user", () => null);
   const authenticated = useState<boolean>("auth_authenticated", () => false);
   const loading = useState<boolean>("auth_loading", () => true);
 
-  /**
-   * Récupère la session courante
-   */
   async function fetchUser(): Promise<void> {
     loading.value = true;
 
@@ -32,26 +38,42 @@ export const useAuth = () => {
   }
 
   /**
-   * Connexion
+   * Connexion avec gestion de session unique
    */
   async function login(
     identifier: string,
     password: string,
-    loginType: "email" | "code"
-  ): Promise<{ success: boolean; error?: string }> {
+    loginType: "email" | "code",
+    forceLogin = false, // ← AJOUTÉ
+  ): Promise<LoginResponse> {
     try {
-      const data = await $fetch<{ success: boolean; user: SessionUser }>(
-        "/api/auth/login",
-        {
-          method: "POST",
-          body: { identifier, password, loginType },
-        }
-      );
+      const data = await $fetch<LoginResponse>("/api/auth/login", {
+        method: "POST",
+        body: {
+          identifier,
+          password,
+          loginType,
+          forceLogin, // ← AJOUTÉ
+        },
+      });
 
-      authenticated.value = true;
-      user.value = data.user;
+      // ← AJOUTÉ : Gestion de la confirmation
+      if (data.requiresConfirmation) {
+        return {
+          success: false,
+          requiresConfirmation: true,
+          message: data.message,
+          sessionInfo: data.sessionInfo,
+        };
+      }
 
-      return { success: true };
+      if (data.success && data.user) {
+        authenticated.value = true;
+        user.value = data.user;
+        return { success: true };
+      }
+
+      return { success: false, error: "Réponse invalide du serveur" };
     } catch (error: any) {
       return {
         success: false,
@@ -60,9 +82,6 @@ export const useAuth = () => {
     }
   }
 
-  /**
-   * Déconnexion
-   */
   async function logout(): Promise<void> {
     try {
       await $fetch("/api/auth/logout", { method: "POST" });
@@ -73,16 +92,10 @@ export const useAuth = () => {
     }
   }
 
-  /**
-   * Vérifie si l'utilisateur a un rôle spécifique
-   */
   function hasRole(roleDesignation: string): boolean {
     return user.value?.role?.designation === roleDesignation;
   }
 
-  /**
-   * Vérifie si l'utilisateur a l'un des rôles spécifiés
-   */
   function hasAnyRole(roles: string[]): boolean {
     if (!user.value?.role) return false;
     return roles.includes(user.value.role.designation);

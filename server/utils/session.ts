@@ -8,13 +8,14 @@ export interface SessionUser {
   nom: string;
   prenom: string;
   email: string;
+  id_direction: string;
   id_departement: string;
-  id_service: string;
   role: {
     id_role: string;
     designation: string;
   };
   id_user_role: string;
+  session_token?: string;  
 }
 
 export interface SessionData {

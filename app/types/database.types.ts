@@ -70,72 +70,67 @@ export type Database = {
             referencedRelation: "agent"
             referencedColumns: ["id_agent"]
           },
+          {
+            foreignKeyName: "activity_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "vue_hierarchie_complete"
+            referencedColumns: ["id_agent"]
+          },
         ]
       }
-      agent: {
+      admin_sessions: {
         Row: {
-          actif: boolean
-          code_agent: string
-          created_at: string
-          deleted_at: string | null
-          email: string
+          created_at: string | null
+          expires_at: string
           id_agent: string
-          id_departement: string
-          id_service: string
-          last_login: string | null
-          nom: string
-          password_hash: string
-          prenom: string
-          updated_at: string
+          id_session: string
+          ip_address: unknown
+          is_active: boolean | null
+          last_activity: string | null
+          session_token: string
+          user_agent: string | null
         }
         Insert: {
-          actif?: boolean
-          code_agent: string
-          created_at?: string
-          deleted_at?: string | null
-          email: string
-          id_agent?: string
-          id_departement: string
-          id_service: string
-          last_login?: string | null
-          nom: string
-          password_hash: string
-          prenom: string
-          updated_at?: string
+          created_at?: string | null
+          expires_at: string
+          id_agent: string
+          id_session?: string
+          ip_address?: unknown
+          is_active?: boolean | null
+          last_activity?: string | null
+          session_token: string
+          user_agent?: string | null
         }
         Update: {
-          actif?: boolean
-          code_agent?: string
-          created_at?: string
-          deleted_at?: string | null
-          email?: string
+          created_at?: string | null
+          expires_at?: string
           id_agent?: string
-          id_departement?: string
-          id_service?: string
-          last_login?: string | null
-          nom?: string
-          password_hash?: string
-          prenom?: string
-          updated_at?: string
+          id_session?: string
+          ip_address?: unknown
+          is_active?: boolean | null
+          last_activity?: string | null
+          session_token?: string
+          user_agent?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "agent_id_departement_fkey"
-            columns: ["id_departement"]
+            foreignKeyName: "admin_sessions_id_agent_fkey"
+            columns: ["id_agent"]
             isOneToOne: false
-            referencedRelation: "departement"
-            referencedColumns: ["id_departement"]
+            referencedRelation: "agent"
+            referencedColumns: ["id_agent"]
           },
           {
-            foreignKeyName: "agent_id_service_fkey"
-            columns: ["id_service"]
+            foreignKeyName: "admin_sessions_id_agent_fkey"
+            columns: ["id_agent"]
             isOneToOne: false
-            referencedRelation: "service"
-            referencedColumns: ["id_service"]
+            referencedRelation: "vue_hierarchie_complete"
+            referencedColumns: ["id_agent"]
           },
         ]
       }
-      agent_new: {
+      agent: {
         Row: {
           actif: boolean
           code_agent: string
@@ -183,28 +178,28 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "agent_new_id_departement_fkey"
+            foreignKeyName: "agent_id_departement_fkey"
             columns: ["id_departement"]
             isOneToOne: false
-            referencedRelation: "departement_new"
+            referencedRelation: "departement"
             referencedColumns: ["id_departement"]
           },
           {
-            foreignKeyName: "agent_new_id_departement_fkey"
+            foreignKeyName: "agent_id_departement_fkey"
             columns: ["id_departement"]
             isOneToOne: false
             referencedRelation: "vue_hierarchie_complete"
             referencedColumns: ["id_departement"]
           },
           {
-            foreignKeyName: "agent_new_id_direction_fkey"
+            foreignKeyName: "agent_id_direction_fkey"
             columns: ["id_direction"]
             isOneToOne: false
-            referencedRelation: "direction_new"
+            referencedRelation: "direction"
             referencedColumns: ["id_direction"]
           },
           {
-            foreignKeyName: "agent_new_id_direction_fkey"
+            foreignKeyName: "agent_id_direction_fkey"
             columns: ["id_direction"]
             isOneToOne: false
             referencedRelation: "vue_hierarchie_complete"
@@ -288,30 +283,6 @@ export type Database = {
       }
       departement: {
         Row: {
-          created_at: string
-          deleted_at: string | null
-          designation: string
-          id_departement: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          deleted_at?: string | null
-          designation: string
-          id_departement?: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          deleted_at?: string | null
-          designation?: string
-          id_departement?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      departement_new: {
-        Row: {
           actif: boolean
           created_at: string
           deleted_at: string | null
@@ -340,14 +311,14 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "departement_new_id_direction_fkey"
+            foreignKeyName: "departement_id_direction_fkey"
             columns: ["id_direction"]
             isOneToOne: false
-            referencedRelation: "direction_new"
+            referencedRelation: "direction"
             referencedColumns: ["id_direction"]
           },
           {
-            foreignKeyName: "departement_new_id_direction_fkey"
+            foreignKeyName: "departement_id_direction_fkey"
             columns: ["id_direction"]
             isOneToOne: false
             referencedRelation: "vue_hierarchie_complete"
@@ -355,7 +326,7 @@ export type Database = {
           },
         ]
       }
-      direction_new: {
+      direction: {
         Row: {
           actif: boolean
           created_at: string
@@ -385,14 +356,14 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "direction_new_id_autorite_fkey"
+            foreignKeyName: "direction_id_autorite_fkey"
             columns: ["id_autorite"]
             isOneToOne: false
             referencedRelation: "autorite_superieure"
             referencedColumns: ["id_autorite"]
           },
           {
-            foreignKeyName: "direction_new_id_autorite_fkey"
+            foreignKeyName: "direction_id_autorite_fkey"
             columns: ["id_autorite"]
             isOneToOne: false
             referencedRelation: "vue_hierarchie_complete"
@@ -480,9 +451,16 @@ export type Database = {
             referencedRelation: "agent"
             referencedColumns: ["id_agent"]
           },
+          {
+            foreignKeyName: "module_id_agent_fkey"
+            columns: ["id_agent"]
+            isOneToOne: false
+            referencedRelation: "vue_hierarchie_complete"
+            referencedColumns: ["id_agent"]
+          },
         ]
       }
-      module_departement_new: {
+      module_departement: {
         Row: {
           date_attribution: string
           id_departement: string
@@ -500,78 +478,27 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "module_departement_new_id_departement_fkey"
+            foreignKeyName: "module_departement_id_departement_fkey"
             columns: ["id_departement"]
             isOneToOne: false
-            referencedRelation: "departement_new"
+            referencedRelation: "departement"
             referencedColumns: ["id_departement"]
           },
           {
-            foreignKeyName: "module_departement_new_id_departement_fkey"
+            foreignKeyName: "module_departement_id_departement_fkey"
             columns: ["id_departement"]
             isOneToOne: false
             referencedRelation: "vue_hierarchie_complete"
             referencedColumns: ["id_departement"]
           },
           {
-            foreignKeyName: "module_departement_new_id_module_fkey"
+            foreignKeyName: "module_departement_id_module_fkey"
             columns: ["id_module"]
             isOneToOne: false
             referencedRelation: "module"
             referencedColumns: ["id_module"]
           },
         ]
-      }
-      module_service: {
-        Row: {
-          date_attribution: string
-          id_module: string
-          id_service: string
-        }
-        Insert: {
-          date_attribution?: string
-          id_module: string
-          id_service: string
-        }
-        Update: {
-          date_attribution?: string
-          id_module?: string
-          id_service?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "module_service_id_module_fkey"
-            columns: ["id_module"]
-            isOneToOne: false
-            referencedRelation: "module"
-            referencedColumns: ["id_module"]
-          },
-          {
-            foreignKeyName: "module_service_id_service_fkey"
-            columns: ["id_service"]
-            isOneToOne: false
-            referencedRelation: "service"
-            referencedColumns: ["id_service"]
-          },
-        ]
-      }
-      module_service_backup: {
-        Row: {
-          date_attribution: string | null
-          id_module: string | null
-          id_service: string | null
-        }
-        Insert: {
-          date_attribution?: string | null
-          id_module?: string | null
-          id_service?: string | null
-        }
-        Update: {
-          date_attribution?: string | null
-          id_module?: string | null
-          id_service?: string | null
-        }
-        Relationships: []
       }
       module_tag: {
         Row: {
@@ -739,6 +666,13 @@ export type Database = {
             referencedColumns: ["id_agent"]
           },
           {
+            foreignKeyName: "reponse_agent_id_agent_fkey"
+            columns: ["id_agent"]
+            isOneToOne: false
+            referencedRelation: "vue_hierarchie_complete"
+            referencedColumns: ["id_agent"]
+          },
+          {
             foreignKeyName: "reponse_agent_id_question_fkey"
             columns: ["id_question"]
             isOneToOne: false
@@ -791,6 +725,13 @@ export type Database = {
             referencedColumns: ["id_agent"]
           },
           {
+            foreignKeyName: "resultat_quiz_id_agent_fkey"
+            columns: ["id_agent"]
+            isOneToOne: false
+            referencedRelation: "vue_hierarchie_complete"
+            referencedColumns: ["id_agent"]
+          },
+          {
             foreignKeyName: "resultat_quiz_id_quiz_fkey"
             columns: ["id_quiz"]
             isOneToOne: false
@@ -816,33 +757,6 @@ export type Database = {
           created_at?: string
           designation?: string
           id_role?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      service: {
-        Row: {
-          actif: boolean
-          created_at: string
-          deleted_at: string | null
-          designation: string
-          id_service: string
-          updated_at: string
-        }
-        Insert: {
-          actif?: boolean
-          created_at?: string
-          deleted_at?: string | null
-          designation: string
-          id_service?: string
-          updated_at?: string
-        }
-        Update: {
-          actif?: boolean
-          created_at?: string
-          deleted_at?: string | null
-          designation?: string
-          id_service?: string
           updated_at?: string
         }
         Relationships: []
@@ -878,6 +792,13 @@ export type Database = {
             columns: ["id_agent"]
             isOneToOne: false
             referencedRelation: "agent"
+            referencedColumns: ["id_agent"]
+          },
+          {
+            foreignKeyName: "suivi_module_id_agent_fkey"
+            columns: ["id_agent"]
+            isOneToOne: false
+            referencedRelation: "vue_hierarchie_complete"
             referencedColumns: ["id_agent"]
           },
           {
@@ -956,10 +877,24 @@ export type Database = {
             referencedColumns: ["id_agent"]
           },
           {
+            foreignKeyName: "user_role_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "vue_hierarchie_complete"
+            referencedColumns: ["id_agent"]
+          },
+          {
             foreignKeyName: "user_role_id_agent_fkey"
             columns: ["id_agent"]
             isOneToOne: false
             referencedRelation: "agent"
+            referencedColumns: ["id_agent"]
+          },
+          {
+            foreignKeyName: "user_role_id_agent_fkey"
+            columns: ["id_agent"]
+            isOneToOne: false
+            referencedRelation: "vue_hierarchie_complete"
             referencedColumns: ["id_agent"]
           },
           {

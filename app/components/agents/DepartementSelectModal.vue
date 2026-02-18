@@ -3,15 +3,18 @@ import type { TableColumn } from "@nuxt/ui";
 import type { Tables } from "~/types/database.types";
 import { getPaginationRowModel } from "@tanstack/vue-table";
 
-type Departement = Tables<"departement">;
+type Direction = Tables<"direction">;
 
 const open = defineModel<boolean>("open", { default: false });
-const selectedDepartement = defineModel<Departement | null>("selectedDepartement", {
-  default: null,
-});
+const selectedDepartement = defineModel<Direction | null>(
+  "selectedDepartement",
+  {
+    default: null,
+  },
+);
 
 const emit = defineEmits<{
-  (e: "select", departement: Departement): void;
+  (e: "select", direction: Direction): void;
 }>();
 
 const table = useTemplateRef<any>("table");
@@ -19,10 +22,10 @@ const UButton = resolveComponent("UButton");
 const UBadge = resolveComponent("UBadge");
 
 const {
-  data: departements,
+  data: directions,
   pending,
   refresh,
-} = useFetch<Departement[]>("/api/departement", {
+} = useFetch<Direction[]>("/api/departement", {
   server: false,
   lazy: true,
   immediate: false,
@@ -40,21 +43,19 @@ watch(
   { immediate: true },
 );
 
-function selectDepartement(departement: Departement) {
-  selectedDepartement.value = departement;
-  emit("select", departement);
+function selectDepartement(direction: Direction) {
+  selectedDepartement.value = direction;
+  emit("select", direction);
   open.value = false;
 }
 
-const columns: TableColumn<Departement>[] = [
+const columns: TableColumn<Direction>[] = [
   {
     accessorKey: "designation",
     header: "Désignation",
     cell: ({ row }: any) => {
       const dept = row.original;
-      return h("div", {}, [
-        h("p", { class: "font-medium" }, dept.designation), 
-      ]);
+      return h("div", {}, [h("p", { class: "font-medium" }, dept.designation)]);
     },
   },
   {
@@ -94,8 +95,8 @@ const globalFilter = ref("");
     <Teleport to="body">
       <UModal
         v-model:open="open"
-        title="Sélectionner un département"
-        description="Choisissez le département d'affectation de l'agent"
+        title="Sélectionner une direction"
+        description="Choisissez une direction d'affectation de l'agent"
         :overlay="false"
         :ui="{
           width: 'sm:max-w-3xl',
@@ -106,7 +107,7 @@ const globalFilter = ref("");
           <div class="space-y-4">
             <UInput
               v-model="globalFilter"
-              placeholder="Rechercher un département..."
+              placeholder="Rechercher une direction..."
               icon="i-lucide-search"
               class="w-full"
             />
@@ -115,7 +116,7 @@ const globalFilter = ref("");
               ref="table"
               v-model:pagination="pagination"
               v-model:global-filter="globalFilter"
-              :data="departements"
+              :data="directions"
               :columns="columns"
               :loading="pending"
               class="max-h-100 overflow-y-auto"
@@ -132,11 +133,11 @@ const globalFilter = ref("");
             />
 
             <div
-              v-if="departements && departements.length > 0"
+              v-if="directions && directions.length > 0"
               class="flex items-center justify-between gap-4 border-t border-default pt-4"
             >
               <div class="text-sm text-muted">
-                {{ departements.length }} département(s) disponible(s)
+                {{ directions.length }} Direction(s) disponible(s)
               </div>
 
               <UPagination
@@ -152,11 +153,11 @@ const globalFilter = ref("");
             </div>
 
             <div
-              v-if="!pending && (!departements || departements.length === 0)"
+              v-if="!pending && (!directions || directions.length === 0)"
               class="text-center py-8 text-muted"
             >
               <UIcon name="i-lucide-inbox" class="mx-auto mb-2 text-4xl" />
-              <p>Aucun département disponible</p>
+              <p>Aucune Direction disponible</p>
             </div>
 
             <div class="flex justify-end pt-4">
