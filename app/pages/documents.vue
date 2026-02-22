@@ -92,7 +92,7 @@ const rowSelection = ref<Record<string, boolean>>({});
 const selectedRows = computed(
   () =>
     table.value?.tableApi?.getSelectedRowModel().rows.map((r) => r.original) ??
-    []
+    [],
 );
 
 /* ---------------------------------------------------
@@ -109,7 +109,7 @@ function openDeleteModal(doc: Document) {
 function onDocumentDeleted() {
   if (documentToDelete.value && documents.value) {
     documents.value = documents.value.filter(
-      (d) => d.id_document !== documentToDelete.value?.id_document
+      (d) => d.id_document !== documentToDelete.value?.id_document,
     );
   }
   documentToDelete.value = null;
@@ -131,21 +131,6 @@ function getRowItems(row: { original: Document }) {
       onSelect: () => {
         navigator.clipboard.writeText(String(d.id_document));
         toast.add({ title: "ID copié dans le presse-papier" });
-      },
-    },
-    {
-      label: "Ouvrir le fichier",
-      icon: "i-lucide-external-link",
-      onSelect: () => {
-        window.open(fullUrl, "_blank");
-      },
-    },
-    {
-      label: "Copier l'URL",
-      icon: "i-lucide-link",
-      onSelect: () => {
-        navigator.clipboard.writeText(fullUrl);
-        toast.add({ title: "URL copiée dans le presse-papier" });
       },
     },
     { type: "separator" },
@@ -225,22 +210,34 @@ const columns: TableColumn<Document>[] = [
     cell: ({ row }: any) => {
       const fullUrl = getFullFileUrl(row.original.fichier);
       return h("div", { class: "flex items-center gap-3" }, [
-        h("div", {
-          class: "w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"
-        }, [
-          h(resolveComponent("UIcon"), {
-            name: getFileIcon(row.original.fichier),
-            class: "text-primary text-lg"
-          }),
-        ]),
+        h(
+          "div",
+          {
+            class:
+              "w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0",
+          },
+          [
+            h(resolveComponent("UIcon"), {
+              name: getFileIcon(row.original.fichier),
+              class: "text-primary text-lg",
+            }),
+          ],
+        ),
         h("div", { class: "min-w-0" }, [
-          h("a", {
-            class: "font-medium truncate max-w-xs block hover:text-primary hover:underline cursor-pointer",
-            href: fullUrl,
-            target: "_blank",
-            title: getFileName(row.original.fichier)
-          }, getFileName(row.original.fichier)),
-          h("p", { class: "text-xs text-muted" }, getFileExtension(row.original.fichier)),
+          h(
+            "a",
+            {
+              class:
+                "font-medium truncate max-w-xs block hover:text-primary hover:underline cursor-pointer",
+              title: getFileName(row.original.fichier) || "Fichier sans nom",
+            },
+            getFileName(row.original.fichier),
+          ),
+          h(
+            "p",
+            { class: "text-xs text-muted" },
+            getFileExtension(row.original.fichier),
+          ),
         ]),
       ]);
     },
@@ -254,7 +251,7 @@ const columns: TableColumn<Document>[] = [
         ? h(
             UBadge,
             { color: "primary", variant: "subtle" },
-            () => row.original.module.titre
+            () => row.original.module.titre,
           )
         : h("span", { class: "text-muted" }, "—"),
   },
@@ -285,7 +282,7 @@ const columns: TableColumn<Document>[] = [
               color: "neutral",
               variant: "ghost",
               class: "ml-auto",
-            })
+            }),
         ),
       ]),
   },
@@ -374,9 +371,10 @@ async function deleteSelectedDocuments() {
 
     toast.add({
       title: "Documents supprimés",
-      description: totalCoursImpacted > 0
-        ? `${selectedRows.value.length} document(s) supprimé(s), ${totalCoursImpacted} cours mis à jour`
-        : `${selectedRows.value.length} document(s) supprimé(s)`,
+      description:
+        totalCoursImpacted > 0
+          ? `${selectedRows.value.length} document(s) supprimé(s), ${totalCoursImpacted} cours mis à jour`
+          : `${selectedRows.value.length} document(s) supprimé(s)`,
       color: "success",
     });
   } catch (err) {
@@ -421,7 +419,9 @@ async function deleteSelectedDocuments() {
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div class="bg-elevated border border-default rounded-lg p-4">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+            <div
+              class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center"
+            >
               <UIcon name="i-lucide-files" class="text-primary text-xl" />
             </div>
             <div>
@@ -433,7 +433,9 @@ async function deleteSelectedDocuments() {
 
         <div class="bg-elevated border border-default rounded-lg p-4">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-lg bg-info/10 flex items-center justify-center">
+            <div
+              class="w-10 h-10 rounded-lg bg-info/10 flex items-center justify-center"
+            >
               <UIcon name="i-lucide-book-open" class="text-info text-xl" />
             </div>
             <div>
@@ -445,7 +447,9 @@ async function deleteSelectedDocuments() {
 
         <div class="bg-elevated border border-default rounded-lg p-4">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
+            <div
+              class="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center"
+            >
               <UIcon name="i-lucide-filter" class="text-success text-xl" />
             </div>
             <div>
@@ -463,7 +467,7 @@ async function deleteSelectedDocuments() {
           v-model="searchQuery"
           placeholder="Rechercher un document..."
           icon="i-lucide-search"
-          class="max-w-sm"
+          class="max-w-md"
         />
 
         <div class="flex items-center gap-3">
@@ -490,7 +494,11 @@ async function deleteSelectedDocuments() {
                   ? selectedModuleForFilter.titre
                   : 'Filtrer par module'
               "
-              :icon="selectedModuleForFilter ? 'i-lucide-book-open' : 'i-lucide-filter'"
+              :icon="
+                selectedModuleForFilter
+                  ? 'i-lucide-book-open'
+                  : 'i-lucide-filter'
+              "
               :color="selectedModuleForFilter ? 'primary' : 'neutral'"
               variant="outline"
               class="min-w-48 justify-start"
@@ -542,7 +550,11 @@ async function deleteSelectedDocuments() {
         <UIcon name="i-lucide-file-x" class="text-5xl text-muted mb-4" />
         <p class="font-medium mb-2">Aucun document trouvé</p>
         <p class="text-muted text-sm">
-          {{ searchQuery || moduleFilter !== 'all' ? 'Essayez de modifier vos filtres' : 'Les documents uploadés dans les modules apparaîtront ici' }}
+          {{
+            searchQuery || moduleFilter !== "all"
+              ? "Essayez de modifier vos filtres"
+              : "Les documents uploadés dans les modules apparaîtront ici"
+          }}
         </p>
       </div>
 

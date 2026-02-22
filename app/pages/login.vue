@@ -20,20 +20,20 @@ const form = ref({
 
 const loading = ref(false);
 
-// ← AJOUTÉ : État pour la confirmation de session active
+//  État pour la confirmation de session active
 const sessionConflict = ref(false);
 const sessionInfo = ref<any>(null);
 
 const identifierLabel = computed(() =>
-  loginType.value === "email" ? "Adresse email" : "Code agent"
+  loginType.value === "email" ? "Adresse email" : "Code agent",
 );
 
 const identifierPlaceholder = computed(() =>
-  loginType.value === "email" ? "votre.email@exemple.com" : "Votre code agent"
+  loginType.value === "email" ? "votre.email@exemple.com" : "Votre code agent",
 );
 
 const identifierIcon = computed(() =>
-  loginType.value === "email" ? "i-lucide-mail" : "i-lucide-hash"
+  loginType.value === "email" ? "i-lucide-mail" : "i-lucide-hash",
 );
 
 function toggleLoginType() {
@@ -41,7 +41,7 @@ function toggleLoginType() {
   form.value.identifier = "";
 }
 
-// ← MODIFIÉ : Gestion de la connexion avec confirmation
+// Gestion de la connexion avec confirmation
 async function handleSubmit(forceLogin = false) {
   if (!form.value.identifier.trim()) {
     toast.add({
@@ -67,12 +67,12 @@ async function handleSubmit(forceLogin = false) {
     form.value.identifier.trim(),
     form.value.password,
     loginType.value,
-    forceLogin  // ← AJOUTÉ
+    forceLogin, 
   );
 
   loading.value = false;
 
-  // ← AJOUTÉ : Gestion du conflit de session
+  //  Gestion du conflit de session
   if (!result.success && result.requiresConfirmation) {
     sessionConflict.value = true;
     sessionInfo.value = result.sessionInfo;
@@ -100,13 +100,13 @@ async function handleSubmit(forceLogin = false) {
   }
 }
 
-// ← AJOUTÉ : Forcer la connexion en fermant la session active
+//  Forcer la connexion en fermant la session active
 function confirmForceLogin() {
   sessionConflict.value = false;
   handleSubmit(true);
 }
 
-// ← AJOUTÉ : Annuler la connexion forcée
+//  Annuler la connexion forcée
 function cancelForceLogin() {
   sessionConflict.value = false;
   sessionInfo.value = null;
@@ -119,14 +119,18 @@ function cancelForceLogin() {
     <div class="w-full max-w-md">
       <!-- Logo / Titre -->
       <div class="text-center mb-8">
-        <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center">
+        <div
+          class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center"
+        >
           <UIcon name="i-lucide-graduation-cap" class="text-primary text-3xl" />
         </div>
         <h1 class="text-2xl font-bold">UTB Learn Administration</h1>
-        <p class="text-muted mt-2">Connectez-vous pour accéder au tableau de bord</p>
+        <p class="text-muted mt-2">
+          Connectez-vous pour accéder au tableau de bord
+        </p>
       </div>
 
-      <!-- ← AJOUTÉ : Modal de confirmation session active -->
+      <!--  Modal de confirmation session active -->
       <UModal
         v-model:open="sessionConflict"
         title="Session active détectée"
@@ -134,10 +138,17 @@ function cancelForceLogin() {
       >
         <template #body>
           <div class="space-y-4">
-            <div class="flex items-start gap-3 p-4 bg-warning/10 border border-warning/20 rounded-lg">
-              <UIcon name="i-lucide-alert-triangle" class="text-warning text-xl mt-0.5" />
+            <div
+              class="flex items-start gap-3 p-4 bg-warning/10 border border-warning/20 rounded-lg"
+            >
+              <UIcon
+                name="i-lucide-alert-triangle"
+                class="text-warning text-xl mt-0.5"
+              />
               <div class="flex-1">
-                <p class="font-medium text-warning mb-1">Une session est déjà ouverte</p>
+                <p class="font-medium text-warning mb-1">
+                  Une session est déjà ouverte
+                </p>
                 <p class="text-sm text-muted">
                   Vous êtes déjà connecté sur un autre navigateur ou appareil.
                 </p>
@@ -154,7 +165,9 @@ function cancelForceLogin() {
               <div class="flex justify-between">
                 <span class="text-muted">Dernière activité :</span>
                 <span class="font-medium">
-                  {{ new Date(sessionInfo.last_activity).toLocaleString("fr-FR") }}
+                  {{
+                    new Date(sessionInfo.last_activity).toLocaleString("fr-FR")
+                  }}
                 </span>
               </div>
             </div>
@@ -240,7 +253,9 @@ function cancelForceLogin() {
             >
               <template #trailing>
                 <UButton
-                  :icon="form.showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                  :icon="
+                    form.showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'
+                  "
                   color="neutral"
                   variant="ghost"
                   size="xs"

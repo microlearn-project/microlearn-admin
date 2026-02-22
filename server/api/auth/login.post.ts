@@ -110,7 +110,7 @@ export default defineEventHandler(async (event) => {
 
     return {
       success: false,
-      requiresConfirmation: true, // ← NOUVEAU : signal au frontend
+      requiresConfirmation: true, // signal au frontend
       message: `Une session est déjà active depuis ${new Date(existingSession.created_at).toLocaleString("fr-FR")}. Voulez-vous fermer cette session et continuer ?`,
       sessionInfo: {
         created_at: existingSession.created_at,

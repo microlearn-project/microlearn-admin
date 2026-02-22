@@ -517,9 +517,9 @@ const stats = computed(() => {
         <!-- Barre de recherche -->
         <UInput
           v-model="searchQuery"
-          placeholder="Rechercher un agent ou rôle..."
+          placeholder="Rechercher un agent ..."
           icon="i-lucide-search"
-          class="max-w-sm"
+          class="max-w-md"
         />
 
         <div class="flex items-center gap-3">

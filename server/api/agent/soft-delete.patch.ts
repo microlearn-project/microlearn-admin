@@ -1,7 +1,7 @@
 // server/api/agent/soft-delete.patch.ts
 import {
   createSupabaseServerClient,
-  createSupabaseAdminClient,  
+  createSupabaseAdminClient,
 } from "~~/server/utils/supabase";
 import type { TablesUpdate } from "~/types/database.types";
 import { getUserSession } from "~~/server/utils/session";
@@ -122,7 +122,7 @@ async function isAgentUsed_quizResult(id_agent: string): Promise<boolean> {
 export default defineEventHandler(async (event) => {
   const { id } = await readBody(event);
   const supabase = createSupabaseServerClient();
-  const supabaseAdmin = createSupabaseAdminClient(); // ← AJOUTÉ
+  const supabaseAdmin = createSupabaseAdminClient();  
 
   // ========== RÉCUPÉRER L'EMAIL DE L'AGENT AVANT SUPPRESSION ==========
   const { data: agentToDelete, error: fetchError } = await supabase
@@ -204,8 +204,8 @@ export default defineEventHandler(async (event) => {
     }
 
     // 2. Supprimer dans supabase.auth
-    let authUserDeleted = false;  // ← AJOUTÉ : Variable accessible partout
-    
+    let authUserDeleted = false; //  Variable accessible partout
+
     try {
       // Récupérer le user ID via l'email
       const { data: authUsers, error: authListError } =
@@ -223,7 +223,7 @@ export default defineEventHandler(async (event) => {
           if (deleteAuthError) {
             console.error("Erreur suppression auth user:", deleteAuthError);
           } else {
-            authUserDeleted = true;  // ← AJOUTÉ : Marquer comme supprimé
+            authUserDeleted = true; //  Marquer comme supprimé
             console.log(`User auth supprimé : ${agentEmail}`);
           }
         } else {
@@ -243,7 +243,7 @@ export default defineEventHandler(async (event) => {
       meta: {
         email: agentEmail,
         type: "hard_delete",
-        auth_supprime: authUserDeleted,   
+        auth_supprime: authUserDeleted,
       },
     });
 

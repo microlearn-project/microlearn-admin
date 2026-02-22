@@ -226,7 +226,7 @@ const participantColumns: TableColumn<Agent>[] = [
         v-model="globalFilter"
         placeholder="Rechercher un service..."
         icon="i-lucide-search"
-        class="max-w-sm"
+        class="max-w-md"
       />
     </div>
 

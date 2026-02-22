@@ -213,7 +213,7 @@ function clearTableSelection() {
           "
           placeholder="Rechercher une catégorie"
           icon="i-lucide-search"
-          class="max-w-sm"
+          class="max-w-md"
           @update:model-value="
             table?.tableApi?.getColumn('designation')?.setFilterValue($event)
           "

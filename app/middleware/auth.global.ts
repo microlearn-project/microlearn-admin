@@ -17,7 +17,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     return navigateTo("/login", { replace: true });
   }
 
-  // ← MODIFIÉ : Validation session UNIQUEMENT si on ne vient PAS de /login
+  // Validation session UNIQUEMENT si on ne vient PAS de /login
   // ET seulement après un délai pour laisser la session se propager
   if (
     authenticated.value &&
@@ -40,7 +40,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
         return;
       }
     } catch (error) {
-      // ← IMPORTANT : Ne pas déconnecter sur erreur réseau
+      // Ne pas déconnecter sur erreur réseau
       // Seulement logger l'erreur
       console.error("Erreur validation session (ignorée):", error);
       // On continue quand même, la session cookie est peut-être encore valide

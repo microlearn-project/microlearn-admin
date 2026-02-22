@@ -59,17 +59,7 @@ const columns: TableColumn<Module>[] = [
     header: "Titre du module",
     cell: ({ row }: any) => {
       const mod = row.original;
-      return h("div", {}, [
-        h("p", { class: "font-medium" }, mod.titre),
-      ]);
-    },
-  }, 
-  {
-    accessorKey: "created_at",
-    header: "Créé le",
-    cell: ({ row }: any) => {
-      const date = new Date(row.original.created_at);
-      return date.toLocaleDateString("fr-FR", { dateStyle: "medium" });
+      return h("div", {}, [h("p", { class: "font-medium" }, mod.titre)]);
     },
   },
   {

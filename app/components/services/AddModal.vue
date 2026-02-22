@@ -8,8 +8,10 @@ type Direction = Tables<"direction">;
 const emit = defineEmits(["addservice"]);
 
 const schema = z.object({
-  designation: z.string().max(50, "Le nombre maximum de caractères est de 50"),
-  id_direction: z.string().uuid("Veuillez sélectionner une direction"),  
+  designation: z
+    .string()
+    .max(255, "Le nombre maximum de caractères est de 255"),
+  id_direction: z.string().uuid("Veuillez sélectionner une direction"),
   actif: z.boolean().default(false),
 });
 
@@ -19,7 +21,7 @@ type Schema = z.output<typeof schema>;
 
 const state = reactive<Partial<Schema>>({
   designation: undefined,
-  id_direction: undefined,  
+  id_direction: undefined,
   actif: undefined,
 });
 
@@ -40,11 +42,11 @@ const toast = useToast();
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   try {
-    await $fetch("/api/service/addservice", {   
+    await $fetch("/api/service/addservice", {
       method: "POST",
       body: {
         designation: event.data.designation,
-        id_direction: event.data.id_direction,  
+        id_direction: event.data.id_direction,
         actif: event.data.actif,
       },
     });
@@ -57,24 +59,32 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
     emit("addservice");
     state.designation = "";
-    state.id_direction = undefined;  
+    state.id_direction = undefined;
     state.actif = undefined;
     open.value = false;
-
   } catch (err: any) {
-    const message = err?.data?.message || err?.statusMessage || err?.message || "";
+    const message =
+      err?.data?.message || err?.statusMessage || err?.message || "";
 
-    if (message.includes("duplicate key") || message.includes("unique constraint")) {
+    if (
+      message.includes("duplicate key") ||
+      message.includes("unique constraint")
+    ) {
       toast.add({
         title: "Échec",
-        description: "Ce département est déjà en place! Veuillez en ajouter un autre.",
+        description:
+          "Ce département est déjà en place! Veuillez en ajouter un autre.",
         color: "error",
       });
       return;
     }
 
     if (err?.statusCode === 400) {
-      toast.add({ title: "Erreur", description: "Requête invalide.", color: "error" });
+      toast.add({
+        title: "Erreur",
+        description: "Requête invalide.",
+        color: "error",
+      });
       return;
     }
 
@@ -88,7 +98,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
 function resetForm() {
   state.designation = "";
-  state.id_direction = undefined;  
+  state.id_direction = undefined;
   state.actif = undefined;
 }
 </script>
@@ -108,15 +118,15 @@ function resetForm() {
         class="space-y-4"
         @submit="onSubmit"
       >
-        <UFormField
-          label="Désignation"
-          name="designation"
-          required
-        >
-          <UInput v-model="designationUppercase" class="w-full" placeholder="COURRIER" />
+        <UFormField label="Désignation" name="designation" required>
+          <UInput
+            v-model="designationUppercase"
+            class="w-full"
+            placeholder="COURRIER"
+          />
         </UFormField>
 
-        <!-- ← AJOUTÉ : Sélection de direction -->
+        <!--  Sélection de direction -->
         <UFormField
           label="Direction"
           name="id_direction"
@@ -125,17 +135,22 @@ function resetForm() {
         >
           <USelect
             v-model="state.id_direction"
-            :items="directions?.map(d => ({ label: d.designation, value: d.id_direction })) ?? []"
+            :items="
+              directions?.map((d) => ({
+                label: d.designation,
+                value: d.id_direction,
+              })) ?? []
+            "
             placeholder="Sélectionner une direction"
             class="w-full"
           />
         </UFormField>
 
-        <UCheckbox 
-          v-model="state.actif" 
-          indicator="end" 
-          label="Actif ?" 
-          variant="card" 
+        <UCheckbox
+          v-model="state.actif"
+          indicator="end"
+          label="Actif ?"
+          variant="card"
         />
 
         <div class="flex justify-end gap-2">
@@ -143,7 +158,7 @@ function resetForm() {
             label="Annuler"
             color="neutral"
             variant="subtle"
-            @click="open = false, resetForm()"
+            @click="((open = false), resetForm())"
           />
           <UButton
             label="Ajouter"

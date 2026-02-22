@@ -133,8 +133,8 @@ const pagination = ref({
 <template>
   <UModal
     v-model:open="open"
-    title="Ajouter des services"
-    description="Sélectionnez les services à ajouter au module"
+    title="Ajouter des départements"
+    description="Sélectionnez les départements à ajouter au module"
     :ui="{ width: 'sm:max-w-2xl' }"
   >
     <template #body>

@@ -43,8 +43,8 @@ async function loadProfile() {
     profile.prenom = data.prenom
     profile.email = data.email
     profile.code_agent = data.code_agent
-    profile.departement = (data.departement as any)?.designation || ''
-    profile.service = (data.service as any)?.designation || ''
+    profile.departement = (data.direction as any)?.designation || ''
+    profile.service = (data.departement as any)?.designation || ''
     profile.created_at = data.created_at
   } catch (err) {
     toast.add({
@@ -234,8 +234,8 @@ const formattedCreatedAt = computed(() => {
       <!-- Département (lecture seule) -->
       <div class="flex max-sm:flex-col justify-between items-start gap-4 py-4">
         <div>
-          <p class="font-medium">Département</p>
-          <p class="text-sm text-muted">Votre département d'affectation</p>
+          <p class="font-medium">Direction</p>
+          <p class="text-sm text-muted">Votre direction d'affectation</p>
         </div>
         <div class="px-3 py-2 bg-muted/20 rounded-md text-sm">
           {{ profile.departement || 'Non défini' }}
@@ -247,8 +247,8 @@ const formattedCreatedAt = computed(() => {
       <!-- Service (lecture seule) -->
       <div class="flex max-sm:flex-col justify-between items-start gap-4 py-4">
         <div>
-          <p class="font-medium">Service</p>
-          <p class="text-sm text-muted">Votre service d'affectation</p>
+          <p class="font-medium">Département</p>
+          <p class="text-sm text-muted">Votre département d'affectation</p>
         </div>
         <div class="px-3 py-2 bg-muted/20 rounded-md text-sm">
           {{ profile.service || 'Non défini' }}

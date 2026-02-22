@@ -1,5 +1,9 @@
 <script setup lang="ts">
 const { isNotificationsSlideoverOpen } = useDashboard();
+
+const { user } = useAuth();
+
+const isFormateur = computed(() => user.value?.role?.designation === 'FORMATEUR');
 </script>
 
 <template>
@@ -34,8 +38,8 @@ const { isNotificationsSlideoverOpen } = useDashboard();
         <!-- Top modules (rapide - ~5 requêtes) -->
         <HomeTopModules />
 
-        <!-- Actions rapides (aucune requête) -->
-        <UCard>
+        <!-- Actions rapides (aucune requête) -  Caché pour FORMATEUR -->
+        <UCard v-if="!isFormateur">
           <template #header>
             <div class="flex items-center justify-between">
               <h3 class="text-lg font-semibold">Actions rapides</h3>

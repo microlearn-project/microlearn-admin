@@ -275,7 +275,7 @@ function clearTableSelection() {
           "
           placeholder="Rechercher une direction..."
           icon="i-lucide-search"
-          class="max-w-sm"
+          class="max-w-md"
           @update:model-value="
             table?.tableApi?.getColumn('designation')?.setFilterValue($event)
           "

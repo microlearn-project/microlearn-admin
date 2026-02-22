@@ -24,7 +24,7 @@ const {
   pending,
   error,
   refresh,
-} = await useFetch<Departement[]>("/api/service", { 
+} = await useFetch<Departement[]>("/api/service", {
   server: true,
   lazy: false,
 });
@@ -35,7 +35,7 @@ const { data: directions } = await useFetch<Direction[]>("/api/direction");
 // Créer un map pour accès rapide aux directions
 const directionsMap = computed(() => {
   if (!directions.value) return new Map();
-  return new Map(directions.value.map(d => [d.id_direction, d]));
+  return new Map(directions.value.map((d) => [d.id_direction, d]));
 });
 
 /* ---------------------------------------------------
@@ -43,17 +43,17 @@ const directionsMap = computed(() => {
 ----------------------------------------------------*/
 // Activer un département
 const activate = async (id: string) => {
-  await $fetch(`/api/service/${id}/activate`, { method: "PATCH" });  
+  await $fetch(`/api/service/${id}/activate`, { method: "PATCH" });
 };
 
 // Désactiver un département
 const deactivate = async (id: string) => {
-  await $fetch(`/api/service/${id}/deactivate`, { method: "PATCH" });   
+  await $fetch(`/api/service/${id}/deactivate`, { method: "PATCH" });
 };
 
 // Supprimer un département
 const softDelete = async (id: string) => {
-  await $fetch(`/api/service/soft-delete`, {   
+  await $fetch(`/api/service/soft-delete`, {
     method: "PATCH",
     body: {
       id: id,
@@ -182,13 +182,15 @@ const columns: TableColumn<Departement>[] = [
       h("div", { class: "font-medium" }, row.original.designation),
   },
   {
-    id: "direction",  // ← AJOUTÉ : Colonne Direction
+    id: "direction", //  Colonne Direction
     accessorFn: (row: Departement) => row.id_direction,
     header: "Direction",
     cell: ({ row }: any) => {
       const direction = directionsMap.value.get(row.original.id_direction);
-      return h("div", { class: "text-sm" }, 
-        direction?.designation || "Non affecté"
+      return h(
+        "div",
+        { class: "text-sm" },
+        direction?.designation || "Non affecté",
       );
     },
   },
@@ -302,14 +304,14 @@ function clearTableSelection() {
       <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
         <!-- Barre de recherche  -->
         <UInput
-          placeholder="Rechercher un département..."
+          placeholder="Rechercher ..."
           :model-value="
             (table?.tableApi
               ?.getColumn('designation')
               ?.getFilterValue() as string) ?? ''
           "
           icon="i-lucide-search"
-          class="max-w-sm"
+          class="max-w-xs"
           @update:model-value="
             table?.tableApi?.getColumn('designation')?.setFilterValue($event)
           "

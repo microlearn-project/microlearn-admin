@@ -58,6 +58,7 @@ const columns: TableColumn<Direction>[] = [
       return h("div", {}, [h("p", { class: "font-medium" }, dept.designation)]);
     },
   },
+  /*
   {
     accessorKey: "created_at",
     header: "Créé le",
@@ -66,6 +67,7 @@ const columns: TableColumn<Direction>[] = [
       return date.toLocaleDateString("fr-FR", { dateStyle: "medium" });
     },
   },
+  */
   {
     id: "actions",
     cell: ({ row }: any) =>

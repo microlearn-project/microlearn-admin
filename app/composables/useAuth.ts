@@ -11,9 +11,9 @@ interface AuthState {
 interface LoginResponse {
   success: boolean;
   error?: string;
-  requiresConfirmation?: boolean; // ← AJOUTÉ
-  message?: string; // ← AJOUTÉ
-  sessionInfo?: any; // ← AJOUTÉ
+  requiresConfirmation?: boolean;
+  message?: string;
+  sessionInfo?: any;  
   user?: SessionUser;
 }
 
@@ -44,7 +44,7 @@ export const useAuth = () => {
     identifier: string,
     password: string,
     loginType: "email" | "code",
-    forceLogin = false, // ← AJOUTÉ
+    forceLogin = false,
   ): Promise<LoginResponse> {
     try {
       const data = await $fetch<LoginResponse>("/api/auth/login", {
@@ -53,11 +53,11 @@ export const useAuth = () => {
           identifier,
           password,
           loginType,
-          forceLogin, // ← AJOUTÉ
+          forceLogin,
         },
       });
 
-      // ← AJOUTÉ : Gestion de la confirmation
+      //  Gestion de la confirmation
       if (data.requiresConfirmation) {
         return {
           success: false,

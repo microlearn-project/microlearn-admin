@@ -335,7 +335,7 @@ const filteredTopScores = computed(() => {
    7. Réinitialisation des filtres
 ----------------------------------------------------*/
 function resetAllFilters() {
-  clearDepartementFilter();  // ← CHANGÉ
+  clearDepartementFilter();   
   selectedPeriod.value = "all";
   statusFilter.value = "all";
   agentSearch.value = "";

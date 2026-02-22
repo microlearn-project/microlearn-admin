@@ -134,7 +134,7 @@ function getRowItems(row: { original: Module }) {
       label: m.download_enabled
         ? "Désactiver le téléchargement"
         : "Activer le téléchargement",
-      icon: m.download_enabled ? "i-lucide-download-off" : "i-lucide-download",
+      icon: m.download_enabled ? "i-lucide-circle-slash" : "i-lucide-download",
       onSelect: () => {
         toggleDownloadable(m.id_module, !m.download_enabled);
       },
@@ -496,7 +496,7 @@ async function toggleDownloadable(id: string, enabled: boolean) {
             ''
           "
           icon="i-lucide-search"
-          class="max-w-sm"
+          class="max-w-md"
           @update:model-value="
             table?.tableApi?.getColumn('titre')?.setFilterValue($event)
           "

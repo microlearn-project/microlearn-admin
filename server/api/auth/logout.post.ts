@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
   const session = getUserSession(event);
 
   if (session) {
-    // ← AJOUTÉ : Invalider la session en BDD
+    //  Invalider la session en BDD
     if (session.user.session_token) {
       const supabase = createSupabaseServerClient();
 

@@ -48,7 +48,14 @@ async function deleteAgents() {
   } finally {
     loading.value = false;
   }
-}
+}  
+
+watch(open, (newValue) => {
+  if (!newValue) {
+    // La modale vient d'être fermée (par la croix, Esc, overlay, etc.)
+    emit("clear-selection")
+  }
+})
 </script>
 
 <template>

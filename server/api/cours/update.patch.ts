@@ -7,13 +7,17 @@ type CoursUpdate = TablesUpdate<"cours">;
 const BUCKET_NAME = "cours-images";
 
 /**
- * Estime la durée de lecture en fonction du nombre de caractères
+ * Estime la durée de lecture en fonction du nombre de mots (plus précis que caractères)
+ * @param text Le texte à estimer (peut contenir du HTML)
+ * @param wordsPerMin Vitesse de lecture moyenne (défaut: 225 mots/min)
  */
-function estimateReadingTime(text: string): string {
-  const plainText = text.replace(/<[^>]*>/g, "").trim();
-  const charCount = plainText.length;
-  const minutes = Math.ceil(charCount / 1000);
-
+function estimateReadingTime(text: string, wordsPerMin: number = 225): string {
+  // Nettoyage plus robuste : retire HTML et entités
+  const plainText = text.replace(/<[^>]*>/g, "").replace(/&[^;]+;/g, " ").trim();
+  const words = plainText.split(/\s+/).filter(word => word.length > 0);
+  const wordCount = words.length;
+  const minutes = Math.ceil(wordCount / wordsPerMin);
+  
   if (minutes < 1) {
     return "< 1 min";
   } else if (minutes < 60) {

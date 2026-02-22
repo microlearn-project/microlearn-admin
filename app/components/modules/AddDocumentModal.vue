@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import type { Tables } from "~/types/database.types";
+import {
+  hasInvalidCharacters,
+  getSuggestedFileName,
+} from "~/utils/fileValidation";
 
 type Module = Tables<"module">;
 
@@ -19,6 +23,11 @@ const toast = useToast();
 ----------------------------------------------------*/
 const selectedFiles = ref<File[]>([]);
 const uploading = ref(false);
+
+//  État pour le modal d'erreur
+const showFileErrorModal = ref(false);
+const invalidFileName = ref("");
+const suggestedFileName = ref("");
 
 // Fonction appelée quand l'utilisateur sélectionne des fichiers
 function onFileSelect(files: File[]) {
@@ -46,6 +55,28 @@ async function uploadDocuments() {
   uploading.value = true;
 
   try {
+    // Vérifier TOUS les fichiers AVANT l'upload
+    const invalidFiles = selectedFiles.value.filter((file) =>
+      hasInvalidCharacters(file.name),
+    );
+
+    if (invalidFiles.length > 0) {
+      // Afficher le modal pour le premier fichier invalide
+      invalidFileName.value = invalidFiles[0].name;
+      suggestedFileName.value = getSuggestedFileName(invalidFiles[0].name);
+      showFileErrorModal.value = true;
+
+      uploading.value = false;
+
+      toast.add({
+        title: "Fichiers invalides détectés",
+        description: `${invalidFiles.length} fichier(s) avec des noms non autorisés`,
+        color: "warning",
+      });
+
+      return;
+    }
+
     // Créer un FormData pour chaque fichier
     const uploadPromises = selectedFiles.value.map(async (file) => {
       const formData = new FormData();
@@ -93,6 +124,13 @@ function formatFileSize(bytes: number): string {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
 }
+
+/* ---------------------------------------------------
+   4.  Indicateur visuel de fichier invalide
+----------------------------------------------------*/
+function isFileNameInvalid(fileName: string): boolean {
+  return hasInvalidCharacters(fileName);
+}
 </script>
 
 <template>
@@ -137,12 +175,37 @@ function formatFileSize(bytes: number): string {
             <div
               v-for="(file, index) in selectedFiles"
               :key="index"
-              class="flex items-center justify-between p-3 border border-default rounded-lg bg-elevated/50"
+              :class="[
+                'flex items-center justify-between p-3 rounded-lg',
+                isFileNameInvalid(file.name)
+                  ? 'border-2 border-error bg-error/5'
+                  : 'border border-default bg-elevated/50',
+              ]"
             >
               <div class="flex items-center gap-3 flex-1 min-w-0">
-                <UIcon name="i-lucide-file" class="text-muted shrink-0" />
+                <UIcon
+                  :name="
+                    isFileNameInvalid(file.name)
+                      ? 'i-lucide-file-x-2'
+                      : 'i-lucide-file'
+                  "
+                  :class="
+                    isFileNameInvalid(file.name) ? 'text-error' : 'text-muted'
+                  "
+                  class="shrink-0"
+                />
                 <div class="min-w-0 flex-1">
-                  <p class="text-sm font-medium truncate">{{ file.name }}</p>
+                  <div class="flex items-center gap-2">
+                    <p class="text-sm font-medium truncate">{{ file.name }}</p>
+                    <UBadge
+                      v-if="isFileNameInvalid(file.name)"
+                      color="error"
+                      variant="subtle"
+                      size="xs"
+                    >
+                      Nom invalide
+                    </UBadge>
+                  </div>
                   <p class="text-xs text-muted">
                     {{ formatFileSize(file.size) }}
                   </p>
@@ -155,6 +218,32 @@ function formatFileSize(bytes: number): string {
                 size="xs"
                 @click="removeFile(index)"
               />
+            </div>
+          </div>
+
+          <!--  Avertissement si fichiers invalides -->
+          <div
+            v-if="selectedFiles.some((f) => isFileNameInvalid(f.name))"
+            class="p-3 bg-warning/10 border border-warning/20 rounded-lg"
+          >
+            <div class="flex items-start gap-2">
+              <UIcon
+                name="i-lucide-alert-triangle"
+                class="text-warning text-lg mt-0.5"
+              />
+              <div class="flex-1">
+                <p class="text-sm font-medium text-warning">
+                  {{
+                    selectedFiles.filter((f) => isFileNameInvalid(f.name))
+                      .length
+                  }}
+                  fichier(s) avec nom invalide
+                </p>
+                <p class="text-xs text-muted mt-1">
+                  Les fichiers avec noms invalides ne pourront pas être
+                  uploadés. Veuillez les renommer avant de continuer.
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -196,4 +285,12 @@ function formatFileSize(bytes: number): string {
       </div>
     </template>
   </UModal>
+
+  <!--  Modal d'erreur pour nom de fichier invalide -->
+  <FileUploadErrorModal
+    v-model:open="showFileErrorModal"
+    :file-name="invalidFileName"
+    :suggested-name="suggestedFileName"
+    @close="showFileErrorModal = false"
+  />
 </template>

@@ -8,7 +8,7 @@ const shortcuts = [
       { keys: ["G", "H"], description: "Aller au tableau de bord" },
       { keys: ["G", "A"], description: "Aller aux agents" },
       { keys: ["G", "P"], description: "Aller aux permissions" },
-      { keys: ["G", "S"], description: "Aller aux services" },
+      { keys: ["G", "S"], description: "Aller aux départements" },
       { keys: ["G", "D"], description: "Aller aux documents" },
       { keys: ["G", "O"], description: "Aller aux modules" },
       { keys: ["G", "R"], description: "Aller à la progression" },
@@ -20,7 +20,7 @@ const shortcuts = [
     category: "Actions",
     items: [
       { keys: ["N"], description: "Ouvrir/fermer les notifications" },
-      { keys: ["C"], description: "Créer un nouveau module" }, 
+      { keys: ["C"], description: "Créer un nouveau module" },
       { keys: ["?"], description: "Afficher cette aide" },
       { keys: ["Esc"], description: "Retour / Fermer" },
     ],

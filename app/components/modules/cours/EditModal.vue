@@ -82,7 +82,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 </script>
 
 <template>
-  <UModal v-model:open="open" :title="`Modification`" :description="`Cours : ${cours.titre}`">
+  <UModal v-model:open="open" :title="`Modification`" :description="`Cours : ${cours.titre}`" :ui="{ content: 'max-w-5xl' }">
     <template #body>
       <UForm :schema="schema" :state="state" class="space-y-4" @submit="onSubmit">
         <UFormField label="Titre du cours" name="titre" required>

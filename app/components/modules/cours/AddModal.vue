@@ -81,7 +81,7 @@ function onClose() {
 </script>
 
 <template>
-  <UModal v-model:open="open" :title="'Ajouter un cours'" @close="onClose">
+  <UModal v-model:open="open" :title="'Ajouter un cours'" :ui="{ content: 'max-w-5xl' }" @close="onClose">
     <template #body>
       <UForm :schema="schema" :state="state" class="space-y-4" @submit="onSubmit">
         <UFormField label="Titre du cours" name="titre" required>

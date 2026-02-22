@@ -55,6 +55,7 @@ const columns: TableColumn<Departement>[] = [
       return h("div", {}, [h("p", { class: "font-medium" }, svc.designation)]);
     },
   },
+  /*
   {
     id: "statut",
     accessorFn: (row: Departement) => row.actif,
@@ -78,6 +79,7 @@ const columns: TableColumn<Departement>[] = [
       return date.toLocaleDateString("fr-FR", { dateStyle: "medium" });
     },
   },
+  */
   {
     id: "actions",
     cell: ({ row }: any) =>

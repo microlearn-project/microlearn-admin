@@ -408,7 +408,7 @@ const sorting = ref([
           v-model="globalFilter"
           placeholder="Rechercher un agent..."
           icon="i-lucide-search"
-          class="max-w-sm"
+          class="max-w-md"
         />
 
         <div class="flex items-center gap-3">

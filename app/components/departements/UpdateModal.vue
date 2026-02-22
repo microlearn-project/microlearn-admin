@@ -25,9 +25,11 @@ const emit = defineEmits<{
    Validation
 --------------------------*/
 const schema = z.object({
-  designation: z.string().max(50),
-  id_autorite: z.string().uuid("Veuillez sélectionner une autorité supérieure"),   
-  actif: z.boolean().default(true),   
+  designation: z
+    .string()
+    .max(255, "Le nombre maximum de caractères est de 255"),
+  id_autorite: z.string().uuid("Veuillez sélectionner une autorité supérieure"),
+  actif: z.boolean().default(true),
 });
 
 type Schema = z.output<typeof schema>;
@@ -35,17 +37,20 @@ type Schema = z.output<typeof schema>;
 /* -------------------------
    Récupération autorités
 --------------------------*/
-const { data: autorites } = await useFetch<AutoriteSuperieure[]>("/api/autorite-superieure", {
-  transform: (data) => data.filter((a) => a.actif),
-});
+const { data: autorites } = await useFetch<AutoriteSuperieure[]>(
+  "/api/autorite-superieure",
+  {
+    transform: (data) => data.filter((a) => a.actif),
+  },
+);
 
 /* -------------------------
    State du formulaire
 --------------------------*/
 const state = reactive<Partial<Schema>>({
   designation: "",
-  id_autorite: undefined,  
-  actif: true,   
+  id_autorite: undefined,
+  actif: true,
 });
 
 // Transformer la désignation en majuscules automatiquement
@@ -70,10 +75,10 @@ watch(
     if (!departement) return;
 
     state.designation = departement.designation;
-    state.id_autorite = departement.id_autorite;  
-    state.actif = departement.actif;   
+    state.id_autorite = departement.id_autorite;
+    state.actif = departement.actif;
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 const toast = useToast();
@@ -88,13 +93,13 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   const oldDesignation = currentDepartement.value.designation;
 
   try {
-    await $fetch("/api/departement/updatedepartement", {   
+    await $fetch("/api/departement/updatedepartement", {
       method: "PATCH",
       body: {
         id: currentDepartement.value.id_direction,
         designation: event.data.designation,
-        id_autorite: event.data.id_autorite, 
-        actif: event.data.actif,  
+        id_autorite: event.data.id_autorite,
+        actif: event.data.actif,
       },
     });
 
@@ -143,9 +148,9 @@ watch(open, (newValue) => {
 </script>
 
 <template>
-  <UModal 
-    v-model:open="open" 
-    title="Modifier la Direction" 
+  <UModal
+    v-model:open="open"
+    title="Modifier la Direction"
     :description="`Modifier les informations de la direction sélectionnée.`"
   >
     <slot />
@@ -161,7 +166,7 @@ watch(open, (newValue) => {
           <UInput v-model="designationUppercase" class="w-full" />
         </UFormField>
 
-        <!-- ← AJOUTÉ : Sélection autorité supérieure -->
+        <!--  Sélection autorité supérieure -->
         <UFormField
           label="Autorité Supérieure"
           name="id_autorite"
@@ -170,16 +175,18 @@ watch(open, (newValue) => {
         >
           <USelect
             v-model="state.id_autorite"
-            :items="autorites?.map(a => ({ 
-              label: `${a.code} - ${a.designation}`, 
-              value: a.id_autorite 
-            })) ?? []"
+            :items="
+              autorites?.map((a) => ({
+                label: `${a.code} - ${a.designation}`,
+                value: a.id_autorite,
+              })) ?? []
+            "
             placeholder="Sélectionner une autorité"
             class="w-full"
           />
         </UFormField>
 
-        <!-- ← AJOUTÉ : Checkbox actif -->
+        <!--   Checkbox actif -->
         <UCheckbox
           v-model="state.actif"
           indicator="end"
@@ -191,9 +198,9 @@ watch(open, (newValue) => {
           <UButton color="neutral" variant="subtle" @click="clear_selection()">
             Annuler
           </UButton>
-          <UButton 
-            type="submit" 
-            color="primary" 
+          <UButton
+            type="submit"
+            color="primary"
             :disabled="props.rows.length !== 1"
           >
             Mettre à jour

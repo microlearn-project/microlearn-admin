@@ -25,8 +25,10 @@ const emit = defineEmits<{
    Validation
 --------------------------*/
 const schema = z.object({
-  designation: z.string().max(50),
-  id_direction: z.string().uuid("Veuillez sélectionner une direction"),   
+  designation: z
+    .string()
+    .max(255, "Le nombre maximum de caractères est de 255"),
+  id_direction: z.string().uuid("Veuillez sélectionner une direction"),
   actif: z.boolean().default(false),
 });
 
@@ -44,7 +46,7 @@ const { data: directions } = await useFetch<Direction[]>("/api/direction", {
 --------------------------*/
 const state = reactive<Partial<Schema>>({
   designation: "",
-  id_direction: undefined,   
+  id_direction: undefined,
   actif: false,
 });
 
@@ -70,7 +72,7 @@ watch(
     if (!service) return;
 
     state.designation = service.designation;
-    state.id_direction = service.id_direction;  
+    state.id_direction = service.id_direction;
     state.actif = service.actif;
   },
   { immediate: true },
@@ -86,12 +88,12 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   if (!currentService.value) return;
 
   try {
-    await $fetch("/api/service/updateservice", {   
+    await $fetch("/api/service/updateservice", {
       method: "PATCH",
       body: {
         id: currentService.value.id_departement,
         designation: event.data.designation,
-        id_direction: event.data.id_direction, 
+        id_direction: event.data.id_direction,
         actif: event.data.actif,
       },
     });
@@ -159,7 +161,7 @@ watch(open, (newValue) => {
           <UInput v-model="designationUppercase" class="w-full" />
         </UFormField>
 
-        <!-- ← AJOUTÉ : Sélection de direction -->
+        <!--  Sélection de direction -->
         <UFormField
           label="Direction"
           name="id_direction"
@@ -168,7 +170,12 @@ watch(open, (newValue) => {
         >
           <USelect
             v-model="state.id_direction"
-            :items="directions?.map(d => ({ label: d.designation, value: d.id_direction })) ?? []"
+            :items="
+              directions?.map((d) => ({
+                label: d.designation,
+                value: d.id_direction,
+              })) ?? []
+            "
             placeholder="Sélectionner une direction"
             class="w-full"
           />

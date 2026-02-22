@@ -108,6 +108,8 @@ watch(
   { immediate: true },
 );
 
+
+
 // Ouvrir le modal quand on clique sur le slot
 function openModal() {
   if (props.rows.length === 1) {
@@ -232,7 +234,14 @@ const currentService = computed(() => {
   return departements.value.find(
     (s) => s.id_departement === props.rows[0].id_departement,
   );
-});
+}); 
+
+watch(open, (newValue) => {
+  if (!newValue) {
+    // La modale vient d'être fermée (par la croix, Esc, overlay, etc.)
+    emit("clear-selection")
+  }
+})
 </script>
 
 <template>
@@ -314,7 +323,7 @@ const currentService = computed(() => {
         <!-- Affectation -->
         <div class="space-y-1">
           <p class="text-sm font-medium text-muted flex items-center gap-2">
-            <UIcon name="i-lucide-building-2" />
+            <UIcon name="i-lucide-briefcase" />
             Affectation
           </p>
           <div class="space-y-3 p-3 bg-muted/10 rounded-lg">
@@ -329,7 +338,7 @@ const currentService = computed(() => {
                   "
                   :icon="
                     selectedDepartement
-                      ? 'i-lucide-building-2'
+                      ? 'i-heroicons-building-office'
                       : 'i-lucide-search'
                   "
                   :color="selectedDepartement ? 'primary' : 'neutral'"
@@ -360,7 +369,7 @@ const currentService = computed(() => {
                       : 'Sélectionner un département'
                   "
                   :icon="
-                    selectedService ? 'i-lucide-briefcase' : 'i-lucide-search'
+                    selectedService ? 'i-lucide-building-2' : 'i-lucide-search'
                   "
                   :color="selectedService ? 'primary' : 'neutral'"
                   variant="outline"
@@ -377,7 +386,7 @@ const currentService = computed(() => {
                   square
                   @click="clearService"
                 />
-              </div> 
+              </div>
             </UFormField>
           </div>
         </div>
