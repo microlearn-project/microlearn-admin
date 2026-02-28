@@ -7,30 +7,10 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "13.0.5"
   }
   public: {
     Tables: {
@@ -74,7 +54,7 @@ export type Database = {
             foreignKeyName: "activity_log_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "vue_hierarchie_complete"
+            referencedRelation: "view_hierarchie_complete"
             referencedColumns: ["id_agent"]
           },
         ]
@@ -125,7 +105,7 @@ export type Database = {
             foreignKeyName: "admin_sessions_id_agent_fkey"
             columns: ["id_agent"]
             isOneToOne: false
-            referencedRelation: "vue_hierarchie_complete"
+            referencedRelation: "view_hierarchie_complete"
             referencedColumns: ["id_agent"]
           },
         ]
@@ -188,7 +168,7 @@ export type Database = {
             foreignKeyName: "agent_id_departement_fkey"
             columns: ["id_departement"]
             isOneToOne: false
-            referencedRelation: "vue_hierarchie_complete"
+            referencedRelation: "view_hierarchie_complete"
             referencedColumns: ["id_departement"]
           },
           {
@@ -202,7 +182,7 @@ export type Database = {
             foreignKeyName: "agent_id_direction_fkey"
             columns: ["id_direction"]
             isOneToOne: false
-            referencedRelation: "vue_hierarchie_complete"
+            referencedRelation: "view_hierarchie_complete"
             referencedColumns: ["id_direction"]
           },
         ]
@@ -321,7 +301,7 @@ export type Database = {
             foreignKeyName: "departement_id_direction_fkey"
             columns: ["id_direction"]
             isOneToOne: false
-            referencedRelation: "vue_hierarchie_complete"
+            referencedRelation: "view_hierarchie_complete"
             referencedColumns: ["id_direction"]
           },
         ]
@@ -366,7 +346,7 @@ export type Database = {
             foreignKeyName: "direction_id_autorite_fkey"
             columns: ["id_autorite"]
             isOneToOne: false
-            referencedRelation: "vue_hierarchie_complete"
+            referencedRelation: "view_hierarchie_complete"
             referencedColumns: ["id_autorite"]
           },
         ]
@@ -377,6 +357,7 @@ export type Database = {
           fichier: string
           id_document: string
           id_module: string
+          nom_original: string | null
           updated_at: string
         }
         Insert: {
@@ -384,6 +365,7 @@ export type Database = {
           fichier: string
           id_document?: string
           id_module: string
+          nom_original?: string | null
           updated_at?: string
         }
         Update: {
@@ -391,6 +373,7 @@ export type Database = {
           fichier?: string
           id_document?: string
           id_module?: string
+          nom_original?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -455,7 +438,7 @@ export type Database = {
             foreignKeyName: "module_id_agent_fkey"
             columns: ["id_agent"]
             isOneToOne: false
-            referencedRelation: "vue_hierarchie_complete"
+            referencedRelation: "view_hierarchie_complete"
             referencedColumns: ["id_agent"]
           },
         ]
@@ -488,7 +471,7 @@ export type Database = {
             foreignKeyName: "module_departement_id_departement_fkey"
             columns: ["id_departement"]
             isOneToOne: false
-            referencedRelation: "vue_hierarchie_complete"
+            referencedRelation: "view_hierarchie_complete"
             referencedColumns: ["id_departement"]
           },
           {
@@ -669,7 +652,7 @@ export type Database = {
             foreignKeyName: "reponse_agent_id_agent_fkey"
             columns: ["id_agent"]
             isOneToOne: false
-            referencedRelation: "vue_hierarchie_complete"
+            referencedRelation: "view_hierarchie_complete"
             referencedColumns: ["id_agent"]
           },
           {
@@ -728,7 +711,7 @@ export type Database = {
             foreignKeyName: "resultat_quiz_id_agent_fkey"
             columns: ["id_agent"]
             isOneToOne: false
-            referencedRelation: "vue_hierarchie_complete"
+            referencedRelation: "view_hierarchie_complete"
             referencedColumns: ["id_agent"]
           },
           {
@@ -798,7 +781,7 @@ export type Database = {
             foreignKeyName: "suivi_module_id_agent_fkey"
             columns: ["id_agent"]
             isOneToOne: false
-            referencedRelation: "vue_hierarchie_complete"
+            referencedRelation: "view_hierarchie_complete"
             referencedColumns: ["id_agent"]
           },
           {
@@ -880,7 +863,7 @@ export type Database = {
             foreignKeyName: "user_role_granted_by_fkey"
             columns: ["granted_by"]
             isOneToOne: false
-            referencedRelation: "vue_hierarchie_complete"
+            referencedRelation: "view_hierarchie_complete"
             referencedColumns: ["id_agent"]
           },
           {
@@ -894,7 +877,7 @@ export type Database = {
             foreignKeyName: "user_role_id_agent_fkey"
             columns: ["id_agent"]
             isOneToOne: false
-            referencedRelation: "vue_hierarchie_complete"
+            referencedRelation: "view_hierarchie_complete"
             referencedColumns: ["id_agent"]
           },
           {
@@ -908,13 +891,16 @@ export type Database = {
       }
     }
     Views: {
-      vue_hierarchie_complete: {
+      view_hierarchie_complete: {
         Row: {
           actif: boolean | null
+          autorite_actif: boolean | null
           autorite_code: string | null
           autorite_designation: string | null
           code_agent: string | null
+          departement_actif: boolean | null
           departement_designation: string | null
+          direction_actif: boolean | null
           direction_designation: string | null
           email: string | null
           id_agent: string | null
@@ -928,18 +914,10 @@ export type Database = {
       }
     }
     Functions: {
+      clean_expired_sessions: { Args: never; Returns: undefined }
       count_modules_for_service: {
         Args: { p_service_ids?: string[] }
         Returns: number
-      }
-      fn_compter_migrations: {
-        Args: never
-        Returns: {
-          ancien_count: number
-          nouveau_count: number
-          statut: string
-          table_name: string
-        }[]
       }
       get_cours_with_quiz_status: {
         Args: { p_agent_id: string; p_module_id: string }
@@ -1139,11 +1117,7 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },
 } as const
-

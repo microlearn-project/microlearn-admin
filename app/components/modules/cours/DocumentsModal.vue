@@ -23,12 +23,12 @@ const supabaseUrl = config.public.supabaseUrl as string;
 const storageBucket = "documents"; // Nom du bucket pour les documents
 
 // Documents disponibles (associés au module)
-const {
-  data: availableDocuments,
-  status: loadingDocs,
-} = useFetch<Document[]>(`/api/module/documents/${props.moduleId}`, {
-  default: () => [],
-});
+const { data: availableDocuments, status: loadingDocs } = useFetch<Document[]>(
+  `/api/module/documents/${props.moduleId}`,
+  {
+    default: () => [],
+  },
+);
 
 // URLs des documents sélectionnés
 const selectedUrls = ref<string[]>([...(props.cours.documents || [])]);
@@ -38,7 +38,7 @@ watch(
   () => props.cours,
   (newCours) => {
     selectedUrls.value = [...(newCours.documents || [])];
-  }
+  },
 );
 
 /**
@@ -56,15 +56,23 @@ function getFullUrl(fichier: string): string {
   // Format: https://{project}.supabase.co/storage/v1/object/public/{bucket}/{path}
   return `${supabaseUrl}/storage/v1/object/public/${storageBucket}/${fichier}`;
 }
+/**
+ * Extrait le nom de fichier à afficher
+ * Priorité : nom_original > extraction depuis URL/chemin
+ */
+function getFileName(doc: Document): string {
+  // Si nom_original existe, l'utiliser (c'est le vrai nom)
+  if (doc.nom_original) {
+    return doc.nom_original;
+  }
 
-// Extraire le nom du fichier depuis l'URL ou le chemin
-function getFileName(urlOrPath: string): string {
+  // Sinon, extraire depuis le chemin/URL (anciens documents)
   try {
-    const parts = urlOrPath.split("/");
+    const parts = doc.fichier.split("/");
     const fileName = parts[parts.length - 1];
     return decodeURIComponent(fileName);
   } catch {
-    return urlOrPath;
+    return doc.fichier;
   }
 }
 
@@ -111,7 +119,8 @@ async function saveDocuments() {
   } catch (err: any) {
     toast.add({
       title: "Erreur",
-      description: err?.data?.statusMessage || "Impossible de mettre à jour les documents",
+      description:
+        err?.data?.statusMessage || "Impossible de mettre à jour les documents",
       color: "error",
     });
   } finally {
@@ -121,7 +130,11 @@ async function saveDocuments() {
 </script>
 
 <template>
-  <UModal v-model:open="open" :title="`Documents`" :description="`Cours : ${cours.titre}`">
+  <UModal
+    v-model:open="open"
+    :title="`Documents`"
+    :description="`Cours : ${cours.titre}`"
+  >
     <template #body>
       <div class="space-y-4">
         <p class="text-sm text-muted">
@@ -131,7 +144,10 @@ async function saveDocuments() {
 
         <!-- État de chargement -->
         <div v-if="loadingDocs === 'pending'" class="text-center py-8">
-          <UIcon name="i-lucide-loader-circle" class="animate-spin text-3xl text-muted" />
+          <UIcon
+            name="i-lucide-loader-circle"
+            class="animate-spin text-3xl text-muted"
+          />
           <p class="text-muted mt-2">Chargement des documents...</p>
         </div>
 
@@ -165,9 +181,12 @@ async function saveDocuments() {
 
             <div class="flex-1 min-w-0">
               <p class="font-medium truncate">
-                {{ getFileName(doc.fichier) }}
+                {{ getFileName(doc) }}
               </p>
-              <p class="text-xs text-muted truncate" :title="getFullUrl(doc.fichier)">
+              <p
+                class="text-xs text-muted truncate"
+                :title="getFullUrl(doc.fichier)"
+              >
                 {{ getFullUrl(doc.fichier) }}
               </p>
             </div>
@@ -188,9 +207,16 @@ async function saveDocuments() {
               :key="index"
               class="flex items-center gap-2 text-xs"
             >
-              <UIcon name="i-lucide-check-circle" class="text-success shrink-0" />
+              <UIcon
+                name="i-lucide-check-circle"
+                class="text-success shrink-0"
+              />
               <span class="truncate" :title="url">
-                {{ getFileName(url) }}
+                {{
+                  availableDocuments.find((d) => getFullUrl(d.fichier) === url)
+                    ?.nom_original ||
+                  getFileName({ fichier: url, nom_original: null } as Document)
+                }}
               </span>
             </div>
           </div>

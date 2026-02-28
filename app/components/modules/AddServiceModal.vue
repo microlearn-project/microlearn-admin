@@ -141,7 +141,7 @@ const pagination = ref({
       <div class="space-y-4">
         <!-- Recherche -->
         <UInput
-          placeholder="Rechercher un service..."
+          placeholder="Rechercher un département..."
           :model-value="
             (table?.tableApi
               ?.getColumn('designation')

@@ -224,7 +224,7 @@ const participantColumns: TableColumn<Agent>[] = [
     <div class="mb-4">
       <UInput
         v-model="globalFilter"
-        placeholder="Rechercher un service..."
+        placeholder="Rechercher un département..."
         icon="i-lucide-search"
         class="max-w-md"
       />

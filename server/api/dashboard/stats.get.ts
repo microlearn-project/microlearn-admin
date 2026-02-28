@@ -45,20 +45,12 @@ export default defineEventHandler(async (event) => {
   if (quizResults && quizResults.length > 0) {
     const passedQuiz = quizResults.filter((r) => Number(r.score) >= 50).length;
     averageSuccessRate = Math.round((passedQuiz / quizResults.length) * 100);
-  }
-
-  // 5. Nombre de modules en cours (progression > 0 et < 100)
-  const { count: inProgressModules } = await supabase
-    .from("suivi_module")
-    .select("*", { count: "exact", head: true })
-    .gt("progression", 0)
-    .lt("progression", 100);
+  } 
 
   return {
     totalAgents: totalAgents || 0,
     publishedModules: publishedModules || 0,
     completedQuiz: completedQuiz || 0,
     averageSuccessRate,
-    inProgressModules: inProgressModules || 0,
   };
 });

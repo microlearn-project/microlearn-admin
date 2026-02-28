@@ -146,25 +146,34 @@ function getRowItems(row: { original: Document }) {
 /* ---------------------------------------------------
    7. Colonnes du tableau
 ----------------------------------------------------*/
-function getFileName(fichier: string): string {
+/**
+Extrait le nom de fichier à afficher
+Priorité : nom_original > extraction depuis fichier
+*/
+function getFileName(document: Document): string {
+  // Si nom_original existe, l'utiliser
+  if (document.nom_original) {
+    return document.nom_original;
+  }
+
+  // Sinon, extraire depuis le chemin (anciens documents)
   try {
-    // Extraire le nom du fichier depuis le chemin ou l'URL
-    const parts = fichier.split("/");
+    const parts = document.fichier.split("/");
     const fileName = parts[parts.length - 1];
     return decodeURIComponent(fileName);
   } catch {
-    return fichier;
+    return document.fichier;
   }
 }
 
-function getFileExtension(fichier: string): string {
-  const fileName = getFileName(fichier);
+function getFileExtension(document: Document): string {
+  const fileName = getFileName(document);
   const parts = fileName.split(".");
   return parts.length > 1 ? parts[parts.length - 1].toUpperCase() : "?";
 }
 
-function getFileIcon(fichier: string): string {
-  const ext = getFileExtension(fichier).toLowerCase();
+function getFileIcon(document: Document): string {
+  const ext = getFileExtension(document).toLowerCase();
   const icons: Record<string, string> = {
     pdf: "i-lucide-file-text",
     doc: "i-lucide-file-text",
@@ -218,7 +227,7 @@ const columns: TableColumn<Document>[] = [
           },
           [
             h(resolveComponent("UIcon"), {
-              name: getFileIcon(row.original.fichier),
+              name: getFileIcon(row.original),
               class: "text-primary text-lg",
             }),
           ],
@@ -229,14 +238,14 @@ const columns: TableColumn<Document>[] = [
             {
               class:
                 "font-medium truncate max-w-xs block hover:text-primary hover:underline cursor-pointer",
-              title: getFileName(row.original.fichier) || "Fichier sans nom",
+              title: getFileName(row.original) || "Fichier sans nom",
             },
-            getFileName(row.original.fichier),
+            getFileName(row.original),
           ),
           h(
             "p",
             { class: "text-xs text-muted" },
-            getFileExtension(row.original.fichier),
+            getFileExtension(row.original),
           ),
         ]),
       ]);
@@ -316,7 +325,7 @@ const filteredData = computed(() => {
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
     result = result.filter((d) => {
-      const fileName = getFileName(d.fichier).toLowerCase();
+      const fileName = getFileName(d).toLowerCase();  
       const moduleName = d.module?.titre?.toLowerCase() || "";
       return fileName.includes(query) || moduleName.includes(query);
     });

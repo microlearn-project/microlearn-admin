@@ -38,7 +38,7 @@ const isFormateur = computed(() => user.value?.role?.designation === 'FORMATEUR'
         <!-- Top modules (rapide - ~5 requêtes) -->
         <HomeTopModules />
 
-        <!-- Actions rapides (aucune requête) -  Caché pour FORMATEUR -->
+        <!-- Actions rapides -  Caché pour FORMATEUR -->
         <UCard v-if="!isFormateur">
           <template #header>
             <div class="flex items-center justify-between">
@@ -90,7 +90,7 @@ const isFormateur = computed(() => user.value?.role?.designation === 'FORMATEUR'
           </div>
         </UCard>
 
-        <!-- Statistiques de la semaine (aucune requête supplémentaire si déjà dans HomeStatsUtb) -->
+        <!-- Statistiques de la semaine -->
         <UCard>
           <HomeWeeklyOverview />
         </UCard>

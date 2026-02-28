@@ -3,8 +3,7 @@ interface DashboardStats {
   totalAgents: number;
   publishedModules: number;
   completedQuiz: number;
-  averageSuccessRate: number;
-  inProgressModules: number;
+  averageSuccessRate: number; 
 }
 
 const { data: stats, pending } = await useFetch<DashboardStats>(
@@ -16,7 +15,6 @@ const { data: stats, pending } = await useFetch<DashboardStats>(
       publishedModules: 0,
       completedQuiz: 0,
       averageSuccessRate: 0,
-      inProgressModules: 0,
     }),
   }
 );

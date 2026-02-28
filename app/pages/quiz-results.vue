@@ -217,20 +217,7 @@ const detailColumns: TableColumn<ModuleDetailResult>[] = [
         () => (reussi ? "✓ Réussi" : "✗ Échoué")
       );
     },
-  },
-  {
-    accessorKey: "temps_ecoule",
-    header: "Temps",
-    cell: ({ row }: any) => {
-      const secondes = row.original.temps_ecoule;
-      if (!secondes || secondes === 0) {
-        return h("span", { class: "text-muted text-xs" }, "N/A");
-      }
-      const minutes = Math.floor(secondes / 60);
-      const secs = secondes % 60;
-      return `${minutes}min ${secs}s`;
-    },
-  },
+  }, 
   {
     accessorKey: "date_soumission",
     header: "Date de soumission",
@@ -335,7 +322,7 @@ const filteredTopScores = computed(() => {
    7. Réinitialisation des filtres
 ----------------------------------------------------*/
 function resetAllFilters() {
-  clearDepartementFilter();   
+  clearDepartementFilter();
   selectedPeriod.value = "all";
   statusFilter.value = "all";
   agentSearch.value = "";
@@ -398,7 +385,6 @@ async function exportToExcel() {
         row.score,
         row.reussi ? "Réussi" : "Échoué",
         new Date(row.date_soumission).toLocaleString("fr-FR"),
-        row.temps_ecoule ? Math.floor(row.temps_ecoule / 60) : "N/A",
       ].join(",")),
     ];
 

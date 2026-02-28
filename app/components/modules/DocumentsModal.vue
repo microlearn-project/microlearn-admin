@@ -104,11 +104,16 @@ async function removeDocuments() {
 }
 
 /* ---------------------------------------------------
-   5. Extraire le nom du fichier depuis le chemin
+   5. Afficher nom_original en priorité
 ----------------------------------------------------*/
-function getFileName(filePath: string): string {
-  // Extraire le nom du fichier depuis un chemin comme "uploads/xxx.pdf"
-  const parts = filePath.split("/");
+function getFileName(document: Document): string {
+  // Si nom_original existe
+  if (document.nom_original) {
+    return document.nom_original;
+  }
+
+  // Sinon, extraire le nom depuis le chemin (anciens documents)
+  const parts = document.fichier.split("/");
   return parts[parts.length - 1];
 }
 
@@ -142,7 +147,8 @@ const columns: TableColumn<Document>[] = [
         { class: "flex items-center gap-2" },
         [
           h("span", { class: "i-lucide-file text-muted" }),
-          h("span", { class: "font-medium truncate max-w-xs" }, getFileName(row.original.fichier)),
+          // Utiliser getFileName qui gère nom_original
+          h("span", { class: "font-medium truncate max-w-xs" }, getFileName(row.original)),
         ]
       ),
   },

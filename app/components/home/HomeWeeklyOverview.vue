@@ -47,9 +47,6 @@ const agentsEvolutionText = computed(() => {
           <h3 class="text-lg font-semibold">Aperçu rapide</h3>
           <p class="text-sm text-muted mt-1">Dernières 7 jours</p>
         </div>
-        <UBadge color="success" variant="subtle">
-          En temps réel
-        </UBadge>
       </div>
     </template>
 

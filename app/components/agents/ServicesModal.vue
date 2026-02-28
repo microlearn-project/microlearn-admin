@@ -189,7 +189,7 @@ function clearTableSelection() {
         <div class="flex items-center justify-between gap-3">
           <!-- Recherche -->
           <UInput
-            placeholder="Rechercher un service..."
+            placeholder="Rechercher un département..."
             :model-value="
               (table?.tableApi
                 ?.getColumn('designation')
