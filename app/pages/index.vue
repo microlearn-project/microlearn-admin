@@ -84,7 +84,7 @@ const isFormateur = computed(() => user.value?.role?.designation === 'FORMATEUR'
               size="lg"
               color="neutral"
               variant="outline"
-              to="/services"
+              to="/departements"
               block
             />
           </div>

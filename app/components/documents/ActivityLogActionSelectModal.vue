@@ -131,7 +131,7 @@ const globalFilter = ref("");
         description="Sélectionnez une action pour filtrer les logs"
         :overlay="false"
         :ui="{
-          width: 'sm:max-w-3xl',
+          content: 'sm:max-w-3xl',
           wrapper: 'z-[100]',
         }"
       >

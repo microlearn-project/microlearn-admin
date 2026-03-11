@@ -105,7 +105,7 @@ function timeAgo(timestamp: string): string {
     v-model:open="isNotificationsSlideoverOpen"
     title="Activités récentes"
     description="Dernières actions effectuées sur la plateforme"
-    :ui="{ width: 'max-w-md' }"
+    :ui="{ content: 'max-w-md' }"
   >
     <template #body>
       <div v-if="!isAdmin" class="flex flex-col items-center justify-center h-full text-center p-8">

@@ -14,7 +14,7 @@ interface AgentProgression {
   prenom: string;
   email: string;
   departement: string;
-  direction: string;      
+  direction: string;
   date_debut: string | null;
   date_fin: string | null;
   progression: number;
@@ -274,6 +274,7 @@ const columns: TableColumn<AgentProgression>[] = [
       />
 
       <div class="space-y-6">
+        <!-- Sélection du module -->
         <div class="flex items-center gap-3">
           <UButton
             label="Sélectionner un module"
@@ -300,19 +301,38 @@ const columns: TableColumn<AgentProgression>[] = [
           </div>
         </div>
 
-        <div v-if="selectedModuleId && progressionData">
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+        <!-- Module sélectionné -->
+        <div v-if="selectedModuleId">
+
+          <!-- Skeleton stats -->
+          <div v-if="pending" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+            <div
+              v-for="i in 4"
+              :key="i"
+              class="bg-elevated border border-default rounded-lg p-4"
+            >
+              <div class="flex items-center gap-3">
+                <USkeleton class="w-10 h-10 rounded-lg shrink-0" />
+                <div class="space-y-2 flex-1">
+                  <USkeleton class="h-8 w-16" />
+                  <USkeleton class="h-3 w-20" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stats réelles -->
+          <div
+            v-else-if="progressionData"
+            class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6"
+          >
             <div class="bg-elevated border border-default rounded-lg p-4">
               <div class="flex items-center gap-3">
-                <div
-                  class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center"
-                >
+                <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                   <UIcon name="i-lucide-users" class="text-primary text-xl" />
                 </div>
                 <div>
-                  <p class="text-2xl font-bold">
-                    {{ progressionData.stats.participants }}
-                  </p>
+                  <p class="text-2xl font-bold">{{ progressionData.stats.participants }}</p>
                   <p class="text-sm text-muted">Participants</p>
                 </div>
               </div>
@@ -320,18 +340,11 @@ const columns: TableColumn<AgentProgression>[] = [
 
             <div class="bg-elevated border border-default rounded-lg p-4">
               <div class="flex items-center gap-3">
-                <div
-                  class="w-10 h-10 rounded-lg bg-info/10 flex items-center justify-center"
-                >
-                  <UIcon
-                    name="i-lucide-user-check"
-                    class="text-info text-xl"
-                  />
+                <div class="w-10 h-10 rounded-lg bg-info/10 flex items-center justify-center">
+                  <UIcon name="i-lucide-user-check" class="text-info text-xl" />
                 </div>
                 <div>
-                  <p class="text-2xl font-bold">
-                    {{ progressionData.stats.tauxParticipation }}%
-                  </p>
+                  <p class="text-2xl font-bold">{{ progressionData.stats.tauxParticipation }}%</p>
                   <p class="text-sm text-muted">Participation</p>
                 </div>
               </div>
@@ -339,18 +352,11 @@ const columns: TableColumn<AgentProgression>[] = [
 
             <div class="bg-elevated border border-default rounded-lg p-4">
               <div class="flex items-center gap-3">
-                <div
-                  class="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center"
-                >
-                  <UIcon
-                    name="i-lucide-check-circle"
-                    class="text-success text-xl"
-                  />
+                <div class="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
+                  <UIcon name="i-lucide-check-circle" class="text-success text-xl" />
                 </div>
                 <div>
-                  <p class="text-2xl font-bold">
-                    {{ progressionData.stats.tauxCompletion }}%
-                  </p>
+                  <p class="text-2xl font-bold">{{ progressionData.stats.tauxCompletion }}%</p>
                   <p class="text-sm text-muted">Complétion</p>
                 </div>
               </div>
@@ -358,25 +364,25 @@ const columns: TableColumn<AgentProgression>[] = [
 
             <div class="bg-elevated border border-default rounded-lg p-4">
               <div class="flex items-center gap-3">
-                <div
-                  class="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center"
-                >
-                  <UIcon
-                    name="i-lucide-trending-up"
-                    class="text-warning text-xl"
-                  />
+                <div class="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
+                  <UIcon name="i-lucide-trending-up" class="text-warning text-xl" />
                 </div>
                 <div>
-                  <p class="text-2xl font-bold">
-                    {{ progressionData.stats.tauxReussite }}%
-                  </p>
+                  <p class="text-2xl font-bold">{{ progressionData.stats.tauxReussite }}%</p>
                   <p class="text-sm text-muted">Réussite</p>
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="flex items-center justify-between mb-4">
+          <!-- Skeleton barre de recherche -->
+          <div v-if="pending" class="flex items-center justify-between mb-4">
+            <USkeleton class="h-10 w-96 rounded-lg" />
+            <USkeleton class="h-4 w-24 rounded" />
+          </div>
+
+          <!-- Barre de recherche réelle -->
+          <div v-else class="flex items-center justify-between mb-4">
             <UInput
               v-model="searchQuery"
               placeholder="Rechercher par code, nom, prénom ou email..."
@@ -384,13 +390,8 @@ const columns: TableColumn<AgentProgression>[] = [
               class="max-w-md"
               :loading="searchPending"
             />
-
             <div class="flex items-center gap-2">
-              <UBadge
-                v-if="searchMode === 'global'"
-                color="info"
-                variant="subtle"
-              >
+              <UBadge v-if="searchMode === 'global'" color="info" variant="subtle">
                 Recherche globale
               </UBadge>
               <p class="text-sm text-muted">
@@ -399,10 +400,18 @@ const columns: TableColumn<AgentProgression>[] = [
             </div>
           </div>
 
+          <!-- Skeleton tableau -->
+          <div v-if="pending" class="space-y-2">
+            <USkeleton class="h-10 w-full rounded-lg" />
+            <USkeleton v-for="i in 8" :key="i" class="h-12 w-full rounded" />
+          </div>
+
+          <!-- Tableau réel -->
           <UTable
+            v-else
             :data="localFilteredAgents"
             :columns="columns"
-            :loading="pending || searchPending"
+            :loading="searchPending"
             :ui="{
               base: 'table-fixed border-separate border-spacing-0',
               thead: '[&>tr]:bg-elevated/50',
@@ -412,15 +421,15 @@ const columns: TableColumn<AgentProgression>[] = [
             }"
           />
 
+          <!-- Pagination -->
           <div
-            v-if="searchMode === 'local' && progressionData.pagination"
+            v-if="!pending && searchMode === 'local' && progressionData?.pagination"
             class="flex items-center justify-between gap-4 border-t border-default pt-4 mt-6"
           >
             <div class="text-sm text-muted">
               Page {{ progressionData.pagination.page }} sur
               {{ progressionData.pagination.totalPages }}
             </div>
-
             <UPagination
               :model-value="currentPage"
               :total="progressionData.pagination.total"
@@ -430,14 +439,12 @@ const columns: TableColumn<AgentProgression>[] = [
           </div>
         </div>
 
+        <!-- Aucun module sélectionné -->
         <div
-          v-else-if="!selectedModule"
+          v-else
           class="text-center py-16 border-2 border-dashed border-default rounded-lg"
         >
-          <UIcon
-            name="i-lucide-graduation-cap"
-            class="text-5xl text-muted mb-4"
-          />
+          <UIcon name="i-lucide-graduation-cap" class="text-5xl text-muted mb-4" />
           <p class="font-medium mb-2">Aucun module sélectionné</p>
           <p class="text-muted text-sm mb-4">
             Cliquez sur le bouton ci-dessus pour sélectionner un module

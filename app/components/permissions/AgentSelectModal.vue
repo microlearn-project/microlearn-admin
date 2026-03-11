@@ -97,7 +97,7 @@ const globalFilter = ref("");
         description="Choisissez l'agent à qui attribuer un rôle"
         :overlay="false"
         :ui="{
-          width: 'sm:max-w-4xl',
+          content: 'sm:max-w-4xl',
           wrapper: 'z-[100]',
         }"
       >

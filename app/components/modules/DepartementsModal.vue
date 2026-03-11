@@ -180,7 +180,7 @@ function clearTableSelection() {
     v-model:open="open"
     :title="`Départements du module « ${module.titre} »`"
     description="Gérer les départements associés à ce module"
-    :ui="{ width: 'sm:max-w-4xl' }"
+    :ui="{ content: 'sm:max-w-4xl' }"
   >
     <slot />
 
@@ -302,7 +302,7 @@ function clearTableSelection() {
   </UModal>
 
   <!-- Modal d'ajout de services -->
-  <ModulesAddServiceModal
+  <ModulesAddDepartementModal
     v-if="showAddModal"
     v-model:open="showAddModal"
     :module="module"

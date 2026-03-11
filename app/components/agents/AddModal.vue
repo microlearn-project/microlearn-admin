@@ -229,7 +229,9 @@ watch(open, (isOpen) => {
                   : 'Sélectionner une direction'
               "
               :icon="
-                selectedDepartement ? 'i-heroicons-building-office' : 'i-lucide-search'
+                selectedDepartement
+                  ? 'i-heroicons-building-office'
+                  : 'i-lucide-search'
               "
               :color="selectedDepartement ? 'primary' : 'neutral'"
               variant="outline"
@@ -258,7 +260,9 @@ watch(open, (isOpen) => {
                   ? selectedService.designation
                   : 'Sélectionner un département'
               "
-              :icon="selectedService ? 'i-lucide-building-2' : 'i-lucide-search'"
+              :icon="
+                selectedService ? 'i-lucide-building-2' : 'i-lucide-search'
+              "
               :color="selectedService ? 'primary' : 'neutral'"
               variant="outline"
               class="flex-1 justify-start"

@@ -1,6 +1,6 @@
 <!-- app/components/SessionWatcher.vue -->
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue';
+import { onMounted, onUnmounted } from "vue";
 
 const { authenticated, user, logout } = useAuth();
 let intervalId: NodeJS.Timeout | null = null;
@@ -15,19 +15,26 @@ async function checkSession() {
   }
 
   try {
-    const response = await $fetch<{ valid: boolean }>('/api/auth/validate-session', {
-      method: 'POST',
-      body: { session_token: user.value.session_token },
-    });
+    const response = await $fetch<{ valid: boolean }>(
+      "/api/auth/validate-session",
+      {
+        method: "POST",
+        body: { session_token: user.value.session_token },
+      },
+    );
 
     // Si session invalide, déconnecter
     if (!response.valid) {
-      console.warn('Session invalidée - déconnexion automatique');
+      console.warn("Session invalidée - déconnexion automatique");
       await logout();
     }
   } catch (error) {
-    console.error('Erreur vérification session:', error);
-    // En cas d'erreur réseau, on ne déconnecte pas
+    // Erreur réseau (offline) → silencieux, on ne déconnecte pas
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      return;
+    }
+    // Vraie erreur inattendue → on log
+    console.error("Erreur vérification session:", error);
   }
 }
 

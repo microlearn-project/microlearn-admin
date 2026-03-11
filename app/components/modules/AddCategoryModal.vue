@@ -135,7 +135,7 @@ const pagination = ref({
     v-model:open="open"
     title="Ajouter des catégories"
     description="Sélectionnez les catégories à ajouter au module"
-    :ui="{ width: 'sm:max-w-2xl' }"
+    :ui="{ content: 'sm:max-w-2xl' }"
   >
     <template #body>
       <div class="space-y-4">

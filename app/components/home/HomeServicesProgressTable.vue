@@ -283,7 +283,7 @@ const participantColumns: TableColumn<Agent>[] = [
     v-model:open="showDetailModal"
     :title="selectedService?.designation"
     :description="`Détails de participation au département ${selectedService?.designation}`"
-    :ui="{ width: 'sm:max-w-5xl' }"
+    :ui="{ content: 'sm:max-w-5xl' }"
   >
     <template #body>
       <div v-if="selectedService" class="space-y-4">

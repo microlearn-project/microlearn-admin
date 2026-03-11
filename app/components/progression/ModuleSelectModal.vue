@@ -85,7 +85,7 @@ const columns: TableColumn<Module>[] = [
 const pagination = ref({
   pageIndex: 0,
   pageSize: 5,
-}); 
+});
 </script>
 
 <template>
@@ -93,7 +93,7 @@ const pagination = ref({
     v-model:open="open"
     title="Sélectionner un module"
     description="Choisissez le module pour afficher la progression des agents"
-    :ui="{ width: 'sm:max-w-3xl' }"
+    :ui="{ content: 'sm:max-w-3xl' }"
   >
     <template #body>
       <div class="space-y-4">

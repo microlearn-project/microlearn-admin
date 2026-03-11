@@ -67,7 +67,7 @@ async function handleSubmit(forceLogin = false) {
     form.value.identifier.trim(),
     form.value.password,
     loginType.value,
-    forceLogin, 
+    forceLogin,
   );
 
   loading.value = false;
@@ -134,7 +134,7 @@ function cancelForceLogin() {
       <UModal
         v-model:open="sessionConflict"
         title="Session active détectée"
-        :ui="{ width: 'sm:max-w-lg' }"
+        :ui="{ content: 'sm:max-w-lg' }"
       >
         <template #body>
           <div class="space-y-4">

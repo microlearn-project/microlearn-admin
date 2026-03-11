@@ -54,32 +54,7 @@ const columns: TableColumn<Departement>[] = [
       const svc = row.original;
       return h("div", {}, [h("p", { class: "font-medium" }, svc.designation)]);
     },
-  },
-  /*
-  {
-    id: "statut",
-    accessorFn: (row: Departement) => row.actif,
-    header: "Statut",
-    cell: ({ row }: any) =>
-      h(
-        UBadge,
-        {
-          color: row.original.actif ? "success" : "error",
-          variant: "subtle",
-          size: "xs",
-        },
-        () => (row.original.actif ? "Actif" : "Inactif"),
-      ),
-  },
-  {
-    accessorKey: "created_at",
-    header: "Créé le",
-    cell: ({ row }: any) => {
-      const date = new Date(row.original.created_at);
-      return date.toLocaleDateString("fr-FR", { dateStyle: "medium" });
-    },
-  },
-  */
+  }, 
   {
     id: "actions",
     cell: ({ row }: any) =>
@@ -113,7 +88,7 @@ const globalFilter = ref("");
         description="Choisissez le département d'affectation de l'agent"
         :overlay="false"
         :ui="{
-          width: 'sm:max-w-3xl',
+          content: 'sm:max-w-3xl',
           wrapper: 'z-[100]',
         }"
       >

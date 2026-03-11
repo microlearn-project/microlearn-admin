@@ -108,8 +108,6 @@ watch(
   { immediate: true },
 );
 
-
-
 // Ouvrir le modal quand on clique sur le slot
 function openModal() {
   if (props.rows.length === 1) {
@@ -234,14 +232,14 @@ const currentService = computed(() => {
   return departements.value.find(
     (s) => s.id_departement === props.rows[0].id_departement,
   );
-}); 
+});
 
 watch(open, (newValue) => {
   if (!newValue) {
     // La modale vient d'être fermée (par la croix, Esc, overlay, etc.)
-    emit("clear-selection")
+    emit("clear-selection");
   }
-})
+});
 </script>
 
 <template>

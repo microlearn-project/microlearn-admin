@@ -205,7 +205,7 @@ function clearTableSelection() {
     v-model:open="open"
     :title="`Documents du module « ${module.titre} »`"
     description="Gérer les documents associés à ce module"
-    :ui="{ width: 'sm:max-w-5xl' }"
+    :ui="{ content: 'sm:max-w-5xl' }"
   >
     <slot />
 

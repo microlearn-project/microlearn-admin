@@ -97,13 +97,13 @@ const links = computed<NavigationMenuItem[][]>(() => {
         {
           label: 'Départements',
           icon: 'i-heroicons-squares-2x2',
-          to: '/services',
+          to: '/departements',
           onSelect: () => { open.value = false }
         },
         {
           label: 'Directions',
           icon: 'i-heroicons-building-office',
-          to: '/departements',
+          to: '/directions',
           onSelect: () => { open.value = false }
         }
       ]

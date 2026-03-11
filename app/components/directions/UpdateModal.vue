@@ -3,21 +3,21 @@ import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
 import type { Tables } from "~/types/database.types";
 
-type Departement = Tables<"departement">;
 type Direction = Tables<"direction">;
+type AutoriteSuperieure = Tables<"autorite_superieure">;
 
 /* -------------------------
    Props
 --------------------------*/
 const props = defineProps<{
-  rows: Departement[];
+  rows: Direction[];
 }>();
 
 /* -------------------------
    Emits
 --------------------------*/
 const emit = defineEmits<{
-  (e: "updateservice"): void;
+  (e: "updatedepartement"): void;
   (e: "clear-selection"): void;
 }>();
 
@@ -28,26 +28,29 @@ const schema = z.object({
   designation: z
     .string()
     .max(255, "Le nombre maximum de caractères est de 255"),
-  id_direction: z.string().uuid("Veuillez sélectionner une direction"),
-  actif: z.boolean().default(false),
+  id_autorite: z.string().uuid("Veuillez sélectionner une autorité supérieure"),
+  actif: z.boolean().default(true),
 });
 
 type Schema = z.output<typeof schema>;
 
 /* -------------------------
-   Récupération directions
+   Récupération autorités
 --------------------------*/
-const { data: directions } = await useFetch<Direction[]>("/api/direction", {
-  transform: (data) => data.filter((d) => d.actif && !d.deleted_at),
-});
+const { data: autorites } = await useFetch<AutoriteSuperieure[]>(
+  "/api/autorite-superieure",
+  {
+    transform: (data) => data.filter((a) => a.actif),
+  },
+);
 
 /* -------------------------
    State du formulaire
 --------------------------*/
 const state = reactive<Partial<Schema>>({
   designation: "",
-  id_direction: undefined,
-  actif: false,
+  id_autorite: undefined,
+  actif: true,
 });
 
 // Transformer la désignation en majuscules automatiquement
@@ -59,21 +62,21 @@ const designationUppercase = computed({
 });
 
 /* -------------------------
-   Département courant (1 seul)
+   Direction courante (1 seul)
 --------------------------*/
-const currentService = computed(() => props.rows[0]);
+const currentDepartement = computed(() => props.rows[0]);
 
 /* -------------------------
    Sync props → form
 --------------------------*/
 watch(
-  currentService,
-  (service) => {
-    if (!service) return;
+  currentDepartement,
+  (departement) => {
+    if (!departement) return;
 
-    state.designation = service.designation;
-    state.id_direction = service.id_direction;
-    state.actif = service.actif;
+    state.designation = departement.designation;
+    state.id_autorite = departement.id_autorite;
+    state.actif = departement.actif;
   },
   { immediate: true },
 );
@@ -85,26 +88,28 @@ const open = ref(false);
    Submit
 --------------------------*/
 async function onSubmit(event: FormSubmitEvent<Schema>) {
-  if (!currentService.value) return;
+  if (!currentDepartement.value) return;
+
+  const oldDesignation = currentDepartement.value.designation;
 
   try {
-    await $fetch("/api/service/updateservice", {
+    await $fetch("/api/departement/updatedepartement", {
       method: "PATCH",
       body: {
-        id: currentService.value.id_departement,
+        id: currentDepartement.value.id_direction,
         designation: event.data.designation,
-        id_direction: event.data.id_direction,
+        id_autorite: event.data.id_autorite,
         actif: event.data.actif,
       },
     });
 
     toast.add({
       title: "Succès",
-      description: `Département « ${event.data.designation} » mis à jour`,
+      description: `Direction mise à jour avec succès`,
       color: "success",
     });
 
-    emit("updateservice");
+    emit("updatedepartement");
     emit("clear-selection");
   } catch (err: any) {
     const message =
@@ -113,7 +118,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     if (message.includes("duplicate") || message.includes("unique")) {
       toast.add({
         title: "Échec",
-        description: "Cette désignation existe déjà.",
+        description: "Cette direction existe déjà.",
         color: "error",
       });
       return;
@@ -145,8 +150,8 @@ watch(open, (newValue) => {
 <template>
   <UModal
     v-model:open="open"
-    title="Modifier le département"
-    :description="`Modifier le département sélectionné.`"
+    title="Modifier la Direction"
+    :description="`Modifier les informations de la direction sélectionnée.`"
   >
     <slot />
 
@@ -161,26 +166,27 @@ watch(open, (newValue) => {
           <UInput v-model="designationUppercase" class="w-full" />
         </UFormField>
 
-        <!--  Sélection de direction -->
+        <!--  Sélection autorité supérieure -->
         <UFormField
-          label="Direction"
-          name="id_direction"
+          label="Autorité Supérieure"
+          name="id_autorite"
           required
-          description="Rattacher ce département à une direction"
+          description="Rattacher cette direction à une autorité supérieure"
         >
           <USelect
-            v-model="state.id_direction"
+            v-model="state.id_autorite"
             :items="
-              directions?.map((d) => ({
-                label: d.designation,
-                value: d.id_direction,
+              autorites?.map((a) => ({
+                label: `${a.code} - ${a.designation}`,
+                value: a.id_autorite,
               })) ?? []
             "
-            placeholder="Sélectionner une direction"
+            placeholder="Sélectionner une autorité"
             class="w-full"
           />
         </UFormField>
 
+        <!--   Checkbox actif -->
         <UCheckbox
           v-model="state.actif"
           indicator="end"

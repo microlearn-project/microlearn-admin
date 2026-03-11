@@ -60,11 +60,11 @@ function getRowItems(row: { original: Tag }) {
   return [
     { type: "label", label: "Actions sur la catégorie" },
     {
-      label: "Copier l’ID",
+      label: "Copier la désignation",
       icon: "i-lucide-copy",
       onSelect: () => {
-        navigator.clipboard.writeText(String(s.id_tag));
-        toast.add({ title: "ID copié dans le presse-papier" });
+        navigator.clipboard.writeText(String(s.designation));
+        toast.add({ title: "Désignation copié dans le presse-papier" });
       },
     },
     { type: "separator" },

@@ -97,7 +97,7 @@ const columns: TableColumn<Departement>[] = [
           color: "primary",
           variant: "ghost",
           size: "xs",
-          onClick: () => selectDepartement(row.original),   
+          onClick: () => selectDepartement(row.original),
         }),
       ]),
   },
@@ -120,7 +120,7 @@ const globalFilter = ref("");
         description="Filtrez les résultats par département"
         :overlay="false"
         :ui="{
-          width: 'sm:max-w-3xl',
+          content: 'sm:max-w-3xl',
           wrapper: 'z-[100]',
         }"
       >

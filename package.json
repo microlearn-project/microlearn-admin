@@ -17,6 +17,7 @@
     "@nuxt/ui": "^4.3.0",
     "@nuxtjs/supabase": "^2.0.2",
     "@supabase/supabase-js": "^2.86.0",
+    "@tiptap/extension-text-align": "3.13.0",
     "@tiptap/vue-3": "3.13.0",
     "@unovis/ts": "^1.6.1",
     "@unovis/vue": "^1.6.1",
@@ -42,7 +43,8 @@
       "@tiptap/extension-drag-handle": "3.13.0",
       "@tiptap/extension-collaboration": "3.13.0",
       "@tiptap/extension-node-range": "3.13.0",
-      "@tiptap/suggestion": "3.13.0"
+      "@tiptap/suggestion": "3.13.0",
+      "@tiptap/extension-text-align": "3.13.0"
     }
   },
   "packageManager": "pnpm@10.21.0"

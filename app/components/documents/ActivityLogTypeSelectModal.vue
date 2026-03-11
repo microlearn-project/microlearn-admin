@@ -127,7 +127,7 @@ const globalFilter = ref("");
         description="Sélectionnez un type pour filtrer les logs"
         :overlay="false"
         :ui="{
-          width: 'sm:max-w-2xl',
+          content: 'sm:max-w-2xl',
           wrapper: 'z-[100]',
         }"
       >

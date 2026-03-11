@@ -98,7 +98,8 @@ const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         <UInput
           v-model="texte"
           :placeholder="`Réponse ${letters[index]}...`"
-          size="sm"
+          size="md"
+          class="w-full"
         />
 
         <!-- Explication (optionnelle) -->
@@ -108,6 +109,7 @@ const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
             placeholder="Explication affichée après la réponse de l'agent..."
             :rows="2"
             size="sm"
+            class="w-full"
           />
         </div>
       </div>

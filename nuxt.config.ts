@@ -1,7 +1,7 @@
 // nuxt.config.ts
 export default defineNuxtConfig({
   modules: ["@nuxt/eslint", "@nuxt/ui", "@vueuse/nuxt"],
- 
+
   runtimeConfig: {
     // Clés privées (côté serveur uniquement)
     supabaseUrl: process.env.NUXT_SUPABASE_URL,
@@ -22,6 +22,11 @@ export default defineNuxtConfig({
         "@supabase/supabase-js",
         "@supabase/postgrest-js",
         "prosemirror-state",
+        // Prosemirror est utilisé par @nuxt/ui pour l'éditeur de texte riche, et il peut causer des problèmes d'importation dans certains environnements. En incluant explicitement les modules Prosemirror, on s'assure qu'ils sont correctement résolus et optimisés par Vite.
+        '@nuxt/ui > prosemirror-state',
+        '@nuxt/ui > prosemirror-transform',
+        '@nuxt/ui > prosemirror-model',
+        '@nuxt/ui > prosemirror-view',
       ],
     },
     build: {

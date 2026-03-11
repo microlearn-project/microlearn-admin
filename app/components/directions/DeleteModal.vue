@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import type { Tables } from "~/types/database.types";
 
-type Departement = Tables<"departement">;
+type Direction = Tables<"direction">;
 
 withDefaults(
   defineProps<{
-    rows: Departement[];
+    rows: Direction[];
     count?: number;
   }>(),
   {
@@ -23,7 +23,7 @@ const toast = useToast();
 
 // Fonction de suppression douce
 const softDelete = async (id: string) => {
-  await $fetch(`/api/service/soft-delete`, {
+  await $fetch(`/api/departement/soft-delete`, {
     method: "PATCH",
     body: {
       id: id,
@@ -32,7 +32,7 @@ const softDelete = async (id: string) => {
 };
 
 // Le texte de confirmation
-function confirmationLines(rows: Departement[]): string[] {
+function confirmationLines(rows: Direction[]): string[] {
   return rows.map((r) => `« ${r.designation} »`);
 }
 
@@ -49,8 +49,8 @@ watch(open, (newValue) => {
 // Soumission de la suppression
 async function onSubmit(rows: Array<any>) {
   try {
-    await Promise.all(rows.map((r) => softDelete(String(r.id_departement))));
-    toast.add({ title: `${rows.length} département(s) supprimé(s)` });
+    await Promise.all(rows.map((r) => softDelete(String(r.id_direction))));
+    toast.add({ title: `${rows.length} direction(s) supprimé(s)` });
     emit("deleted");
     emit("clear-selection");
   } catch (err) {
@@ -65,7 +65,9 @@ async function onSubmit(rows: Array<any>) {
 
 // Fonction pour nettoyer la sélection
 function clear_selection() {
+  // Fermer la modale
   open.value = false;
+  // Désélectionner toutes les lignes
   emit("clear-selection");
 }
 </script>
@@ -73,14 +75,16 @@ function clear_selection() {
 <template>
   <UModal
     v-model:open="open"
-    :title="`Supprimer ${count} département${count > 1 ? 's' : ''}`"
+    :title="`Supprimer ${count} direction${count > 1 ? 's' : ''}`"
     :description="`Êtes-vous sûr ? `"
   >
     <slot />
     <template #body>
       <div class="space-y-4">
         <div v-if="rows.length > 1">
-          <p class="font-medium">Les départements suivants seront supprimés :</p>
+          <p class="font-medium">
+            Les directions suivants seront supprimés :
+          </p>
           <ul class="list-disc pl-5 space-y-1">
             <li v-for="(line, i) in confirmationLines(rows)" :key="i">
               {{ line }}
@@ -90,8 +94,9 @@ function clear_selection() {
 
         <div v-else>
           <p>
-            Le département <strong>« {{ rows[0]?.designation }} »</strong> sera
-            supprimé.
+            La direction
+            <strong>« {{ rows[0]?.designation }} »</strong>
+            sera supprimé.
           </p>
         </div>
 

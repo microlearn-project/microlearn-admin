@@ -183,7 +183,7 @@ function clearTableSelection() {
     v-model:open="open"
     :title="`Catégories du module « ${module.titre} »`"
     description="Gérer les catégories associées à ce module"
-    :ui="{ width: 'sm:max-w-4xl' }"
+    :ui="{ content: 'sm:max-w-4xl' }"
   >
     <slot />
 

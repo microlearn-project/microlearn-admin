@@ -473,7 +473,7 @@ async function toggleDownloadable(id: string, enabled: boolean) {
       />
 
       <!-- Modal de gestion des services -->
-      <ModulesServicesModal
+      <ModulesDepartementsModal
         v-if="moduleForServices"
         v-model:open="showServicesModal"
         :module="moduleForServices"

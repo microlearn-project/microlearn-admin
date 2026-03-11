@@ -135,7 +135,7 @@ const pagination = ref({
     v-model:open="open"
     title="Ajouter des départements"
     description="Sélectionnez les départements à ajouter au module"
-    :ui="{ width: 'sm:max-w-2xl' }"
+    :ui="{ content: 'sm:max-w-2xl' }"
   >
     <template #body>
       <div class="space-y-4">

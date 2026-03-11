@@ -94,7 +94,7 @@ export default defineEventHandler(async (event) => {
           id_module
         )
       )
-    `
+    `,
     )
     .eq("termine", true);
 
@@ -105,7 +105,7 @@ export default defineEventHandler(async (event) => {
   let tauxReussite = 0;
   if (moduleQuizResults && moduleQuizResults.length > 0) {
     const passedQuiz = moduleQuizResults.filter(
-      (r: any) => Number(r.score) >= 50
+      (r: any) => Number(r.score) >= 50,
     ).length;
     tauxReussite = Math.round((passedQuiz / moduleQuizResults.length) * 100);
   }
@@ -158,7 +158,7 @@ export default defineEventHandler(async (event) => {
               id_module
             )
           )
-        `
+        `,
         )
         .eq("id_agent", suivi.id_agent);
 
@@ -168,12 +168,12 @@ export default defineEventHandler(async (event) => {
       });
 
       const quizTermine = moduleQuiz?.some((q: any) => q.termine) || false;
-      const quizScore =
-        moduleQuiz?.find((q: any) => q.termine)?.score || null;
+      const quizScore = moduleQuiz?.find((q: any) => q.termine)?.score || null;
 
       // Compter les cours complétés
-      const coursCompletes =
-        suivi.progression === 100 ? totalCours || 0 : 0;
+      const coursCompletes = totalCours
+        ? Math.round(((suivi.progression || 0) / 100) * (totalCours || 0))
+        : 0;
 
       agents.push({
         id_agent: agent.id_agent,
@@ -182,7 +182,7 @@ export default defineEventHandler(async (event) => {
         prenom: agent.prenom,
         email: agent.email,
         departement: agent.departement?.designation || "N/A",
-        direction: agent.direction?.designation || "N/A",      
+        direction: agent.direction?.designation || "N/A",
         date_debut: suivi.date_debut,
         date_fin: suivi.date_fin,
         progression: suivi.progression || 0,

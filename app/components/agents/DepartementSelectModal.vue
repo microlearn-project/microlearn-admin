@@ -58,16 +58,6 @@ const columns: TableColumn<Direction>[] = [
       return h("div", {}, [h("p", { class: "font-medium" }, dept.designation)]);
     },
   },
-  /*
-  {
-    accessorKey: "created_at",
-    header: "Créé le",
-    cell: ({ row }: any) => {
-      const date = new Date(row.original.created_at);
-      return date.toLocaleDateString("fr-FR", { dateStyle: "medium" });
-    },
-  },
-  */
   {
     id: "actions",
     cell: ({ row }: any) =>
@@ -101,7 +91,7 @@ const globalFilter = ref("");
         description="Choisissez une direction d'affectation de l'agent"
         :overlay="false"
         :ui="{
-          width: 'sm:max-w-3xl',
+          content: 'sm:max-w-3xl',
           wrapper: 'z-[100]',
         }"
       >

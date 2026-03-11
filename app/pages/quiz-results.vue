@@ -217,7 +217,7 @@ const detailColumns: TableColumn<ModuleDetailResult>[] = [
         () => (reussi ? "✓ Réussi" : "✗ Échoué")
       );
     },
-  }, 
+  },
   {
     accessorKey: "date_soumission",
     header: "Date de soumission",
@@ -495,7 +495,7 @@ async function exportToJSON() {
         v-model:open="showModuleDetailModal"
         :title="`Détails - ${selectedModuleForDetail?.titre}`"
         :description="`Liste des agents ayant tenté ce module`"
-        :ui="{ width: 'sm:max-w-5xl' }"
+        :ui="{ content: 'sm:max-w-5xl' }"
       >
         <template #body>
           <div class="space-y-4">

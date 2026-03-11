@@ -6,6 +6,7 @@ import type {
 } from "@nuxt/ui";
 import type { Editor } from "@tiptap/vue-3";
 import { ImageUpload } from "./editor/ImageUpload";
+import { TextAlign } from "@tiptap/extension-text-align";
 
 defineProps<{
   moduleId?: string;
@@ -126,6 +127,39 @@ const toolbarItems = [
     },
   ],
   [
+    {
+      icon: "i-lucide-align-left",
+      tooltip: { text: "Alignement" },
+      content: { align: "start" },
+      items: [
+        {
+          kind: "textAlign",
+          align: "left",
+          icon: "i-lucide-align-left",
+          label: "Gauche",
+        },
+        {
+          kind: "textAlign",
+          align: "center",
+          icon: "i-lucide-align-center",
+          label: "Centrer",
+        },
+        {
+          kind: "textAlign",
+          align: "right",
+          icon: "i-lucide-align-right",
+          label: "Droite",
+        },
+        {
+          kind: "textAlign",
+          align: "justify",
+          icon: "i-lucide-align-justify",
+          label: "Justifier",
+        },
+      ],
+    },
+  ],
+  [
     { kind: "undo", icon: "i-lucide-undo", tooltip: { text: "Annuler" } },
     { kind: "redo", icon: "i-lucide-redo", tooltip: { text: "Rétablir" } },
   ],
@@ -166,6 +200,12 @@ const bubbleToolbarItems = [
     },
   ],
   [{ kind: "link", icon: "i-lucide-link", tooltip: { text: "Lien" } }],
+  [
+    { kind: "textAlign", align: "left",    icon: "i-lucide-align-left",    tooltip: { text: "Gauche" } },
+    { kind: "textAlign", align: "center",  icon: "i-lucide-align-center",  tooltip: { text: "Centrer" } },
+    { kind: "textAlign", align: "right",   icon: "i-lucide-align-right",   tooltip: { text: "Droite" } },
+    { kind: "textAlign", align: "justify", icon: "i-lucide-align-justify", tooltip: { text: "Justifier" } },
+  ],
 ] satisfies EditorToolbarItem[][];
 
 // Menu slash avec upload d'image
@@ -207,7 +247,10 @@ const suggestionItems: EditorSuggestionMenuItem<typeof customHandlers>[][] = [
       v-model="content"
       placeholder="Commencez à écrire la description de votre module..."
       :min-height="500"
-      :extensions="[ImageUpload]"
+      :extensions="[
+        ImageUpload,
+        TextAlign.configure({ types: ['heading', 'paragraph'] }),
+      ]"
       :handlers="customHandlers"
       class="prose prose-neutral dark:prose-invert max-w-none"
     >
@@ -223,10 +266,8 @@ const suggestionItems: EditorSuggestionMenuItem<typeof customHandlers>[][] = [
         layout="bubble"
       />
 
-      <UEditorDragHandle :editor="editor" />
-      <!--
+      <UEditorDragHandle :editor="editor" /> 
       <UEditorSuggestionMenu :editor="editor" :items="suggestionItems" />
-      -->
     </UEditor>
 
     <div

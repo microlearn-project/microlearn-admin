@@ -95,7 +95,7 @@ const globalFilter = ref("");
         description="Choisissez un module pour filtrer les documents"
         :overlay="false"
         :ui="{
-          width: 'sm:max-w-4xl',
+          content: 'sm:max-w-4xl',
           wrapper: 'z-[100]',
         }"
       >

@@ -101,7 +101,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     <UForm :schema="schema" :state="state" class="space-y-6" @submit="onSubmit">
       <!-- Titre -->
       <UFormField label="Titre du module" name="titre" required>
-        <UInput v-model="state.titre" size="xl" />
+        <UInput v-model="state.titre" size="xl" class="w-full" />
       </UFormField>
 
       <!-- Description -->
@@ -196,7 +196,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       :module="module"
     />
 
-    <ModulesServicesModal
+    <ModulesDepartementsModal
       v-if="showServicesModal"
       v-model:open="showServicesModal"
       :module="module"

@@ -210,7 +210,7 @@ const quizStats = computed(() => {
     v-model:open="open"
     :title="`Quiz : ${cours.titre}`"
     :ui="{
-      width: 'sm:max-w-4xl',
+      content: 'w-[calc(100vw-2rem)] max-w-4xl',
     }"
     @close="onClose"
     :description="quiz ? 'Éditez les questions et réponses du quiz.' : 'Créez un quiz pour ce cours.'"

@@ -11,7 +11,7 @@ const _useDashboard = () => {
     "g-h": () => router.push("/"),
     "g-a": () => router.push("/agents"),
     "g-p": () => router.push("/permissions"),
-    "g-s": () => router.push("/services"),
+    "g-s": () => router.push("/departements"),
     "g-d": () => router.push("/documents"),
     "g-m": () => router.push("/settings"),
 
@@ -40,7 +40,7 @@ const _useDashboard = () => {
       } else if (window.history.length > 1) {
         router.back();
       }
-    }, 
+    },
   });
 
   watch(() => route.fullPath, () => {

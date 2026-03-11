@@ -4,8 +4,8 @@ import { getPaginationRowModel } from "@tanstack/vue-table";
 import { upperFirst } from "scule";
 import type { Tables } from "~/types/database.types";
 
-type Departement = Tables<"departement">;
 type Direction = Tables<"direction">;
+type AutoriteSuperieure = Tables<"autorite_superieure">;
 
 const toast = useToast();
 
@@ -17,43 +17,33 @@ const UDropdownMenu = resolveComponent("UDropdownMenu");
 const UButton = resolveComponent("UButton");
 
 /* ---------------------------------------------------
-   1. Récupération des départements avec directions
+   1. Récupération des directions avec autorités
 ----------------------------------------------------*/
 const {
-  data: departements,
+  data: directions,
   pending,
   error,
   refresh,
-} = await useFetch<Departement[]>("/api/service", {
+} = await useFetch<Direction[]>("/api/departement", {
   server: true,
   lazy: false,
 });
 
-// Récupérer les directions pour affichage
-const { data: directions } = await useFetch<Direction[]>("/api/direction");
+// Récupérer les autorités supérieures pour affichage
+const { data: autorites } = await useFetch<AutoriteSuperieure[]>("/api/autorite-superieure");
 
-// Créer un map pour accès rapide aux directions
-const directionsMap = computed(() => {
-  if (!directions.value) return new Map();
-  return new Map(directions.value.map((d) => [d.id_direction, d]));
+// Map pour accès rapide aux autorités
+const autoritesMap = computed(() => {
+  if (!autorites.value) return new Map();
+  return new Map(autorites.value.map(a => [a.id_autorite, a]));
 });
 
 /* ---------------------------------------------------
    2. Actions API
 ----------------------------------------------------*/
-// Activer un département
-const activate = async (id: string) => {
-  await $fetch(`/api/service/${id}/activate`, { method: "PATCH" });
-};
-
-// Désactiver un département
-const deactivate = async (id: string) => {
-  await $fetch(`/api/service/${id}/deactivate`, { method: "PATCH" });
-};
-
-// Supprimer un département
+// Supprimer une direction
 const softDelete = async (id: string) => {
-  await $fetch(`/api/service/soft-delete`, {
+  await $fetch(`/api/departement/soft-delete`, {
     method: "PATCH",
     body: {
       id: id,
@@ -75,56 +65,16 @@ const selectedRows = computed(
 /* ---------------------------------------------------
      4. Items du menu sur chaque ligne
 ----------------------------------------------------*/
-function getRowItems(row: { original: Departement }) {
+function getRowItems(row: { original: Direction }) {
   const s = row.original;
   return [
-    { type: "label", label: "Actions sur le département" },
+    { type: "label", label: "Actions sur la direction" },
     {
       label: "Copier l'ID",
       icon: "i-lucide-copy",
       onSelect: () => {
-        navigator.clipboard.writeText(String(s.id_departement));
+        navigator.clipboard.writeText(String(s.id_direction));
         toast.add({ title: "ID copié dans le presse-papier" });
-      },
-    },
-    { type: "separator" },
-    {
-      label: s.actif ? "Désactiver" : "Activer",
-      icon: s.actif ? "i-lucide-toggle-right" : "i-lucide-toggle-left",
-      color: s.actif ? "warning" : "success",
-      onSelect: async () => {
-        const newStatus = !s.actif;
-
-        try {
-          if (newStatus) {
-            await activate(s.id_departement);
-          } else {
-            await deactivate(s.id_departement);
-          }
-
-          // MISE À JOUR LOCALE
-          if (!departements.value) return;
-
-          departements.value = departements.value.map((srv) =>
-            srv.id_departement === s.id_departement
-              ? {
-                  ...srv,
-                  actif: newStatus,
-                  updated_at: new Date().toISOString(),
-                }
-              : srv,
-          );
-
-          toast.add({
-            title: newStatus ? "Département activé" : "Département désactivé",
-          });
-        } catch (e) {
-          toast.add({
-            title: "Erreur",
-            description: "Impossible de modifier le département",
-            color: "error",
-          });
-        }
       },
     },
     { type: "separator" },
@@ -134,18 +84,20 @@ function getRowItems(row: { original: Departement }) {
       color: "error",
       onSelect: async () => {
         try {
-          await softDelete(s.id_departement);
+          await softDelete(s.id_direction);
 
-          departements.value = departements.value?.filter(
-            (srv) => srv.id_departement !== s.id_departement,
-          );
+          if (directions.value) {
+            directions.value = directions.value.filter(
+              (dir) => dir.id_direction !== s.id_direction,
+            );
+          }
 
-          toast.add({ title: "Département supprimé" });
+          toast.add({ title: "Direction supprimée" });
           clearTableSelection();
-        } catch {
+        } catch (error) {
           toast.add({
             title: "Erreur",
-            description: "Suppression impossible",
+            description: "Impossible de supprimer la direction",
             color: "error",
           });
         }
@@ -157,7 +109,7 @@ function getRowItems(row: { original: Departement }) {
 /* ---------------------------------------------------
      5. Colonnes du tableau
 ----------------------------------------------------*/
-const columns: TableColumn<Departement>[] = [
+const columns: TableColumn<Direction>[] = [
   {
     id: "select",
     header: ({ table }: any) =>
@@ -182,21 +134,33 @@ const columns: TableColumn<Departement>[] = [
       h("div", { class: "font-medium" }, row.original.designation),
   },
   {
-    id: "direction", //  Colonne Direction
-    accessorFn: (row: Departement) => row.id_direction,
-    header: "Direction",
+    id: "autorite",
+    accessorFn: (row: Direction) => row.id_autorite,
+    header: "Autorité Supérieure",
     cell: ({ row }: any) => {
-      const direction = directionsMap.value.get(row.original.id_direction);
-      return h(
-        "div",
-        { class: "text-sm" },
-        direction?.designation || "Non affecté",
-      );
+      const autorite = autoritesMap.value.get(row.original.id_autorite);
+      if (!autorite) {
+        return h("div", { class: "text-sm text-muted" }, "Non affecté");
+      }
+      return h("div", { class: "flex items-center gap-2" }, [
+        h(
+          "span",
+          {
+            class: `inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+              autorite.code === "DG"
+                ? "bg-primary/10 text-primary"
+                : "bg-info/10 text-info"
+            }`,
+          },
+          autorite.code
+        ),
+        h("span", { class: "text-sm" }, autorite.designation),
+      ]);
     },
   },
   {
     id: "statut",
-    accessorFn: (row: Departement) => row.actif,
+    accessorFn: (row: Direction) => row.actif,
     header: "Statut",
     cell: ({ row }: any) =>
       h(
@@ -253,7 +217,7 @@ const columns: TableColumn<Departement>[] = [
 ];
 
 /* ---------------------------------------------------
-     6. Pagination (10 départements par page)
+     6. Pagination (10 directions par page)
 ----------------------------------------------------*/
 const pagination = ref({
   pageIndex: 0,
@@ -287,14 +251,14 @@ function clearTableSelection() {
 }
 </script>
 <template>
-  <UDashboardPanel id="departements">
+  <UDashboardPanel id="directions">
     <template #header>
-      <UDashboardNavbar title="Départements">
+      <UDashboardNavbar title="Directions">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
-          <ServicesAddModal @addservice="refresh()" />
+          <DirectionsAddModal  @adddepartement="refresh()" />
         </template>
       </UDashboardNavbar>
     </template>
@@ -302,16 +266,16 @@ function clearTableSelection() {
     <template #body>
       <!-- Composants -->
       <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
-        <!-- Barre de recherche  -->
+        <!-- Barre de recherche -->
         <UInput
-          placeholder="Rechercher ..."
           :model-value="
             (table?.tableApi
               ?.getColumn('designation')
               ?.getFilterValue() as string) ?? ''
           "
+          placeholder="Rechercher une direction..."
           icon="i-lucide-search"
-          class="max-w-xs"
+          class="max-w-md"
           @update:model-value="
             table?.tableApi?.getColumn('designation')?.setFilterValue($event)
           "
@@ -319,11 +283,11 @@ function clearTableSelection() {
 
         <div class="flex items-center gap-3">
           <!-- Modal de mise à jour -->
-          <ServicesUpdateModal
-            :rows="selectedRows"
-            @updateservice="refresh()"
-            @clear-selection="clearTableSelection"
-          >
+          <DirectionsUpdateModal
+  :rows="selectedRows"
+  @updatedepartement="refresh()"
+  @clear-selection="clearTableSelection"
+>
             <UButton
               v-if="selectedRows.length === 1"
               label="Modifier"
@@ -331,10 +295,10 @@ function clearTableSelection() {
               variant="subtle"
               icon="i-lucide-edit-2"
             />
-          </ServicesUpdateModal>
+          </DirectionsUpdateModal>
 
           <!-- Modal de suppression -->
-          <ServicesDeleteModal
+          <DirectionsDeleteModal
             :count="table?.tableApi?.getFilteredSelectedRowModel().rows.length"
             :rows="selectedRows"
             @deleted="refresh()"
@@ -355,9 +319,9 @@ function clearTableSelection() {
                 </UKbd>
               </template>
             </UButton>
-          </ServicesDeleteModal>
+          </DirectionsDeleteModal>
 
-          <!-- Bouton de filtre -->
+          <!-- Bouton de filtre statut -->
           <USelect
             v-model="statusFilter"
             :items="[
@@ -365,11 +329,7 @@ function clearTableSelection() {
               { label: 'Actif', value: 'actif' },
               { label: 'Inactif', value: 'inactif' },
             ]"
-            :ui="{
-              trailingIcon:
-                'group-data-[state=open]:rotate-180 transition-transform duration-200',
-            }"
-            placeholder="Filter status"
+            placeholder="Filtrer par statut"
             class="min-w-28"
           />
 
@@ -404,7 +364,7 @@ function clearTableSelection() {
         ref="table"
         v-model:pagination="pagination"
         v-model:row-selection="rowSelection"
-        :data="departements"
+        :data="directions ?? []"
         :pagination-options="{
           getPaginationRowModel: getPaginationRowModel(),
         }"
