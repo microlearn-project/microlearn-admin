@@ -12,6 +12,7 @@ overrides:
   '@tiptap/extension-collaboration': 3.13.0
   '@tiptap/extension-node-range': 3.13.0
   '@tiptap/suggestion': 3.13.0
+  '@tiptap/extension-text-align': 3.13.0
 
 importers:
 
