@@ -20,10 +20,7 @@ const schema = z.object({
 
 type Schema = z.output<typeof schema>;
 
-const state = reactive<Schema>({
-  titre: "",
-});
-
+const state = reactive<Schema>({ titre: "" });
 const description = ref("");
 const submitting = ref(false);
 
@@ -56,10 +53,8 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       color: "success",
     });
 
-    // Réinitialiser le formulaire
     state.titre = "";
     description.value = "";
-
     open.value = false;
     emit("created");
   } catch (err: any) {
@@ -74,6 +69,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 }
 
 function onClose() {
+  // Les vidéos orphelines éventuelles seront nettoyées par Edge Function nocturne 
   state.titre = "";
   description.value = "";
   open.value = false;
@@ -81,7 +77,13 @@ function onClose() {
 </script>
 
 <template>
-  <UModal v-model:open="open" :title="'Ajouter un cours'" :ui="{ content: 'max-w-5xl' }" @close="onClose">
+  <UModal
+    v-model:open="open"
+    :title="'Ajouter un cours'"
+    :ui="{ content: 'max-w-5xl' }"
+    @close="onClose"
+    :description="'Créez un nouveau cours pour ce module. '"
+  >
     <template #body>
       <UForm :schema="schema" :state="state" class="space-y-4" @submit="onSubmit">
         <UFormField label="Titre du cours" name="titre" required>
@@ -93,7 +95,10 @@ function onClose() {
         </UFormField>
 
         <UFormField label="Contenu du cours" required>
-          <ModulesCreateEditor v-model="description" />
+          <ModulesCreateEditor
+            v-model="description"
+            :module-id="moduleId"
+          />
         </UFormField>
 
         <p class="text-xs text-muted">

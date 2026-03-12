@@ -4,30 +4,44 @@ import type {
   EditorToolbarItem,
   EditorSuggestionMenuItem,
 } from "@nuxt/ui";
-import type { Editor } from "@tiptap/vue-3";
 import { ImageUpload } from "./editor/ImageUpload";
+import { VideoUpload } from "./editor/VideoUpload";
 import { TextAlign } from "@tiptap/extension-text-align";
 
-defineProps<{
+const props = defineProps<{
   moduleId?: string;
+  coursId?: string;
 }>();
 
 const content = defineModel<string>({ default: "" });
 
-// Custom handlers pour l'upload d'image
 const customHandlers = {
   imageUpload: {
-    canExecute: (editor: Editor) =>
+    canExecute: (editor: any) =>
       editor.can().insertContent({ type: "imageUpload" }),
-    execute: (editor: Editor) => {
+    execute: (editor: any) => {
       editor.chain().focus().insertContent({ type: "imageUpload" }).run();
     },
-    isActive: (editor: Editor) => editor.isActive("imageUpload"),
+    isActive: (editor: any) => editor.isActive("imageUpload"),
+    isDisabled: undefined,
+  },
+  videoUpload: {
+    canExecute: (editor: any) =>
+      editor.can().insertContent({ type: "videoUpload" }),
+    execute: (editor: any) => {
+      editor.chain().focus().insertContent({
+        type: "videoUpload",
+        attrs: {
+          moduleId: props.moduleId || null,
+          coursId: props.coursId || null,
+        },
+      }).run();
+    },
+    isActive: (editor: any) => editor.isActive("videoUpload"),
     isDisabled: undefined,
   },
 } satisfies EditorCustomHandlers;
 
-// Toolbar fixe avec le bouton d'upload personnalisé
 const toolbarItems = [
   [
     {
@@ -35,96 +49,32 @@ const toolbarItems = [
       tooltip: { text: "Titres" },
       content: { align: "start" },
       items: [
-        {
-          kind: "heading",
-          level: 1,
-          icon: "i-lucide-heading-1",
-          label: "Titre 1",
-        },
-        {
-          kind: "heading",
-          level: 2,
-          icon: "i-lucide-heading-2",
-          label: "Titre 2",
-        },
-        {
-          kind: "heading",
-          level: 3,
-          icon: "i-lucide-heading-3",
-          label: "Titre 3",
-        },
+        { kind: "heading", level: 1, icon: "i-lucide-heading-1", label: "Titre 1" },
+        { kind: "heading", level: 2, icon: "i-lucide-heading-2", label: "Titre 2" },
+        { kind: "heading", level: 3, icon: "i-lucide-heading-3", label: "Titre 3" },
       ],
     },
   ],
   [
-    {
-      kind: "mark",
-      mark: "bold",
-      icon: "i-lucide-bold",
-      tooltip: { text: "Gras" },
-    },
-    {
-      kind: "mark",
-      mark: "italic",
-      icon: "i-lucide-italic",
-      tooltip: { text: "Italique" },
-    },
-    {
-      kind: "mark",
-      mark: "underline",
-      icon: "i-lucide-underline",
-      tooltip: { text: "Souligné" },
-    },
-    {
-      kind: "mark",
-      mark: "strike",
-      icon: "i-lucide-strikethrough",
-      tooltip: { text: "Barré" },
-    },
-    {
-      kind: "mark",
-      mark: "code",
-      icon: "i-lucide-code",
-      tooltip: { text: "Code inline" },
-    },
+    { kind: "mark", mark: "bold",      icon: "i-lucide-bold",          tooltip: { text: "Gras" } },
+    { kind: "mark", mark: "italic",    icon: "i-lucide-italic",        tooltip: { text: "Italique" } },
+    { kind: "mark", mark: "underline", icon: "i-lucide-underline",     tooltip: { text: "Souligné" } },
+    { kind: "mark", mark: "strike",    icon: "i-lucide-strikethrough", tooltip: { text: "Barré" } },
+    { kind: "mark", mark: "code",      icon: "i-lucide-code",          tooltip: { text: "Code inline" } },
   ],
   [
-    {
-      kind: "bulletList",
-      icon: "i-lucide-list",
-      tooltip: { text: "Liste à puces" },
-    },
-    {
-      kind: "orderedList",
-      icon: "i-lucide-list-ordered",
-      tooltip: { text: "Liste numérotée" },
-    },
+    { kind: "bulletList",  icon: "i-lucide-list",         tooltip: { text: "Liste à puces" } },
+    { kind: "orderedList", icon: "i-lucide-list-ordered", tooltip: { text: "Liste numérotée" } },
   ],
   [
-    {
-      kind: "blockquote",
-      icon: "i-lucide-text-quote",
-      tooltip: { text: "Citation" },
-    },
-    {
-      kind: "codeBlock",
-      icon: "i-lucide-square-code",
-      tooltip: { text: "Bloc de code" },
-    },
-    {
-      kind: "horizontalRule",
-      icon: "i-lucide-separator-horizontal",
-      tooltip: { text: "Séparateur" },
-    },
+    { kind: "blockquote",     icon: "i-lucide-text-quote",          tooltip: { text: "Citation" } },
+    { kind: "codeBlock",      icon: "i-lucide-square-code",         tooltip: { text: "Bloc de code" } },
+    { kind: "horizontalRule", icon: "i-lucide-separator-horizontal", tooltip: { text: "Séparateur" } },
   ],
   [
-    { kind: "link", icon: "i-lucide-link", tooltip: { text: "Lien" } },
-    // Bouton d'upload personnalisé
-    {
-      kind: "imageUpload",
-      icon: "i-lucide-image",
-      tooltip: { text: "Image" },
-    },
+    { kind: "link",        icon: "i-lucide-link",  tooltip: { text: "Lien" } },
+    { kind: "imageUpload", icon: "i-lucide-image", tooltip: { text: "Image" } },
+    { kind: "videoUpload", icon: "i-lucide-video", tooltip: { text: "Vidéo" } },
   ],
   [
     {
@@ -132,30 +82,10 @@ const toolbarItems = [
       tooltip: { text: "Alignement" },
       content: { align: "start" },
       items: [
-        {
-          kind: "textAlign",
-          align: "left",
-          icon: "i-lucide-align-left",
-          label: "Gauche",
-        },
-        {
-          kind: "textAlign",
-          align: "center",
-          icon: "i-lucide-align-center",
-          label: "Centrer",
-        },
-        {
-          kind: "textAlign",
-          align: "right",
-          icon: "i-lucide-align-right",
-          label: "Droite",
-        },
-        {
-          kind: "textAlign",
-          align: "justify",
-          icon: "i-lucide-align-justify",
-          label: "Justifier",
-        },
+        { kind: "textAlign", align: "left",    icon: "i-lucide-align-left",    label: "Gauche" },
+        { kind: "textAlign", align: "center",  icon: "i-lucide-align-center",  label: "Centrer" },
+        { kind: "textAlign", align: "right",   icon: "i-lucide-align-right",   label: "Droite" },
+        { kind: "textAlign", align: "justify", icon: "i-lucide-align-justify", label: "Justifier" },
       ],
     },
   ],
@@ -165,39 +95,13 @@ const toolbarItems = [
   ],
 ] satisfies EditorToolbarItem<typeof customHandlers>[][];
 
-// Toolbar bubble
 const bubbleToolbarItems = [
   [
-    {
-      kind: "mark",
-      mark: "bold",
-      icon: "i-lucide-bold",
-      tooltip: { text: "Gras" },
-    },
-    {
-      kind: "mark",
-      mark: "italic",
-      icon: "i-lucide-italic",
-      tooltip: { text: "Italique" },
-    },
-    {
-      kind: "mark",
-      mark: "underline",
-      icon: "i-lucide-underline",
-      tooltip: { text: "Souligné" },
-    },
-    {
-      kind: "mark",
-      mark: "strike",
-      icon: "i-lucide-strikethrough",
-      tooltip: { text: "Barré" },
-    },
-    {
-      kind: "mark",
-      mark: "code",
-      icon: "i-lucide-code",
-      tooltip: { text: "Code" },
-    },
+    { kind: "mark", mark: "bold",      icon: "i-lucide-bold",          tooltip: { text: "Gras" } },
+    { kind: "mark", mark: "italic",    icon: "i-lucide-italic",        tooltip: { text: "Italique" } },
+    { kind: "mark", mark: "underline", icon: "i-lucide-underline",     tooltip: { text: "Souligné" } },
+    { kind: "mark", mark: "strike",    icon: "i-lucide-strikethrough", tooltip: { text: "Barré" } },
+    { kind: "mark", mark: "code",      icon: "i-lucide-code",          tooltip: { text: "Code" } },
   ],
   [{ kind: "link", icon: "i-lucide-link", tooltip: { text: "Lien" } }],
   [
@@ -208,34 +112,26 @@ const bubbleToolbarItems = [
   ],
 ] satisfies EditorToolbarItem[][];
 
-// Menu slash avec upload d'image
 const suggestionItems: EditorSuggestionMenuItem<typeof customHandlers>[][] = [
   [
     { type: "label", label: "Texte" },
-    { kind: "paragraph", label: "Paragraphe", icon: "i-lucide-type" },
-    { kind: "heading", level: 1, label: "Titre 1", icon: "i-lucide-heading-1" },
-    { kind: "heading", level: 2, label: "Titre 2", icon: "i-lucide-heading-2" },
-    { kind: "heading", level: 3, label: "Titre 3", icon: "i-lucide-heading-3" },
+    { kind: "paragraph", label: "Paragraphe",  icon: "i-lucide-type" },
+    { kind: "heading",   level: 1, label: "Titre 1", icon: "i-lucide-heading-1" },
+    { kind: "heading",   level: 2, label: "Titre 2", icon: "i-lucide-heading-2" },
+    { kind: "heading",   level: 3, label: "Titre 3", icon: "i-lucide-heading-3" },
   ],
   [
     { type: "label", label: "Listes" },
-    { kind: "bulletList", label: "Liste à puces", icon: "i-lucide-list" },
-    {
-      kind: "orderedList",
-      label: "Liste numérotée",
-      icon: "i-lucide-list-ordered",
-    },
+    { kind: "bulletList",  label: "Liste à puces",   icon: "i-lucide-list" },
+    { kind: "orderedList", label: "Liste numérotée", icon: "i-lucide-list-ordered" },
   ],
   [
     { type: "label", label: "Insérer" },
-    { kind: "blockquote", label: "Citation", icon: "i-lucide-text-quote" },
-    { kind: "codeBlock", label: "Bloc de code", icon: "i-lucide-square-code" },
-    {
-      kind: "horizontalRule",
-      label: "Séparateur",
-      icon: "i-lucide-separator-horizontal",
-    },
-    { kind: "imageUpload", label: "Image", icon: "i-lucide-image" },
+    { kind: "blockquote",     label: "Citation",     icon: "i-lucide-text-quote" },
+    { kind: "codeBlock",      label: "Bloc de code", icon: "i-lucide-square-code" },
+    { kind: "horizontalRule", label: "Séparateur",   icon: "i-lucide-separator-horizontal" },
+    { kind: "imageUpload",    label: "Image",        icon: "i-lucide-image" },
+    { kind: "videoUpload",    label: "Vidéo",        icon: "i-lucide-video" },
   ],
 ];
 </script>
@@ -249,6 +145,7 @@ const suggestionItems: EditorSuggestionMenuItem<typeof customHandlers>[][] = [
       :min-height="500"
       :extensions="[
         ImageUpload,
+        VideoUpload,
         TextAlign.configure({ types: ['heading', 'paragraph'] }),
       ]"
       :handlers="customHandlers"
@@ -259,14 +156,12 @@ const suggestionItems: EditorSuggestionMenuItem<typeof customHandlers>[][] = [
         :items="toolbarItems"
         class="border-b border-default py-2 px-4 bg-elevated/50 sticky top-0 z-20"
       />
-
       <UEditorToolbar
         :editor="editor"
         :items="bubbleToolbarItems"
         layout="bubble"
       />
-
-      <UEditorDragHandle :editor="editor" /> 
+      <UEditorDragHandle :editor="editor" />
       <UEditorSuggestionMenu :editor="editor" :items="suggestionItems" />
     </UEditor>
 
@@ -375,6 +270,14 @@ const suggestionItems: EditorSuggestionMenuItem<typeof customHandlers>[][] = [
 }
 
 :deep(.ProseMirror img) {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+  display: block;
+}
+
+:deep(.ProseMirror video) {
   max-width: 100%;
   height: auto;
   border-radius: 0.5rem;

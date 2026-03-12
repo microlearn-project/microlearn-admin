@@ -4,59 +4,42 @@ import type { TablesUpdate } from "~/types/database.types";
 
 type CoursUpdate = TablesUpdate<"cours">;
 
-const BUCKET_NAME = "cours-images";
+const BUCKET_NAME_IMAGES = "cours-images";
+const BUCKET_NAME_VIDEOS = "cours-videos";
 
-/**
- * Estime la durée de lecture en fonction du nombre de mots (plus précis que caractères)
- * @param text Le texte à estimer (peut contenir du HTML)
- * @param wordsPerMin Vitesse de lecture moyenne (défaut: 225 mots/min)
- */
 function estimateReadingTime(text: string, wordsPerMin: number = 225): string {
-  // Nettoyage plus robuste : retire HTML et entités
   const plainText = text.replace(/<[^>]*>/g, "").replace(/&[^;]+;/g, " ").trim();
   const words = plainText.split(/\s+/).filter(word => word.length > 0);
   const wordCount = words.length;
   const minutes = Math.ceil(wordCount / wordsPerMin);
-  
-  if (minutes < 1) {
-    return "< 1 min";
-  } else if (minutes < 60) {
-    return `${minutes} min`;
-  } else {
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
-    if (remainingMinutes === 0) {
-      return `${hours}h`;
-    }
-    return `${hours}h${remainingMinutes.toString().padStart(2, "0")}`;
-  }
+
+  if (minutes < 1) return "< 1 min";
+  if (minutes < 60) return `${minutes} min`;
+
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  return remainingMinutes === 0
+    ? `${hours}h`
+    : `${hours}h${remainingMinutes.toString().padStart(2, "0")}`;
 }
 
-/**
- * Extrait toutes les URLs d'images Supabase d'une description HTML
- */
-function extractSupabaseImageUrls(
+function extractUrlsFromDescription(
   description: string,
   bucketName: string
 ): string[] {
+  // Couvre à la fois <img src="..."> et <video src="...">
   const urlRegex = new RegExp(
-    `<img[^>]+src=["']([^"']*${bucketName}[^"']*)["'][^>]*>`,
+    `src=["']([^"']*${bucketName}[^"']*)["']`,
     "gi"
   );
-
   const urls: string[] = [];
   let match;
-
   while ((match = urlRegex.exec(description)) !== null) {
     urls.push(match[1]);
   }
-
   return urls;
 }
 
-/**
- * Extrait le chemin du fichier depuis une URL publique Supabase
- */
 function extractFilePathFromUrl(
   url: string,
   bucketName: string
@@ -66,48 +49,31 @@ function extractFilePathFromUrl(
   return match ? match[1] : null;
 }
 
-/**
- * Supprime les images qui ne sont plus présentes dans la nouvelle description
- */
-async function deleteOrphanedImages(
+async function deleteOrphanedFiles(
   oldDescription: string | null,
   newDescription: string,
-  coursId: string,
+  bucketName: string,
   supabase: ReturnType<typeof createSupabaseServerClient>
 ): Promise<void> {
   if (!oldDescription) return;
 
-  const oldImageUrls = extractSupabaseImageUrls(oldDescription, BUCKET_NAME);
-  const newImageUrls = extractSupabaseImageUrls(newDescription, BUCKET_NAME);
-
-  const removedUrls = oldImageUrls.filter((url) => !newImageUrls.includes(url));
+  const oldUrls = extractUrlsFromDescription(oldDescription, bucketName);
+  const newUrls = extractUrlsFromDescription(newDescription, bucketName);
+  const removedUrls = oldUrls.filter((url) => !newUrls.includes(url));
 
   if (removedUrls.length === 0) return;
 
   const filePaths: string[] = [];
-
   for (const url of removedUrls) {
-    const filePath = extractFilePathFromUrl(url, BUCKET_NAME);
-    if (filePath) {
-      filePaths.push(filePath);
-    }
+    const filePath = extractFilePathFromUrl(url, bucketName);
+    if (filePath) filePaths.push(filePath);
   }
 
   if (filePaths.length > 0) {
-    const { error } = await supabase.storage
-      .from(BUCKET_NAME)
-      .remove(filePaths);
-
-    if (error) {
-      // Échec suppression fichiers
-      return;
-    }
+    await supabase.storage.from(bucketName).remove(filePaths);
   }
 }
 
-/**
- * Extrait et uploade les images base64 de la description vers Supabase Storage
- */
 async function processImagesInDescription(
   description: string,
   coursId: string,
@@ -117,7 +83,6 @@ async function processImagesInDescription(
     /<img[^>]+src=["'](data:image\/([^;]+);base64,([^"']+))["'][^>]*>/gi;
 
   let processedDescription = description;
-
   const matches: Array<{
     fullMatch: string;
     dataUrl: string;
@@ -135,44 +100,31 @@ async function processImagesInDescription(
     });
   }
 
-  if (matches.length === 0) {
-    return description;
-  }
+  if (matches.length === 0) return description;
 
   for (const img of matches) {
     try {
       const imageBuffer = Buffer.from(img.base64Data, "base64");
-      const fileName = `${Date.now()}-${Math.random()
-        .toString(36)
-        .substring(2, 9)}.${img.extension}`;
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${img.extension}`;
       const filePath = `${coursId}/${fileName}`;
-      const contentType = `image/${img.extension}`;
 
       const { error: uploadError } = await supabase.storage
-        .from(BUCKET_NAME)
+        .from(BUCKET_NAME_IMAGES)
         .upload(filePath, imageBuffer, {
-          contentType,
+          contentType: `image/${img.extension}`,
           upsert: false,
         });
 
-      if (uploadError) {
-        continue;
-      }
+      if (uploadError) continue;
 
       const { data: publicUrlData } = supabase.storage
-        .from(BUCKET_NAME)
+        .from(BUCKET_NAME_IMAGES)
         .getPublicUrl(filePath);
 
-      const newImgTag = img.fullMatch.replace(
-        img.dataUrl,
-        publicUrlData.publicUrl
-      );
-      processedDescription = processedDescription.replace(
-        img.fullMatch,
-        newImgTag
-      );
-    } catch  {
-      // Échec traitement image
+      const newImgTag = img.fullMatch.replace(img.dataUrl, publicUrlData.publicUrl);
+      processedDescription = processedDescription.replace(img.fullMatch, newImgTag);
+    } catch {
+      //
     }
   }
 
@@ -184,55 +136,46 @@ export default defineEventHandler(async (event) => {
   const { id, titre, description, documents } = body;
 
   if (!id) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "ID du cours requis",
-    });
+    throw createError({ statusCode: 400, statusMessage: "ID du cours requis" });
   }
 
   const supabase = createSupabaseServerClient();
 
-  // Récupérer l'ancienne description pour comparer les images
-  const { data: currentCours, error: fetchError } = await supabase
+  const { data: currentCours } = await supabase
     .from("cours")
     .select("description")
     .eq("id_cours", id)
     .single();
 
-  if (fetchError) {
-    // Cours non trouvé
-  }
-
-  // Construire le payload de mise à jour
   const payload: CoursUpdate = {};
 
-  if (titre !== undefined) {
-    payload.titre = titre;
-  }
+  if (titre !== undefined) payload.titre = titre;
+  if (documents !== undefined) payload.documents = documents;
 
-  if (documents !== undefined) {
-    payload.documents = documents;
-  }
-
-  // Traiter les images si la description est fournie
   if (description !== undefined) {
-    // Traiter les nouvelles images base64
     const processedDescription = await processImagesInDescription(
       description,
       id,
       supabase
     );
 
-    // Supprimer les images orphelines
-    await deleteOrphanedImages(
+    // Supprimer images orphelines
+    await deleteOrphanedFiles(
       currentCours?.description || null,
       processedDescription,
-      id,
+      BUCKET_NAME_IMAGES,
+      supabase
+    );
+
+    // Supprimer vidéos orphelines
+    await deleteOrphanedFiles(
+      currentCours?.description || null,
+      processedDescription,
+      BUCKET_NAME_VIDEOS,
       supabase
     );
 
     payload.description = processedDescription;
-    // Recalculer la durée de lecture
     payload.duree_lecture = estimateReadingTime(processedDescription);
   }
 
@@ -244,10 +187,7 @@ export default defineEventHandler(async (event) => {
     .single();
 
   if (error) {
-    throw createError({
-      statusCode: 500,
-      statusMessage: error.message,
-    });
+    throw createError({ statusCode: 500, statusMessage: error.message });
   }
 
   return data;

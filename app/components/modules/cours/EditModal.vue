@@ -7,6 +7,7 @@ type Cours = Tables<"cours">;
 
 const props = defineProps<{
   cours: Cours;
+  moduleId: string;
 }>();
 
 const open = defineModel<boolean>("open", { default: false });
@@ -23,14 +24,10 @@ const schema = z.object({
 
 type Schema = z.output<typeof schema>;
 
-const state = reactive<Schema>({
-  titre: props.cours.titre,
-});
-
+const state = reactive<Schema>({ titre: props.cours.titre });
 const description = ref(props.cours.description);
 const submitting = ref(false);
 
-// Réinitialiser quand le cours change
 watch(
   () => props.cours,
   (newCours) => {
@@ -79,10 +76,21 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     submitting.value = false;
   }
 }
+
+function onClose() {
+  // Les vidéos orphelines éventuelles seront nettoyées par Edge Function nocturne
+  open.value = false;
+}
 </script>
 
 <template>
-  <UModal v-model:open="open" :title="`Modification`" :description="`Cours : ${cours.titre}`" :ui="{ content: 'max-w-5xl' }">
+  <UModal
+    v-model:open="open"
+    :title="`Modification`"
+    :description="`Cours : ${cours.titre}`"
+    :ui="{ content: 'max-w-5xl' }"
+    @close="onClose"
+  >
     <template #body>
       <UForm :schema="schema" :state="state" class="space-y-4" @submit="onSubmit">
         <UFormField label="Titre du cours" name="titre" required>
@@ -90,7 +98,11 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         </UFormField>
 
         <UFormField label="Contenu du cours" required>
-          <ModulesCreateEditor v-model="description" />
+          <ModulesCreateEditor
+            v-model="description"
+            :module-id="moduleId"
+            :cours-id="cours.id_cours"
+          />
         </UFormField>
 
         <p class="text-xs text-muted">
@@ -104,7 +116,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             color="neutral"
             variant="outline"
             :disabled="submitting"
-            @click="open = false"
+            @click="onClose"
           />
           <UButton
             label="Enregistrer"

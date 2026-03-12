@@ -2,6 +2,8 @@
 import { createSupabaseServerClient } from "~~/server/utils/supabase";
 import { getUserSession } from "~~/server/utils/session";
 
+const SEUIL_REUSSITE = 50;
+
 export default defineEventHandler(async (event) => {
   const session = getUserSession(event);
 
@@ -15,7 +17,6 @@ export default defineEventHandler(async (event) => {
   const supabase = createSupabaseServerClient();
 
   try {
-    // Calculer les dates
     const now = new Date();
     const weekStart = new Date(now);
     weekStart.setDate(weekStart.getDate() - 7);
@@ -34,7 +35,7 @@ export default defineEventHandler(async (event) => {
       .gte("created_at", weekStart.toISOString())
       .lte("created_at", now.toISOString());
 
-    const uniqueAgentsThisWeek = new Set(
+    const agents_actifs_semaine = new Set(
       agentsThisWeek?.map((a: any) => a.user_id) || []
     ).size;
 
@@ -45,19 +46,9 @@ export default defineEventHandler(async (event) => {
       .gte("created_at", previousWeekStart.toISOString())
       .lte("created_at", previousWeekEnd.toISOString());
 
-    const uniqueAgentsPreviousWeek = new Set(
+    const agents_actifs_semaine_precedente = new Set(
       agentsPreviousWeek?.map((a: any) => a.user_id) || []
     ).size;
-
-    // Calculer l'évolution en pourcentage
-    let agents_actifs_evolution = 0;
-    if (uniqueAgentsPreviousWeek > 0) {
-      agents_actifs_evolution = Math.round(
-        ((uniqueAgentsThisWeek - uniqueAgentsPreviousWeek) / uniqueAgentsPreviousWeek) * 100
-      );
-    } else if (uniqueAgentsThisWeek > 0) {
-      agents_actifs_evolution = 100; // 100% si on passe de 0 à quelque chose
-    }
 
     // 3. Modules commencés cette semaine
     const { count: modules_commences } = await supabase
@@ -67,17 +58,24 @@ export default defineEventHandler(async (event) => {
       .lte("date_debut", now.toISOString());
 
     // 4. Quiz complétés cette semaine
-    const { count: quiz_completes } = await supabase
+    const { data: quizCompletes } = await supabase
       .from("resultat_quiz")
-      .select("*", { count: "exact", head: true })
+      .select("score")
       .eq("termine", true)
       .gte("date_fin", weekStart.toISOString())
       .lte("date_fin", now.toISOString());
 
+    const quiz_completes = quizCompletes?.length || 0;
+    const quiz_reussis = quizCompletes?.filter(
+      (q) => q.score !== null && Number(q.score) >= SEUIL_REUSSITE
+    ).length || 0;
+
     return {
-      agents_actifs_evolution,
+      agents_actifs_semaine,
+      agents_actifs_semaine_precedente,
       modules_commences: modules_commences || 0,
-      quiz_completes: quiz_completes || 0,
+      quiz_completes,
+      quiz_reussis,
     };
   } catch (error: any) {
     throw createError({

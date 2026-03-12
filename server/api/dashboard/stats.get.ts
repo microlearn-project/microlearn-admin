@@ -45,7 +45,7 @@ export default defineEventHandler(async (event) => {
   if (quizResults && quizResults.length > 0) {
     const passedQuiz = quizResults.filter((r) => Number(r.score) >= 50).length;
     averageSuccessRate = Math.round((passedQuiz / quizResults.length) * 100);
-  } 
+  }
 
   return {
     totalAgents: totalAgents || 0,

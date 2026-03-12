@@ -35,8 +35,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     emit("addrole");
     state.designation = "";
     open.value = false;
-  } catch (err: any) { 
-
+  } catch (err: any) {
     const message =
       err?.data?.message || err?.statusMessage || err?.message || "";
 
@@ -47,8 +46,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     ) {
       toast.add({
         title: "Échec",
-        description:
-          "Ce rôle est déjà en place! Veuillez en ajouter un autre.",
+        description: "Ce rôle est déjà en place! Veuillez en ajouter un autre.",
         color: "error",
       });
       return;

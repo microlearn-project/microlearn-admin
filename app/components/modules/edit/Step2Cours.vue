@@ -35,7 +35,7 @@ const initialOrder = ref<string[]>([]);
 const hasOrderChanged = computed(() => {
   if (localCours.value.length !== initialOrder.value.length) return false;
   return localCours.value.some(
-    (cours, index) => cours.id_cours !== initialOrder.value[index]
+    (cours, index) => cours.id_cours !== initialOrder.value[index],
   );
 });
 
@@ -48,7 +48,7 @@ watch(
       initialOrder.value = newData.map((c) => c.id_cours);
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 // États des modales
@@ -171,15 +171,22 @@ async function saveOrder() {
 
     // Rafraîchir les données pour synchroniser
     await refresh();
-  } catch (err: any) { 
+  } catch (err: any) {
     toast.add({
       title: "Erreur",
-      description: err?.data?.statusMessage || "Impossible de sauvegarder l'ordre",
+      description:
+        err?.data?.statusMessage || "Impossible de sauvegarder l'ordre",
       color: "error",
     });
   } finally {
     savingOrder.value = false;
   }
+}
+
+// Détecter si un cours contient une vidéo dans sa description
+function hasVideo(cours: Cours): boolean {
+  if (!cours.description) return false;
+  return /src=["']https?:\/\/[^"']*cours-videos[^"']*["']/i.test(cours.description);
 }
 
 // Callbacks des modales
@@ -224,7 +231,8 @@ async function onCoursDeleted() {
           <div>
             <p class="font-medium">Ordre modifié</p>
             <p class="text-sm text-muted">
-              L'ordre des cours a été modifié. Enregistrez pour appliquer les changements.
+              L'ordre des cours a été modifié. Enregistrez pour appliquer les
+              changements.
             </p>
           </div>
         </div>
@@ -251,7 +259,10 @@ async function onCoursDeleted() {
 
     <!-- État de chargement -->
     <div v-if="status === 'pending'" class="text-center py-16">
-      <UIcon name="i-lucide-loader-circle" class="animate-spin text-4xl text-muted mb-4" />
+      <UIcon
+        name="i-lucide-loader-circle"
+        class="animate-spin text-4xl text-muted mb-4"
+      />
       <p class="text-muted">Chargement des cours...</p>
     </div>
 
@@ -260,7 +271,10 @@ async function onCoursDeleted() {
       v-else-if="!localCours || localCours.length === 0"
       class="text-center py-16 border-2 border-dashed border-default rounded-lg"
     >
-      <UIcon name="i-lucide-book-open" class="mx-auto mb-4 text-6xl text-muted" />
+      <UIcon
+        name="i-lucide-book-open"
+        class="mx-auto mb-4 text-6xl text-muted"
+      />
       <p class="text-lg font-medium mb-2">Aucun cours</p>
       <p class="text-muted mb-4">
         Ce module n'a pas encore de cours. Commencez par en ajouter un.
@@ -283,7 +297,8 @@ async function onCoursDeleted() {
           class="group relative bg-elevated border border-default rounded-lg transition-all duration-200 select-none"
           :class="{
             'opacity-50 scale-95': draggedIndex === index,
-            'border-primary border-2 bg-primary/5': dragOverIndex === index && draggedIndex !== index,
+            'border-primary border-2 bg-primary/5':
+              dragOverIndex === index && draggedIndex !== index,
           }"
           @dragstart="onDragStart($event, index)"
           @dragover="onDragOver($event, index)"
@@ -309,20 +324,38 @@ async function onCoursDeleted() {
                     >
                       {{ index + 1 }}
                     </span>
-                    <h3 class="font-semibold truncate">{{ coursItem.titre }}</h3>
+                    <h3 class="font-semibold truncate">
+                      {{ coursItem.titre }}
+                    </h3>
                   </div>
 
-                  <div class="flex flex-wrap items-center gap-4 text-sm text-muted mt-2">
+                  <div
+                    class="flex flex-wrap items-center gap-4 text-sm text-muted mt-2"
+                  >
                     <!-- Durée -->
                     <div class="flex items-center gap-1">
                       <UIcon name="i-lucide-clock" class="text-xs" />
                       <span>{{ coursItem.duree_lecture }}</span>
                     </div>
 
+                    <!-- Badge vidéo -->
+                    <div
+                      v-if="hasVideo(coursItem)"
+                      class="flex items-center gap-1 text-primary"
+                    >
+                      <UIcon name="i-lucide-video" class="text-xs" />
+                      <span>Vidéo</span>
+                    </div>
+
                     <!-- Documents -->
                     <div class="flex items-center gap-1">
                       <UIcon name="i-lucide-paperclip" class="text-xs" />
-                      <span v-if="!coursItem.documents || coursItem.documents.length === 0">
+                      <span
+                        v-if="
+                          !coursItem.documents ||
+                          coursItem.documents.length === 0
+                        "
+                      >
                         Aucun document
                       </span>
                       <span v-else>
@@ -337,7 +370,10 @@ async function onCoursDeleted() {
                     class="mt-2 flex flex-wrap gap-1"
                   >
                     <UBadge
-                      v-for="(docUrl, docIndex) in coursItem.documents.slice(0, 3)"
+                      v-for="(docUrl, docIndex) in coursItem.documents.slice(
+                        0,
+                        3,
+                      )"
                       :key="docIndex"
                       color="neutral"
                       variant="subtle"
@@ -359,7 +395,9 @@ async function onCoursDeleted() {
                 </div>
 
                 <!-- Actions -->
-                <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div
+                  class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
                   <UTooltip text="Gérer les documents">
                     <UButton
                       icon="i-lucide-paperclip"
@@ -443,6 +481,7 @@ async function onCoursDeleted() {
       v-if="showEditModal && selectedCours"
       v-model:open="showEditModal"
       :cours="selectedCours"
+      :module-id="module.id_module"
       @updated="onCoursUpdated"
     />
 
