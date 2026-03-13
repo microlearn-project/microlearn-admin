@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from "~~/server/utils/supabase";
 
 const BUCKET_NAME = "cours-videos";
 const ALLOWED_TYPES = ["video/mp4", "video/webm"];
+const MAX_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
 
 export default defineEventHandler(async (event) => {
   const formData = await readFormData(event);
@@ -17,6 +18,15 @@ export default defineEventHandler(async (event) => {
     throw createError({
       statusCode: 400,
       statusMessage: "Format non supporté. Utilisez MP4 ou WebM",
+    });
+  }
+
+
+
+  if (file.size > MAX_SIZE_BYTES) {
+    throw createError({
+      statusCode: 413,
+      statusMessage: "Fichier trop volumineux. La limite est de 50 MB",
     });
   }
 

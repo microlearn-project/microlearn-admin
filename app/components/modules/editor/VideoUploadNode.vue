@@ -10,7 +10,7 @@ const loading = ref(false);
 const uploadedUrl = ref<string | null>(props.node.attrs.src || null);
 
 const moduleId = computed(() => props.node.attrs.moduleId as string | null);
-const coursId  = computed(() => props.node.attrs.coursId  as string | null);
+const coursId = computed(() => props.node.attrs.coursId as string | null);
 
 const storagePath = computed(() => {
   if (moduleId.value && coursId.value) {
@@ -21,6 +21,8 @@ const storagePath = computed(() => {
   }
   return `temp-${Date.now()}`;
 });
+
+const progress = ref(0);
 
 watch(file, async (newFile) => {
   if (!newFile) return;
@@ -36,16 +38,50 @@ watch(file, async (newFile) => {
     return;
   }
 
+  const MAX_SIZE_MB = 50;
+  const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
+  if (newFile.size > MAX_SIZE_BYTES) {
+    toast.add({
+      title: "Fichier trop volumineux",
+      description: `La vidéo ne doit pas dépasser ${MAX_SIZE_MB} MB`,
+      color: "error",
+    });
+    file.value = null;
+    return;
+  }
+
   loading.value = true;
+  progress.value = 0;
 
   try {
     const formData = new FormData();
     formData.append("file", newFile);
     formData.append("storagePath", storagePath.value);
 
-    const response = await $fetch<{ url: string; filePath: string }>(
-      "/api/cours/video-upload",
-      { method: "POST", body: formData }
+    // XHR pour suivre la progression
+    const response = await new Promise<{ url: string; filePath: string }>(
+      (resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+
+        xhr.upload.addEventListener("progress", (event) => {
+          if (event.lengthComputable) {
+            progress.value = Math.round((event.loaded / event.total) * 100);
+          }
+        });
+
+        xhr.addEventListener("load", () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(JSON.parse(xhr.responseText));
+          } else {
+            reject(new Error(xhr.responseText));
+          }
+        });
+
+        xhr.addEventListener("error", () => reject(new Error("Erreur réseau")));
+
+        xhr.open("POST", "/api/cours/video-upload");
+        xhr.send(formData);
+      },
     );
 
     uploadedUrl.value = response.url;
@@ -68,11 +104,12 @@ watch(file, async (newFile) => {
   } catch (error: any) {
     toast.add({
       title: "Erreur",
-      description: error?.data?.statusMessage || "Impossible d'uploader la vidéo",
+      description: error?.message || "Impossible d'uploader la vidéo",
       color: "error",
     });
   } finally {
     loading.value = false;
+    progress.value = 0;
   }
 });
 </script>
@@ -84,7 +121,7 @@ watch(file, async (newFile) => {
         :src="uploadedUrl"
         controls
         class="w-full rounded-lg border border-default"
-        style="max-height: 400px;"
+        style="max-height: 400px"
       />
       <UButton
         icon="i-lucide-trash-2"
@@ -96,22 +133,38 @@ watch(file, async (newFile) => {
       />
     </div>
 
-    <UFileUpload
-      v-else
-      v-model="file"
-      accept="video/mp4,video/webm"
-      label="Uploader une vidéo"
-      description="MP4 ou WebM"
-      :preview="false"
-      class="min-h-48 my-4"
-    >
-      <template #leading>
-        <UAvatar
-          :icon="loading ? 'i-lucide-loader-circle' : 'i-lucide-video'"
-          size="xl"
-          :ui="{ icon: loading ? 'animate-spin' : '' }"
-        />
-      </template>
-    </UFileUpload>
+    <div v-else class="my-4 flex flex-col gap-2">
+      <UFileUpload
+        v-model="file"
+        accept="video/mp4,video/webm"
+        label="Uploader une vidéo"
+        description="MP4 ou WebM — 50 MB max"
+        :preview="false"
+        :disabled="loading"
+        class="min-h-48"
+      >
+        <template #leading>
+          <UAvatar
+            :icon="loading ? 'i-lucide-loader-circle' : 'i-lucide-video'"
+            size="xl"
+            :ui="{ icon: loading ? 'animate-spin' : '' }"
+          />
+        </template>
+      </UFileUpload>
+
+      <!-- Barre de progression -->
+      <div v-if="loading" class="flex flex-col gap-1">
+        <div class="flex justify-between text-xs text-muted">
+          <span>Upload en cours...</span>
+          <span>{{ progress }}%</span>
+        </div>
+        <div class="w-full bg-elevated rounded-full h-1.5 overflow-hidden">
+          <div
+            class="bg-primary h-1.5 rounded-full transition-all duration-300"
+            :style="{ width: `${progress}%` }"
+          />
+        </div>
+      </div>
+    </div>
   </NodeViewWrapper>
 </template>
