@@ -27,6 +27,7 @@ const progress = ref(0);
 watch(file, async (newFile) => {
   if (!newFile) return;
 
+  // Validation format
   const allowedTypes = ["video/mp4", "video/webm"];
   if (!allowedTypes.includes(newFile.type)) {
     toast.add({
@@ -38,6 +39,7 @@ watch(file, async (newFile) => {
     return;
   }
 
+  // Validation taille
   const MAX_SIZE_MB = 50;
   const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
   if (newFile.size > MAX_SIZE_BYTES) {
@@ -54,37 +56,49 @@ watch(file, async (newFile) => {
   progress.value = 0;
 
   try {
-    const formData = new FormData();
-    formData.append("file", newFile);
-    formData.append("storagePath", storagePath.value);
-
-    // XHR pour suivre la progression
-    const response = await new Promise<{ url: string; filePath: string }>(
-      (resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-
-        xhr.upload.addEventListener("progress", (event) => {
-          if (event.lengthComputable) {
-            progress.value = Math.round((event.loaded / event.total) * 100);
-          }
-        });
-
-        xhr.addEventListener("load", () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            resolve(JSON.parse(xhr.responseText));
-          } else {
-            reject(new Error(xhr.responseText));
-          }
-        });
-
-        xhr.addEventListener("error", () => reject(new Error("Erreur réseau")));
-
-        xhr.open("POST", "/api/cours/video-upload");
-        xhr.send(formData);
+    // Étape 1 — Demander la signed URL à notre API (leger, pas de fichier)
+    const { signedUrl, publicUrl } = await $fetch<{
+      signedUrl: string;
+      token: string;
+      filePath: string;
+      publicUrl: string;
+    }>("/api/cours/video-signed-url", {
+      method: "POST",
+      body: {
+        fileName: newFile.name,
+        fileType: newFile.type,
+        fileSize: newFile.size,
+        storagePath: storagePath.value,
       },
-    );
+    });
 
-    uploadedUrl.value = response.url;
+    // Étape 2 — Upload direct vers Supabase Storage (bypass Vercel)
+    await new Promise<void>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+
+      xhr.upload.addEventListener("progress", (event) => {
+        if (event.lengthComputable) {
+          progress.value = Math.round((event.loaded / event.total) * 100);
+        }
+      });
+
+      xhr.addEventListener("load", () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve();
+        } else {
+          reject(new Error("Erreur lors de l'upload vers le storage"));
+        }
+      });
+
+      xhr.addEventListener("error", () => reject(new Error("Erreur réseau")));
+
+      xhr.open("PUT", signedUrl);
+      xhr.setRequestHeader("Content-Type", newFile.type);
+      xhr.send(newFile);
+    });
+
+    // Étape 3 — Mettre à jour l'éditeur avec la Public URL permanente
+    uploadedUrl.value = publicUrl;
 
     const pos = props.getPos();
     if (typeof pos !== "number") return;
@@ -93,7 +107,7 @@ watch(file, async (newFile) => {
       .chain()
       .focus()
       .setNodeSelection(pos)
-      .updateAttributes("videoUpload", { src: response.url })
+      .updateAttributes("videoUpload", { src: publicUrl })
       .run();
 
     toast.add({
@@ -104,7 +118,7 @@ watch(file, async (newFile) => {
   } catch (error: any) {
     toast.add({
       title: "Erreur",
-      description: error?.message || "Impossible d'uploader la vidéo",
+      description: error?.data?.statusMessage || error?.message || "Impossible d'uploader la vidéo",
       color: "error",
     });
   } finally {
