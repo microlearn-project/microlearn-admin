@@ -90,7 +90,7 @@ async function submit() {
 </script>
 
 <template>
-  <UModal v-model:open="open" title="Modifier l'attribution">
+  <UModal v-model:open="open" title="Modifier l'attribution" :description="`Modifier les détails de l'attribution de rôle pour ${userRole ? `${userRole.agent.prenom} ${userRole.agent.nom}` : 'l\'agent'}`">
     <template #body>
       <div v-if="userRole" class="space-y-4">
         <!-- Info agent et rôle (non modifiable) -->

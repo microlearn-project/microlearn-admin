@@ -118,7 +118,10 @@ watch(file, async (newFile) => {
   } catch (error: any) {
     toast.add({
       title: "Erreur",
-      description: error?.data?.statusMessage || error?.message || "Impossible d'uploader la vidéo",
+      description:
+        error?.data?.statusMessage ||
+        error?.message ||
+        "Impossible d'uploader la vidéo",
       color: "error",
     });
   } finally {
