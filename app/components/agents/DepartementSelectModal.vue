@@ -25,7 +25,7 @@ const {
   data: directions,
   pending,
   refresh,
-} = useFetch<Direction[]>("/api/departement", {
+} = useFetch<Direction[]>("/api/departement/available", {
   server: false,
   lazy: true,
   immediate: false,

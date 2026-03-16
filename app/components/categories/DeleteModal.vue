@@ -13,41 +13,75 @@ withDefaults(
   }
 );
 
-// Définir les événements émis
 const emit = defineEmits<{
   (e: "deleted"): void;
   (e: "clear-selection"): void;
 }>();
 
 const toast = useToast();
+const open = defineModel<boolean>("open", { default: false });
 
-// Fonction de suppression douce
-const softDelete = async (id: string) => {
-  await $fetch(`/api/tag/soft-delete`, {
-    method: "PATCH",
-    body: {
-      id: id,
-    },
-  });
-};
-
-// Test si la modale est ouverte
-const open = ref(false);
+// État de la modale de confirmation (tag utilisé dans des modules)
+const confirmModal = ref(false);
+const affectedModules = ref<{ id_module: string; titre: string }[]>([]);
+const tagToForceDelete = ref<Tag | null>(null);
+const forceLoading = ref(false);
 
 watch(open, (newValue) => {
   if (!newValue) {
-    // La modale vient d'être fermée (par la croix, Esc, overlay, etc.)
     emit("clear-selection");
   }
 });
 
-// Soumission de la suppression
-async function onSubmit(rows: Array<any>) {
+// Suppression d'un tag (vérifie d'abord s'il est utilisé)
+async function deleteTag(tag: Tag) {
+  const result = await $fetch<{
+    requiresConfirmation: boolean;
+    modules?: { id_module: string; titre: string }[];
+  }>("/api/tag/soft-delete", {
+    method: "PATCH",
+    body: { id: tag.id_tag },
+  });
+
+  if (result.requiresConfirmation && result.modules?.length) {
+    // Tag utilisé → ouvrir la modale de confirmation
+    affectedModules.value = result.modules;
+    tagToForceDelete.value = tag;
+    confirmModal.value = true;
+    return false; // pas encore supprimé
+  }
+
+  return true; // supprimé directement
+}
+
+// Soumission principale (suppression simple ou multiple)
+async function onSubmit(rows: Tag[]) {
+  const deleted: Tag[] = [];
+  const needsConfirm: Tag[] = [];
+
   try {
-    await Promise.all(rows.map((r) => softDelete(String(r.id_tag))));
-    toast.add({ title: `${rows.length} catégorie(s) supprimé(s)` });
-    emit("deleted");
-    emit("clear-selection");
+    for (const tag of rows) {
+      const done = await deleteTag(tag);
+      if (done) {
+        deleted.push(tag);
+      } else {
+        needsConfirm.push(tag);
+      }
+    }
+
+    if (deleted.length > 0) {
+      toast.add({
+        title: `${deleted.length} catégorie(s) supprimée(s)`,
+        color: "success",
+      });
+      emit("deleted");
+    }
+
+    // Si au moins un tag nécessite confirmation, on garde la modale ouverte
+    if (needsConfirm.length === 0) {
+      emit("clear-selection");
+      open.value = false;
+    }
   } catch (err) {
     toast.add({
       title: "Erreur",
@@ -55,28 +89,68 @@ async function onSubmit(rows: Array<any>) {
       color: "error",
     });
   }
-  open.value = false;
 }
 
-// Le texte de confirmation
+// Confirmer la suppression forcée (désassociation + hard-delete)
+async function onConfirmForceDelete() {
+  if (!tagToForceDelete.value) return;
+
+  forceLoading.value = true;
+
+  try {
+    await $fetch("/api/tag/force-delete", {
+      method: "POST",
+      body: { id: tagToForceDelete.value.id_tag },
+    });
+
+    toast.add({
+      title: "Catégorie supprimée",
+      description: `« ${tagToForceDelete.value.designation} » et ses associations ont été supprimées`,
+      color: "success",
+    });
+
+    emit("deleted");
+    emit("clear-selection");
+    confirmModal.value = false;
+    open.value = false;
+  } catch (err) {
+    toast.add({
+      title: "Erreur",
+      description: (err as Error).message,
+      color: "error",
+    });
+  } finally {
+    forceLoading.value = false;
+    tagToForceDelete.value = null;
+    affectedModules.value = [];
+  }
+}
+
+// Annuler la suppression forcée
+function onCancelForceDelete() {
+  confirmModal.value = false;
+  tagToForceDelete.value = null;
+  affectedModules.value = [];
+  open.value = false;
+  emit("clear-selection");
+}
+
+function clear_selection() {
+  open.value = false;
+  emit("clear-selection");
+}
+
 function confirmationLines(rows: Tag[]): string[] {
   return rows.map((r) => `« ${r.designation} »`);
-}
-
-// Fonction pour nettoyer la sélection
-function clear_selection() {
-  // Fermer la modale
-  open.value = false;
-  // Désélectionner toutes les lignes
-  emit("clear-selection");
 }
 </script>
 
 <template>
+  <!-- Modale principale de suppression -->
   <UModal
     v-model:open="open"
-    :title="`Supprimer ${count} catégories${count > 1 ? 's' : ''}`"
-    :description="`Êtes-vous sûr ? `"
+    :title="`Supprimer ${count} catégorie${count > 1 ? 's' : ''}`"
+    description="Êtes-vous sûr ?"
   >
     <slot />
     <template #body>
@@ -112,6 +186,76 @@ function clear_selection() {
             variant="solid"
             loading-auto
             @click="onSubmit(rows)"
+          />
+        </div>
+      </div>
+    </template>
+  </UModal>
+
+  <!-- Modale de confirmation (tag utilisé dans des modules) -->
+  <UModal
+    v-model:open="confirmModal"
+    title="Cette catégorie est utilisée"
+    :ui="{ content: 'sm:max-w-lg' }"
+    :description="`La catégorie « ${tagToForceDelete?.designation} » est associée à des modules. Voulez-vous la supprimer quand même ?`"
+  >
+    <template #body>
+      <div class="space-y-4">
+        <!-- Avertissement -->
+        <div class="flex items-start gap-3 p-4 bg-error/10 border border-error/20 rounded-lg">
+          <UIcon name="i-lucide-alert-triangle" class="text-error text-xl mt-0.5 shrink-0" />
+          <div>
+            <p class="font-medium text-error">
+              « {{ tagToForceDelete?.designation }} » est associée à
+              {{ affectedModules.length }} module{{ affectedModules.length > 1 ? 's' : '' }}
+            </p>
+            <p class="text-sm text-muted mt-1">
+              En confirmant, l'association avec ces modules sera supprimée
+              et la catégorie sera définitivement effacée.
+            </p>
+          </div>
+        </div>
+
+        <!-- Liste des modules affectés -->
+        <div>
+          <p class="text-sm font-medium mb-2">Modules affectés :</p>
+          <ul class="space-y-1 max-h-48 overflow-y-auto">
+            <li
+              v-for="module in affectedModules"
+              :key="module.id_module"
+              class="flex items-center gap-2 p-2 bg-elevated rounded-lg text-sm"
+            >
+              <UIcon name="i-lucide-book-open" class="text-muted shrink-0" />
+              <span class="truncate">{{ module.titre }}</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Info supplémentaire -->
+        <div class="flex items-start gap-2 p-3 bg-warning/10 border border-warning/20 rounded-lg text-sm">
+          <UIcon name="i-lucide-info" class="text-warning mt-0.5 shrink-0" />
+          <p class="text-muted">
+            Cette action est <strong>irréversible</strong>. Les modules listés
+            ci-dessus ne seront pas supprimés — uniquement l'association avec
+            cette catégorie sera retirée.
+          </p>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-2">
+          <UButton
+            label="Annuler"
+            color="neutral"
+            variant="outline"
+            :disabled="forceLoading"
+            @click="onCancelForceDelete"
+          />
+          <UButton
+            label="Supprimer quand même"
+            color="error"
+            variant="solid"
+            icon="i-lucide-trash-2"
+            :loading="forceLoading"
+            @click="onConfirmForceDelete"
           />
         </div>
       </div>

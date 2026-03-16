@@ -7,11 +7,9 @@ import type { Tables } from "~/types/database.types";
 type Tag = Tables<"tag">;
 
 const toast = useToast();
-
 const table = useTemplateRef<any>("table");
 
 const UCheckbox = resolveComponent("UCheckbox");
-const UBadge = resolveComponent("UBadge");
 const UDropdownMenu = resolveComponent("UDropdownMenu");
 const UButton = resolveComponent("UButton");
 
@@ -21,7 +19,6 @@ const UButton = resolveComponent("UButton");
 const {
   data: categories,
   pending,
-  error,
   refresh,
 } = await useFetch<Tag[]>("/api/tag", {
   server: true,
@@ -29,20 +26,7 @@ const {
 });
 
 /* ---------------------------------------------------
-   2. Actions API
-----------------------------------------------------*/
-// Supprimer une catégorie
-const softDelete = async (id: string) => {
-  await $fetch(`/api/tag/soft-delete`, {
-    method: "PATCH",
-    body: {
-      id: id,
-    },
-  });
-};
-
-/* ---------------------------------------------------
-     3. Sélection des lignes
+   2. Sélection des lignes
 ----------------------------------------------------*/
 const rowSelection = ref<Record<string, boolean>>({});
 
@@ -53,7 +37,18 @@ const selectedRows = computed(
 );
 
 /* ---------------------------------------------------
-     4. Items du menu sur chaque ligne
+   3. Suppression via modale (menu ligne)
+----------------------------------------------------*/
+const tagToDelete = ref<Tag | null>(null);
+const showDeleteModal = ref(false);
+
+function openDeleteModal(tag: Tag) {
+  tagToDelete.value = tag;
+  showDeleteModal.value = true;
+}
+
+/* ---------------------------------------------------
+   4. Items du menu sur chaque ligne
 ----------------------------------------------------*/
 function getRowItems(row: { original: Tag }) {
   const s = row.original;
@@ -72,34 +67,13 @@ function getRowItems(row: { original: Tag }) {
       label: "Supprimer",
       icon: "i-lucide-trash-2",
       color: "error",
-      onSelect: async () => {
-        try {
-          // 1. Appel API
-          await softDelete(s.id_tag);
-
-          // 2. MISE À JOUR LOCALE (Suppression de l'élément)
-          if (categories.value) {
-            categories.value = categories.value.filter(
-              (tag) => tag.id_tag !== s.id_tag,
-            );
-          }
-
-          toast.add({ title: "Catégorie supprimée" });
-          clearTableSelection();
-        } catch (error) {
-          toast.add({
-            title: "Erreur",
-            description: "Impossible de supprimer la catégorie",
-            color: "error",
-          });
-        }
-      },
+      onSelect: () => openDeleteModal(s),
     },
   ];
 }
 
 /* ---------------------------------------------------
-     5. Colonnes du tableau
+   5. Colonnes du tableau
 ----------------------------------------------------*/
 const columns: TableColumn<Tag>[] = [
   {
@@ -170,24 +144,22 @@ const columns: TableColumn<Tag>[] = [
 ];
 
 /* ---------------------------------------------------
-     6. Pagination (10 catégories par page)
+   6. Pagination
 ----------------------------------------------------*/
 const pagination = ref({
   pageIndex: 0,
   pageSize: 10,
 });
 
-/*
-  7. Déselectionner toutes les lignes du tableau
-*/
+/* ---------------------------------------------------
+   7. Déselectionner toutes les lignes
+----------------------------------------------------*/
 function clearTableSelection() {
-  // Vide la sélection TanStack Table
   table.value?.tableApi?.resetRowSelection();
-
-  // Sécurité supplémentaire (état local)
   rowSelection.value = {};
 }
 </script>
+
 <template>
   <UDashboardPanel id="categories">
     <template #header>
@@ -202,7 +174,7 @@ function clearTableSelection() {
     </template>
 
     <template #body>
-      <!-- Composants -->
+      <!-- Filtres et actions -->
       <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
         <!-- Barre de recherche -->
         <UInput
@@ -220,7 +192,7 @@ function clearTableSelection() {
         />
 
         <div class="flex items-center gap-3">
-          <!-- Modal de mise à jour -->
+          <!-- Modal de mise à jour (sélection multiple) -->
           <CategoriesUpdateModal
             :rows="selectedRows"
             @updatetag="refresh()"
@@ -235,9 +207,9 @@ function clearTableSelection() {
             />
           </CategoriesUpdateModal>
 
-          <!-- Modal de suppression -->
+          <!-- Modal de suppression (sélection multiple) -->
           <CategoriesDeleteModal
-            :count="table?.tableApi?.getFilteredSelectedRowModel().rows.length"
+            :count="table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0"
             :rows="selectedRows"
             @deleted="refresh()"
             @clear-selection="clearTableSelection"
@@ -251,13 +223,12 @@ function clearTableSelection() {
             >
               <template #trailing>
                 <UKbd>
-                  {{
-                    table?.tableApi?.getFilteredSelectedRowModel().rows.length
-                  }}
+                  {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length }}
                 </UKbd>
               </template>
             </UButton>
           </CategoriesDeleteModal>
+
           <!-- Bouton colonnes visibles -->
           <UDropdownMenu
             :items="
@@ -324,6 +295,16 @@ function clearTableSelection() {
           @update:page="(p) => table?.tableApi?.setPageIndex(p - 1)"
         />
       </div>
+
+      <!-- Modal de suppression unitaire (depuis le menu ⋮) -->
+      <CategoriesDeleteModal
+        v-if="tagToDelete"
+        :count="1"
+        :rows="tagToDelete ? [tagToDelete] : []"
+        v-model:open="showDeleteModal"
+        @deleted="refresh(); tagToDelete = null"
+        @clear-selection="tagToDelete = null"
+      />
     </template>
   </UDashboardPanel>
 </template>
