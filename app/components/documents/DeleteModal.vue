@@ -51,13 +51,15 @@ async function loadUsage() {
   }
 }
 
-// Extraire le nom du fichier
-function getFileName(fichier: string): string {
+// Nom réel du fichier plutôt que le chemin de stockage (un UUID)
+function getFileName(doc: Document): string {
+  if (doc.nom_original) return doc.nom_original;
   try {
-    const parts = fichier.split("/");
-    return decodeURIComponent(parts[parts.length - 1]);
+    const parts = doc.fichier.split("/");
+    const last = parts[parts.length - 1];
+    return last ? decodeURIComponent(last) : doc.fichier;
   } catch {
-    return fichier;
+    return doc.fichier;
   }
 }
 
@@ -97,7 +99,7 @@ async function deleteDocument() {
 </script>
 
 <template>
-  <UModal v-model:open="open" title="Supprimer le document" :description="document ? `Suppression du document ${getFileName(document.fichier)}` : ''">
+  <UModal v-model:open="open" title="Supprimer le document" :description="document ? `Suppression du document ${getFileName(document)}` : ''">
     <template #body>
       <div v-if="document" class="space-y-4">
         <!-- Info du document -->
@@ -106,7 +108,7 @@ async function deleteDocument() {
             <UIcon name="i-lucide-file" class="text-primary text-xl" />
           </div>
           <div class="min-w-0 flex-1">
-            <p class="font-medium truncate">{{ getFileName(document.fichier) }}</p>
+            <p class="font-medium truncate">{{ getFileName(document) }}</p>
             <p v-if="document.module" class="text-sm text-muted">
               Module : {{ document.module.titre }}
             </p>

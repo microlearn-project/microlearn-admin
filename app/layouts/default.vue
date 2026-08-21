@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { NavigationMenuItem } from '@nuxt/ui'
+import type { NavigationMenuItem, CommandPaletteItem } from '@nuxt/ui'
 
 const route = useRoute()
 const toast = useToast()
@@ -180,10 +180,13 @@ const links = computed<NavigationMenuItem[][]>(() => {
 });
 
 
+// NavigationMenuItem.chip accepte boolean | ChipProps, CommandPaletteItem.chip
+// n'accepte que ChipProps — aucun item ci-dessus ne fixe jamais "chip",
+// cast sûr pour la seule incompatibilité structurelle entre les deux types.
 const groups = computed(() => [{
   id: 'links',
   label: 'Aller au',
-  items: links.value.flat()
+  items: links.value.flat() as CommandPaletteItem[]
 }])
 </script>
 

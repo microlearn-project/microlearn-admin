@@ -3,18 +3,19 @@ import type { TableColumn } from "@nuxt/ui";
 import type { Tables } from "~/types/database.types";
 import { getPaginationRowModel } from "@tanstack/vue-table";
 
-type Direction = Tables<"direction">;
+type Departement = Tables<"departement">;
 
 const open = defineModel<boolean>("open", { default: false });
-const selectedDepartement = defineModel<Direction | null>(
-  "selectedDepartement",
-  {
-    default: null,
-  },
-);
+const selectedService = defineModel<Departement | null>("selectedService", {
+  default: null,
+});
+
+const props = defineProps<{
+  idDirection?: string | null;
+}>();
 
 const emit = defineEmits<{
-  (e: "select", direction: Direction): void;
+  (e: "select", departement: Departement): void;
 }>();
 
 const table = useTemplateRef<any>("table");
@@ -22,15 +23,18 @@ const UButton = resolveComponent("UButton");
 const UBadge = resolveComponent("UBadge");
 
 const {
-  data: directions,
+  data: departements,
   pending,
   refresh,
-} = useFetch<Direction[]>("/api/departement/available", {
+} = useFetch<Departement[]>("/api/departement", {
   server: false,
   lazy: true,
   immediate: false,
   watch: false,
-  transform: (data) => data.filter((d) => !d.deleted_at),
+  query: computed(() =>
+    props.idDirection ? { id_direction: props.idDirection } : {}
+  ),
+  transform: (data) => data.filter((s) => !s.deleted_at && s.actif),
 });
 
 watch(
@@ -43,19 +47,19 @@ watch(
   { immediate: true },
 );
 
-function selectDepartement(direction: Direction) {
-  selectedDepartement.value = direction;
-  emit("select", direction);
+function selectService(departement: Departement) {
+  selectedService.value = departement;
+  emit("select", departement);
   open.value = false;
 }
 
-const columns: TableColumn<Direction>[] = [
+const columns: TableColumn<Departement>[] = [
   {
     accessorKey: "designation",
     header: "Désignation",
     cell: ({ row }: any) => {
-      const dept = row.original;
-      return h("div", {}, [h("p", { class: "font-medium" }, dept.designation)]);
+      const svc = row.original;
+      return h("div", {}, [h("p", { class: "font-medium" }, svc.designation)]);
     },
   },
   {
@@ -68,7 +72,7 @@ const columns: TableColumn<Direction>[] = [
           color: "primary",
           variant: "ghost",
           size: "xs",
-          onClick: () => selectDepartement(row.original),
+          onClick: () => selectService(row.original),
         }),
       ]),
   },
@@ -87,8 +91,8 @@ const globalFilter = ref("");
     <Teleport to="body">
       <UModal
         v-model:open="open"
-        title="Sélectionner une direction"
-        description="Choisissez une direction d'affectation de l'agent"
+        title="Sélectionner un département"
+        description="Choisissez le département d'affectation de l'agent"
         :overlay="false"
         :ui="{
           content: 'sm:max-w-3xl',
@@ -99,7 +103,7 @@ const globalFilter = ref("");
           <div class="space-y-4">
             <UInput
               v-model="globalFilter"
-              placeholder="Rechercher une direction..."
+              placeholder="Rechercher un département..."
               icon="i-lucide-search"
               class="w-full"
             />
@@ -108,7 +112,7 @@ const globalFilter = ref("");
               ref="table"
               v-model:pagination="pagination"
               v-model:global-filter="globalFilter"
-              :data="directions"
+              :data="departements"
               :columns="columns"
               :loading="pending"
               class="max-h-100 overflow-y-auto"
@@ -125,11 +129,11 @@ const globalFilter = ref("");
             />
 
             <div
-              v-if="directions && directions.length > 0"
+              v-if="departements && departements.length > 0"
               class="flex items-center justify-between gap-4 border-t border-default pt-4"
             >
               <div class="text-sm text-muted">
-                {{ directions.length }} Direction(s) disponible(s)
+                {{ departements.length }} département(s) disponible(s)
               </div>
 
               <UPagination
@@ -145,11 +149,11 @@ const globalFilter = ref("");
             </div>
 
             <div
-              v-if="!pending && (!directions || directions.length === 0)"
+              v-if="!pending && (!departements || departements.length === 0)"
               class="text-center py-8 text-muted"
             >
               <UIcon name="i-lucide-inbox" class="mx-auto mb-2 text-4xl" />
-              <p>Aucune Direction disponible</p>
+              <p>Aucun départements disponible</p>
             </div>
 
             <div class="flex justify-end pt-4">

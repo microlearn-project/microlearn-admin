@@ -1,9 +1,15 @@
 <script setup lang="ts">
 import type { Tables } from "~/types/database.types";
 
-type Cours = Tables<"cours">;
+// documents n'est plus une colonne de la table cours (dérivé côté API,
+// cours_document) — omis ici pour rester compatible avec l'objet enrichi
+// que Step2Cours.vue/Step3Quiz.vue transmettent.
+type Cours = Omit<Tables<"cours">, "documents">;
 type Quiz = Tables<"quiz"> & {
-  question: (Tables<"question"> & {
+  // L'API (formatQuiz) renvoie "questions" (pluriel), pas la relation Prisma
+  // brute "question" — à ne pas confondre avec POST /quiz/create qui renvoie
+  // la ligne Prisma brute (sans ce champ, injecté manuellement ci-dessous).
+  questions: (Tables<"question"> & {
     reponse: Tables<"reponse">[];
   })[];
 };
@@ -13,6 +19,7 @@ const props = defineProps<{
 }>();
 
 const open = defineModel<boolean>("open", { default: false });
+useModalEscapeOnly(open);
 
 const emit = defineEmits<{
   (e: "saved"): void;
@@ -24,6 +31,16 @@ const toast = useToast();
 const quiz = ref<Quiz | null>(null);
 const loading = ref(true);
 const creating = ref(false);
+
+// UInput (nuxt-ui) accepte string | undefined, pas string | null (colonne
+// description nullable en base) — pont get/set entre les deux. Distinct de
+// quizDescription (ref plus bas) qui sert au formulaire de création.
+const quizDescriptionModel = computed<string | undefined>({
+  get: () => quiz.value?.description ?? undefined,
+  set: (value) => {
+    if (quiz.value) quiz.value.description = value ?? null;
+  },
+});
 
 async function loadQuiz() {
   loading.value = true;
@@ -85,7 +102,7 @@ async function createQuiz() {
       },
     });
 
-    quiz.value = { ...newQuiz, question: [] };
+    quiz.value = { ...newQuiz, questions: [] };
 
     toast.add({
       title: "Succès",
@@ -150,7 +167,7 @@ async function addQuestion() {
       },
     });
 
-    quiz.value.question.push({
+    quiz.value.questions.push({
       ...(newQuestion as Tables<"question">),
       reponse: [],
     });
@@ -174,7 +191,7 @@ async function addQuestion() {
 // Supprimer une question
 function onQuestionDeleted(questionId: string) {
   if (!quiz.value) return;
-  quiz.value.question = quiz.value.question.filter(
+  quiz.value.questions = quiz.value.questions.filter(
     (q) => q.id_question !== questionId
   );
 }
@@ -189,7 +206,7 @@ function onClose() {
 const quizStats = computed(() => {
   if (!quiz.value) return null;
 
-  const questions = quiz.value.question;
+  const questions = quiz.value.questions;
   const activeQuestions = questions.filter((q) => q.actif);
   const validQuestions = questions.filter((q) => {
     const reponses = q.reponse;
@@ -212,6 +229,7 @@ const quizStats = computed(() => {
     :ui="{
       content: 'w-[calc(100vw-2rem)] max-w-4xl',
     }"
+    :dismissible="false"
     @close="onClose"
     :description="quiz ? 'Éditez les questions et réponses du quiz.' : 'Créez un quiz pour ce cours.'"
   >
@@ -279,7 +297,7 @@ const quizStats = computed(() => {
 
               <UFormField label="Description">
                 <UInput
-                  v-model="quiz.description"
+                  v-model="quizDescriptionModel"
                   placeholder="Description optionnelle..."
                   @update:model-value="debouncedUpdateQuiz"
                 />
@@ -327,7 +345,7 @@ const quizStats = computed(() => {
               />
             </div>
 
-            <div v-if="quiz.question.length === 0" class="text-center py-12 border-2 border-dashed border-default rounded-xl">
+            <div v-if="quiz.questions.length === 0" class="text-center py-12 border-2 border-dashed border-default rounded-xl">
               <UIcon name="i-lucide-list-plus" class="text-5xl text-muted mb-4" />
               <p class="font-medium mb-2">Aucune question</p>
               <p class="text-muted text-sm mb-4">
@@ -345,7 +363,7 @@ const quizStats = computed(() => {
 
             <div v-else class="space-y-4">
               <ModulesQuizQuestionEditor
-                v-for="(question, index) in quiz.question"
+                v-for="(question, index) in quiz.questions"
                 :key="question.id_question"
                 :question="question"
                 :question-number="index + 1"

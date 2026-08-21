@@ -1,5 +1,5 @@
 // server/api/quiz/by-cours/[coursId].get.ts
-import { createSupabaseServerClient } from "~~/server/utils/supabase";
+import { callApi } from "~~/server/utils/apiBridge";
 
 export default defineEventHandler(async (event) => {
   const coursId = getRouterParam(event, "coursId");
@@ -7,37 +7,14 @@ export default defineEventHandler(async (event) => {
   if (!coursId) {
     throw createError({
       statusCode: 400,
-      statusMessage: "ID du cours requis",
+      message: "ID du cours requis",
     });
   }
 
-  const supabase = createSupabaseServerClient();
-
-  // Récupérer le quiz avec ses questions et réponses
-  const { data, error } = await supabase
-    .from("quiz")
-    .select(
-      `
-      *,
-      question (
-        *,
-        reponse (*)
-      )
-    `
-    )
-    .eq("id_cours", coursId)
-    .single();
-
-  if (error) {
-    // Si pas de quiz trouvé, retourner null (pas d'erreur)
-    if (error.code === "PGRST116") {
-      return null;
-    }
-    throw createError({
-      statusCode: 500,
-      statusMessage: error.message,
-    });
+  try {
+    return await callApi(event, `/quiz/by-cours/${coursId}`);
+  } catch (err: any) {
+    if (err?.statusCode === 404) return null;
+    throw err;
   }
-
-  return data;
 });

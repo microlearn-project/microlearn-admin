@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import type { Tables } from "~/types/database.types";
 
-type Cours = Tables<"cours">;
+// documents n'est plus une colonne de la table cours (dérivé côté API,
+// cours_document) — omis ici pour rester compatible avec l'objet enrichi
+// que Step2Cours.vue transmet ; ce modal charge de toute façon ses propres
+// associations réelles via /api/cours/:id/documents.
+type Cours = Omit<Tables<"cours">, "documents">;
 type Document = Tables<"document">;
 
 const props = defineProps<{
@@ -16,11 +20,6 @@ const emit = defineEmits<{
 }>();
 
 const toast = useToast();
-const config = useRuntimeConfig();
-
-// URL de base Supabase Storage
-const supabaseUrl = config.public.supabaseUrl as string;
-const storageBucket = "documents"; // Nom du bucket pour les documents
 
 // Documents disponibles (associés au module)
 const { data: availableDocuments, status: loadingDocs } = useFetch<Document[]>(
@@ -30,31 +29,38 @@ const { data: availableDocuments, status: loadingDocs } = useFetch<Document[]>(
   },
 );
 
-// URLs des documents sélectionnés
-const selectedUrls = ref<string[]>([...(props.cours.documents || [])]);
+// Documents réellement associés à CE cours (table de liaison cours_document —
+// cours.documents n'existe plus, c'était l'ancien schéma Supabase).
+interface CoursDocumentRow {
+  id_document: string;
+  document: { fichier: string };
+}
 
-// Réinitialiser quand le cours change
+const { data: currentDocuments, refresh: refreshCurrentDocuments } = useFetch<
+  CoursDocumentRow[]
+>(`/api/cours/${props.cours.id_cours}/documents`, { default: () => [] });
+
+const selectedUrls = ref<string[]>([]);
+
 watch(
-  () => props.cours,
-  (newCours) => {
-    selectedUrls.value = [...(newCours.documents || [])];
+  currentDocuments,
+  (rows) => {
+    selectedUrls.value = (rows ?? []).map((row) => row.document.fichier);
   },
+  { immediate: true }
 );
 
-/**
- * Construit l'URL publique complète d'un document Supabase
- * Si le fichier est déjà une URL complète, la retourne telle quelle
- * Sinon, construit l'URL à partir du chemin relatif
- */
-function getFullUrl(fichier: string): string {
-  // Si c'est déjà une URL complète
-  if (fichier.startsWith("http://") || fichier.startsWith("https://")) {
-    return fichier;
-  }
+// Ré-ouvrir le modal (autre cours ou même cours après un changement externe)
+// doit refléter l'état réel, pas ce qui traînait de la session précédente.
+watch(open, (isOpen) => {
+  if (isOpen) refreshCurrentDocuments();
+});
 
-  // Sinon, construire l'URL Supabase Storage
-  // Format: https://{project}.supabase.co/storage/v1/object/public/{bucket}/{path}
-  return `${supabaseUrl}/storage/v1/object/public/${storageBucket}/${fichier}`;
+// StorageService renvoie toujours des URLs publiques complètes — plus besoin
+// de reconstruire quoi que ce soit ici (l'ancien getFullUrl() supposait un
+// chemin relatif Supabase, ça n'existe plus).
+function getFullUrl(fichier: string): string {
+  return fichier;
 }
 /**
  * Extrait le nom de fichier à afficher
@@ -70,7 +76,7 @@ function getFileName(doc: Document): string {
   try {
     const parts = doc.fichier.split("/");
     const fileName = parts[parts.length - 1];
-    return decodeURIComponent(fileName);
+    return fileName ? decodeURIComponent(fileName) : doc.fichier;
   } catch {
     return doc.fichier;
   }
@@ -107,6 +113,8 @@ async function saveDocuments() {
         documents: selectedUrls.value, // Tableau d'URLs complètes
       },
     });
+
+    await refreshCurrentDocuments();
 
     toast.add({
       title: "Succès",

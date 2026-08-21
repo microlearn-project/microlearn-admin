@@ -1,20 +1,16 @@
 // composables/useAuth.ts
-import type { SessionUser } from "~~/server/utils/session";
+export interface SessionUser {
+  id_agent: string;
+  code_agent: string;
+  nom: string;
+  prenom: string;
+  email: string;
+  role: { designation: string };
+}
 
 interface AuthState {
   authenticated: boolean;
   user: SessionUser | null;
-  loggedInAt: string | null;
-  expiresAt: string | null;
-}
-
-interface LoginResponse {
-  success: boolean;
-  error?: string;
-  requiresConfirmation?: boolean;
-  message?: string;
-  sessionInfo?: any;  
-  user?: SessionUser;
 }
 
 export const useAuth = () => {
@@ -37,59 +33,19 @@ export const useAuth = () => {
     }
   }
 
-  /**
-   * Connexion avec gestion de session unique
-   */
-  async function login(
-    identifier: string,
-    password: string,
-    loginType: "email" | "code",
-    forceLogin = false,
-  ): Promise<LoginResponse> {
-    try {
-      const data = await $fetch<LoginResponse>("/api/auth/login", {
-        method: "POST",
-        body: {
-          identifier,
-          password,
-          loginType,
-          forceLogin,
-        },
-      });
-
-      //  Gestion de la confirmation
-      if (data.requiresConfirmation) {
-        return {
-          success: false,
-          requiresConfirmation: true,
-          message: data.message,
-          sessionInfo: data.sessionInfo,
-        };
-      }
-
-      if (data.success && data.user) {
-        authenticated.value = true;
-        user.value = data.user;
-        return { success: true };
-      }
-
-      return { success: false, error: "Réponse invalide du serveur" };
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error?.data?.statusMessage || "Erreur de connexion",
-      };
-    }
+  // Démarre le flux Keycloak — navigation plein-écran, pas un appel $fetch,
+  // puisque la suite se passe sur le domaine de Keycloak.
+  function login(redirectTo?: string): void {
+    const target = redirectTo
+      ? `/api/auth/login?redirect=${encodeURIComponent(redirectTo)}`
+      : "/api/auth/login";
+    window.location.href = target;
   }
 
   async function logout(): Promise<void> {
-    try {
-      await $fetch("/api/auth/logout", { method: "POST" });
-    } finally {
-      authenticated.value = false;
-      user.value = null;
-      navigateTo("/login");
-    }
+    authenticated.value = false;
+    user.value = null;
+    window.location.href = "/api/auth/logout";
   }
 
   function hasRole(roleDesignation: string): boolean {

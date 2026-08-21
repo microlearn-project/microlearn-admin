@@ -90,7 +90,7 @@ function formatDate(date: string) {
             </div>
             <div
               class="prose prose-sm prose-neutral dark:prose-invert max-w-none max-h-64 overflow-y-auto rounded-lg bg-muted/20 p-4 border border-default"
-              v-html="module.description"
+              v-html="sanitizeHtml(module.description)"
             />
           </div>
         </div>

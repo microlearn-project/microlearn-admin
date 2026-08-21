@@ -1,33 +1,15 @@
-// server/api/agent/deactivate.post.ts
-import { createSupabaseServerClient } from "~~/server/utils/supabase";
-import type { TablesUpdate } from "~/types/database.types";
+// server/api/agent/[id]/deactivate.patch.ts
+import { callApi } from "~~/server/utils/apiBridge";
 
-type AgentUpdate = TablesUpdate<"agent">;
-
-export default defineEventHandler(async (event) => {
+export default defineEventHandler((event) => {
   const id = event.context.params?.id;
 
   if (!id) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Missing agent ID",
-    });
+    throw createError({ statusCode: 400, message: "Missing agent ID" });
   }
-  const supabase = createSupabaseServerClient();
 
-  const payload: AgentUpdate = {
-    actif: false,
-  };
-
-  const { data, error } = await supabase
-    .from("agent")
-    .update(payload)
-    .eq("id_agent", id)
-    .select()
-    .single();
-
-  if (error)
-    throw createError({ statusCode: 500, statusMessage: error.message });
-
-  return data;
+  return callApi(event, `/agents/${id}`, {
+    method: "PATCH",
+    body: { actif: false },
+  });
 });

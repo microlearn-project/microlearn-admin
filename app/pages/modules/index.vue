@@ -20,6 +20,7 @@ const isAdmin = computed(() => hasRole("ADMIN"));
 const isFormateur = computed(() => hasRole("FORMATEUR"));
 
 type Module = Tables<"module">;
+type Departement = Tables<"departement">;
 
 const toast = useToast();
 const table = useTemplateRef<any>("table");
@@ -32,6 +33,9 @@ const UButton = resolveComponent("UButton");
 /* ---------------------------------------------------
    1. Récupération des modules
 ----------------------------------------------------*/
+const selectedDepartementFilter = ref<Departement | null>(null);
+const showDepartementFilterModal = ref(false);
+
 const {
   data: modules,
   pending,
@@ -40,6 +44,11 @@ const {
 } = await useFetch<Module[]>("/api/module", {
   server: true,
   lazy: false,
+  query: computed(() =>
+    selectedDepartementFilter.value
+      ? { departement_id: selectedDepartementFilter.value.id_departement }
+      : {}
+  ),
 });
 
 /* ---------------------------------------------------
@@ -503,6 +512,19 @@ async function toggleDownloadable(id: string, enabled: boolean) {
         />
 
         <div class="flex items-center gap-3">
+          <!-- Bouton modifier — un seul module sélectionné -->
+          <UButton
+            v-if="selectedRows.length === 1"
+            label="Modifier"
+            color="secondary"
+            variant="subtle"
+            icon="i-lucide-edit-2"
+            @click="
+              selectedRows[0] &&
+                navigateTo(`/modules/edit/${selectedRows[0].id_module}`)
+            "
+          />
+
           <!-- Bouton supprimer -->
           <ModulesDeleteModal
             :count="table?.tableApi?.getFilteredSelectedRowModel().rows.length"
@@ -526,6 +548,37 @@ async function toggleDownloadable(id: string, enabled: boolean) {
               </template>
             </UButton>
           </ModulesDeleteModal>
+
+          <!-- Filtre par département (modal) -->
+          <ModulesDepartementFilterModal
+            v-model:open="showDepartementFilterModal"
+            @select="selectedDepartementFilter = $event"
+          />
+          <div class="flex items-center gap-1">
+            <UButton
+              :label="
+                selectedDepartementFilter
+                  ? selectedDepartementFilter.designation
+                  : 'Tous les départements'
+              "
+              :icon="
+                selectedDepartementFilter
+                  ? 'i-lucide-building-2'
+                  : 'i-lucide-search'
+              "
+              :color="selectedDepartementFilter ? 'primary' : 'neutral'"
+              variant="outline"
+              @click="showDepartementFilterModal = true"
+            />
+            <UButton
+              v-if="selectedDepartementFilter"
+              icon="i-lucide-x"
+              color="neutral"
+              variant="ghost"
+              square
+              @click="selectedDepartementFilter = null"
+            />
+          </div>
 
           <!-- Bouton de filtre -->
           <USelect

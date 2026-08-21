@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn } from "@nuxt/ui";
+import type { Tables } from "~/types/database.types";
 
 interface Module {
   id_module: string;
@@ -49,6 +50,64 @@ interface ProgressionResponse {
 }
 
 const UBadge = resolveComponent("UBadge");
+
+/* ---------------------------------------------------
+   Onglets : par module (existant) / par agent (nouveau)
+----------------------------------------------------*/
+const activeTab = ref("module");
+const tabItems = [
+  { label: "Par module", value: "module", icon: "i-lucide-book-open" },
+  { label: "Par agent", value: "agent", icon: "i-lucide-user" },
+];
+
+/* ---------------------------------------------------
+   Onglet "Par agent" — historique de progression
+----------------------------------------------------*/
+interface AgentHistoryEntry {
+  id_module: string;
+  titre: string;
+  tags: string[];
+  progression: number;
+  statut: "completed" | "in_progress";
+  date_debut: string | null;
+  date_fin: string | null;
+  derniere_activite: string;
+}
+
+type AgentLite = Tables<"agent">;
+
+const showAgentModal = ref(false);
+const selectedAgent = ref<AgentLite | null>(null);
+const historyPage = ref(1);
+const HISTORY_PAGE_SIZE = 10;
+
+const {
+  data: agentHistory,
+  pending: historyPending,
+  refresh: refreshHistory,
+} = await useFetch<AgentHistoryEntry[]>(
+  () => `/api/agent/${selectedAgent.value?.id_agent}/history`,
+  {
+    immediate: false,
+    watch: false,
+    default: () => [],
+  }
+);
+
+function handleAgentSelect(agent: AgentLite) {
+  selectedAgent.value = agent;
+  historyPage.value = 1;
+  refreshHistory();
+}
+
+const historyTotalPages = computed(() =>
+  Math.max(1, Math.ceil((agentHistory.value?.length ?? 0) / HISTORY_PAGE_SIZE))
+);
+
+const paginatedHistory = computed(() => {
+  const start = (historyPage.value - 1) * HISTORY_PAGE_SIZE;
+  return (agentHistory.value ?? []).slice(start, start + HISTORY_PAGE_SIZE);
+});
 
 const showModuleModal = ref(false);
 const selectedModule = ref<Module | null>(null);
@@ -273,7 +332,15 @@ const columns: TableColumn<AgentProgression>[] = [
         @select="handleModuleSelect"
       />
 
-      <div class="space-y-6">
+      <PermissionsAgentSelectModal
+        v-model:open="showAgentModal"
+        v-model:selected-agent="selectedAgent"
+        @select="handleAgentSelect"
+      />
+
+      <UTabs v-model="activeTab" :items="tabItems" class="mb-6" />
+
+      <div v-if="activeTab === 'module'" class="space-y-6">
         <!-- Sélection du module -->
         <div class="flex items-center gap-3">
           <UButton
@@ -453,6 +520,138 @@ const columns: TableColumn<AgentProgression>[] = [
             label="Sélectionner un module"
             icon="i-lucide-search"
             @click="showModuleModal = true"
+          />
+        </div>
+      </div>
+
+      <div v-else-if="activeTab === 'agent'" class="space-y-6">
+        <!-- Sélection de l'agent -->
+        <div class="flex items-center gap-3">
+          <UButton
+            label="Sélectionner un agent"
+            icon="i-lucide-search"
+            color="primary"
+            size="lg"
+            @click="showAgentModal = true"
+          />
+
+          <div
+            v-if="selectedAgent"
+            class="flex items-center gap-2 px-4 py-2 bg-elevated border border-default rounded-lg"
+          >
+            <UIcon name="i-lucide-user" class="text-primary" />
+            <span class="font-medium">
+              {{ selectedAgent.prenom }} {{ selectedAgent.nom }}
+            </span>
+            <span class="text-sm text-muted">({{ selectedAgent.code_agent }})</span>
+            <UButton
+              icon="i-lucide-x"
+              color="neutral"
+              variant="ghost"
+              size="xs"
+              square
+              @click="selectedAgent = null"
+            />
+          </div>
+        </div>
+
+        <!-- Agent sélectionné -->
+        <div v-if="selectedAgent">
+          <!-- Skeleton -->
+          <div v-if="historyPending" class="space-y-2">
+            <USkeleton v-for="i in 5" :key="i" class="h-20 w-full rounded-lg" />
+          </div>
+
+          <!-- Aucun historique -->
+          <div
+            v-else-if="!agentHistory || agentHistory.length === 0"
+            class="text-center py-16 border-2 border-dashed border-default rounded-lg"
+          >
+            <UIcon name="i-lucide-inbox" class="text-5xl text-muted mb-4" />
+            <p class="font-medium mb-2">Aucune progression enregistrée</p>
+            <p class="text-muted text-sm">
+              Cet agent n'a encore commencé aucun module.
+            </p>
+          </div>
+
+          <!-- Liste de l'historique -->
+          <div v-else class="space-y-3">
+            <div
+              v-for="entry in paginatedHistory"
+              :key="entry.id_module"
+              class="flex items-center gap-4 p-4 bg-elevated border border-default rounded-lg"
+            >
+              <div
+                class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0"
+              >
+                <UIcon name="i-lucide-book-open" class="text-primary text-xl" />
+              </div>
+
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <p class="font-medium truncate">{{ entry.titre }}</p>
+                  <UBadge
+                    :color="entry.statut === 'completed' ? 'success' : 'warning'"
+                    variant="subtle"
+                    size="sm"
+                  >
+                    {{ entry.statut === "completed" ? "Terminé" : "En cours" }}
+                  </UBadge>
+                  <UBadge
+                    v-for="tag in entry.tags"
+                    :key="tag"
+                    color="neutral"
+                    variant="subtle"
+                    size="sm"
+                  >
+                    {{ tag }}
+                  </UBadge>
+                </div>
+                <p class="text-sm text-muted mt-1">
+                  {{ entry.date_debut ? new Date(entry.date_debut).toLocaleDateString("fr-FR") : "N/A" }}
+                  →
+                  {{ entry.date_fin ? new Date(entry.date_fin).toLocaleDateString("fr-FR") : "En cours" }}
+                </p>
+              </div>
+
+              <div class="text-right shrink-0">
+                <p class="text-lg font-bold">{{ entry.progression }}%</p>
+                <p class="text-xs text-muted">Progression</p>
+              </div>
+            </div>
+
+            <!-- Pagination -->
+            <div
+              v-if="historyTotalPages > 1"
+              class="flex items-center justify-between gap-4 border-t border-default pt-4 mt-6"
+            >
+              <div class="text-sm text-muted">
+                Page {{ historyPage }} sur {{ historyTotalPages }}
+              </div>
+              <UPagination
+                :page="historyPage"
+                :items-per-page="HISTORY_PAGE_SIZE"
+                :total="agentHistory.length"
+                @update:page="(p: number) => (historyPage = p)"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Aucun agent sélectionné -->
+        <div
+          v-else
+          class="text-center py-16 border-2 border-dashed border-default rounded-lg"
+        >
+          <UIcon name="i-lucide-user-search" class="text-5xl text-muted mb-4" />
+          <p class="font-medium mb-2">Aucun agent sélectionné</p>
+          <p class="text-muted text-sm mb-4">
+            Cliquez sur le bouton ci-dessus pour sélectionner un agent
+          </p>
+          <UButton
+            label="Sélectionner un agent"
+            icon="i-lucide-search"
+            @click="showAgentModal = true"
           />
         </div>
       </div>

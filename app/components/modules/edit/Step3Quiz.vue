@@ -7,9 +7,14 @@ const QuizEditorModal = defineAsyncComponent(
 );
 
 type Module = Tables<"module">;
-type Cours = Tables<"cours">;
+// documents n'est plus une colonne de la table cours (dérivé côté API,
+// cours_document) — omis ici pour rester compatible avec l'objet enrichi
+// que Step2Cours.vue transmet.
+type Cours = Omit<Tables<"cours">, "documents">;
 type Quiz = Tables<"quiz"> & {
-  question: (Tables<"question"> & {
+  // L'API (formatQuiz) renvoie "questions" (pluriel) — voir la même note
+  // dans QuizEditorModal.vue.
+  questions: (Tables<"question"> & {
     reponse: Tables<"reponse">[];
   })[];
 };
@@ -91,7 +96,7 @@ function getQuizStatus(coursId: string) {
     return { status: "none", label: "Pas de quiz", color: "neutral" };
   }
 
-  const questions = quiz.question || [];
+  const questions = quiz.questions || [];
   const activeQuestions = questions.filter((q) => q.actif);
   const validQuestions = questions.filter((q) => {
     const reponses = q.reponse || [];
@@ -131,7 +136,7 @@ const globalStats = computed(() => {
 
   const readyQuiz = Object.entries(quizByCoursId.value).filter(([_, quiz]) => {
     if (!quiz || quiz === "loading") return false;
-    const questions = quiz.question || [];
+    const questions = quiz.questions || [];
     const activeQuestions = questions.filter((q) => q.actif);
     const validQuestions = questions.filter((q) => {
       const reponses = q.reponse || [];
@@ -295,7 +300,7 @@ const globalStats = computed(() => {
                 {{ getQuizInfo(coursItem.id_cours)?.titre }}
               </p>
               <p class="text-xs text-muted">
-                {{ getQuizInfo(coursItem.id_cours)?.question?.length || 0 }} question(s)
+                {{ getQuizInfo(coursItem.id_cours)?.questions?.length || 0 }} question(s)
               </p>
             </div>
 

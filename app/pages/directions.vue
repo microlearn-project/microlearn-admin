@@ -24,7 +24,7 @@ const {
   pending,
   error,
   refresh,
-} = await useFetch<Direction[]>("/api/departement", {
+} = await useFetch<Direction[]>("/api/direction", {
   server: true,
   lazy: false,
 });
@@ -39,19 +39,6 @@ const autoritesMap = computed(() => {
 });
 
 /* ---------------------------------------------------
-   2. Actions API
-----------------------------------------------------*/
-// Supprimer une direction
-const softDelete = async (id: string) => {
-  await $fetch(`/api/departement/soft-delete`, {
-    method: "PATCH",
-    body: {
-      id: id,
-    },
-  });
-};
-
-/* ---------------------------------------------------
      3. Sélection des lignes
 ----------------------------------------------------*/
 const rowSelection = ref<Record<string, boolean>>({});
@@ -61,6 +48,16 @@ const selectedRows = computed(
     table.value?.tableApi?.getSelectedRowModel().rows.map((r) => r.original) ??
     [],
 );
+
+// Suppression d'une ligne : passe par la même confirmation que la
+// suppression en masse, au lieu de supprimer immédiatement au clic.
+const singleDeleteTarget = ref<Direction | null>(null);
+const showSingleDeleteModal = ref(false);
+
+function requestSingleDelete(direction: Direction) {
+  singleDeleteTarget.value = direction;
+  showSingleDeleteModal.value = true;
+}
 
 /* ---------------------------------------------------
      4. Items du menu sur chaque ligne
@@ -82,26 +79,7 @@ function getRowItems(row: { original: Direction }) {
       label: "Supprimer",
       icon: "i-lucide-trash-2",
       color: "error",
-      onSelect: async () => {
-        try {
-          await softDelete(s.id_direction);
-
-          if (directions.value) {
-            directions.value = directions.value.filter(
-              (dir) => dir.id_direction !== s.id_direction,
-            );
-          }
-
-          toast.add({ title: "Direction supprimée" });
-          clearTableSelection();
-        } catch (error) {
-          toast.add({
-            title: "Erreur",
-            description: "Impossible de supprimer la direction",
-            color: "error",
-          });
-        }
-      },
+      onSelect: () => requestSingleDelete(s),
     },
   ];
 }
@@ -320,6 +298,15 @@ function clearTableSelection() {
               </template>
             </UButton>
           </DirectionsDeleteModal>
+
+          <!-- Modal de suppression (action de ligne, une seule direction) -->
+          <DirectionsDeleteModal
+            v-model:open="showSingleDeleteModal"
+            :count="1"
+            :rows="singleDeleteTarget ? [singleDeleteTarget] : []"
+            @deleted="refresh()"
+            @clear-selection="singleDeleteTarget = null"
+          />
 
           <!-- Bouton de filtre statut -->
           <USelect

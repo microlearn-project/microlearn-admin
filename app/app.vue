@@ -47,17 +47,15 @@ useSeoMeta({
       <!-- Loading  -->
       <AuthLoadingScreen v-if="isInitialLoading" />
 
-      <!-- Le contenu -->
-      <UTooltipProvider>
-        <div v-show="!isInitialLoading">
-          <NuxtLoadingIndicator />
-          <NuxtLayout>
-            <SessionWatcher />
-            <NuxtPage />
-          </NuxtLayout>
-          <ShortcutsHelpModal />
-        </div>
-      </UTooltipProvider>
+      <!-- Le contenu — <UApp> fournit déjà un TooltipProvider en interne
+           (Nuxt UI v4) ; un wrapper explicite ici ne résout à rien. -->
+      <div v-show="!isInitialLoading">
+        <NuxtLoadingIndicator />
+        <NuxtLayout>
+          <NuxtPage />
+        </NuxtLayout>
+        <ShortcutsHelpModal />
+      </div>
     </div>
   </UApp>
 </template>

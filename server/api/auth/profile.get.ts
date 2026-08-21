@@ -1,56 +1,11 @@
 // server/api/auth/profile.get.ts
-import { createSupabaseServerClient } from "~~/server/utils/supabase";
-import { getUserSession } from "~~/server/utils/session";
+// /auth/me est ouvert à tout rôle authentifié et auto-scopé au token —
+// contrairement à /agents/:id (réservé SUPERADMIN/ADMIN), il fonctionne
+// aussi pour un FORMATEUR consultant son propre profil.
+import { callApi } from "~~/server/utils/apiBridge";
+import { requireSession } from "~~/server/utils/keycloakAuth";
 
-export default defineEventHandler(async (event) => {
-  // Récupérer l'utilisateur connecté
-  const session = getUserSession(event);
-
-  if (!session) {
-    throw createError({
-      statusCode: 401,
-      statusMessage: "Non authentifié",
-    });
-  }
-
-  const currentUserId = session.user.id_agent;
-
-  const supabase = createSupabaseServerClient();
-
-  // Récupérer les infos complètes de l'agent
-  const { data, error } = await supabase
-    .from("agent")
-    .select(
-      `
-      id_agent,
-      code_agent,
-      nom,
-      prenom,
-      email,
-      actif,
-      last_login,
-      created_at,
-      id_direction,
-      id_departement,
-      direction:id_direction (
-        id_direction,
-        designation
-      ),
-      departement:id_departement (
-        id_departement,
-        designation
-      )
-    `,
-    )
-    .eq("id_agent", currentUserId)
-    .single();
-
-  if (error) {
-    throw createError({
-      statusCode: 500,
-      statusMessage: error.message,
-    });
-  }
-
-  return data;
+export default defineEventHandler((event) => {
+  requireSession(event);
+  return callApi(event, `/auth/me`);
 });

@@ -26,6 +26,46 @@ const filters = ref({
   search: "",
 });
 
+const selectedPeriod = ref<string>("all");
+const periodOptions = [
+  { label: "Toute la période", value: "all" },
+  { label: "7 derniers jours", value: "7d" },
+  { label: "30 derniers jours", value: "30d" },
+  { label: "3 derniers mois", value: "3m" },
+  { label: "6 derniers mois", value: "6m" },
+  { label: "Cette année", value: "year" },
+];
+
+const selectedPeriodLabel = computed(() => {
+  if (selectedPeriod.value === "all") return null;
+  return periodOptions.find((p) => p.value === selectedPeriod.value)?.label;
+});
+
+const dateRange = computed(() => {
+  const now = new Date();
+  let from: string | undefined;
+
+  switch (selectedPeriod.value) {
+    case "7d":
+      from = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      break;
+    case "30d":
+      from = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      break;
+    case "3m":
+      from = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString();
+      break;
+    case "6m":
+      from = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000).toISOString();
+      break;
+    case "year":
+      from = new Date(now.getFullYear(), 0, 1).toISOString();
+      break;
+  }
+
+  return { from, to: now.toISOString() };
+});
+
 // Modals de sélection
 const showActionSelectModal = ref(false);
 const showTypeSelectModal = ref(false);
@@ -33,32 +73,6 @@ const showTypeSelectModal = ref(false);
 // Modal détail
 const showDetailModal = ref(false);
 const selectedLog = ref<any>(null);
-
-// Options de filtre pour l'affichage
-const actionOptions = [
-  { label: "Connexion", value: "connexion" },
-  { label: "Déconnexion", value: "deconnexion" },
-  { label: "Agent créé", value: "agent_cree" },
-  { label: "Rôle attribué", value: "role_attribue" },
-  { label: "Rôle modifié", value: "role_modifie" },
-  { label: "Rôle révoqué", value: "role_revoque" },
-  { label: "Rôle supprimé", value: "role_supprime" },
-  { label: "Catégorie créée", value: "categorie_creee" },
-  { label: "Catégorie supprimée", value: "categorie_supprimee" },
-  { label: "Direction créé", value: "direction_cree" },
-  { label: "Direction supprimé", value: "direction_supprime" },
-  { label: "Département créé", value: "departement_cree" },
-  { label: "Département supprimé", value: "departement_supprime" },
-];
-
-const objetTypeOptions = [
-  { label: "Agent", value: "agent" },
-  { label: "User Role", value: "user_role" },
-  { label: "Session", value: "session" },
-  { label: "Catégorie", value: "tag" },
-  { label: "Direction", value: "direction" },
-  { label: "Département", value: "departement" },
-];
 
 // Handlers de sélection
 function handleActionSelect(action: string) {
@@ -80,18 +94,23 @@ function clearTypeFilter() {
 // Récupérer le label d'une action
 const selectedActionLabel = computed(() => {
   if (!filters.value.action) return null;
-  return actionOptions.find(a => a.value === filters.value.action)?.label || filters.value.action;
+  return formatActionLabel(filters.value.action);
 });
 
 // Récupérer le label d'un type
 const selectedTypeLabel = computed(() => {
   if (!filters.value.objet_type) return null;
-  return objetTypeOptions.find(t => t.value === filters.value.objet_type)?.label || filters.value.objet_type;
+  return formatObjetTypeLabel(filters.value.objet_type);
 });
 
 // Vérifier si des filtres sont actifs
 const hasActiveFilters = computed(() => {
-  return filters.value.action !== null || filters.value.objet_type !== null || filters.value.search !== "";
+  return (
+    filters.value.action !== null ||
+    filters.value.objet_type !== null ||
+    filters.value.search !== "" ||
+    selectedPeriod.value !== "all"
+  );
 });
 
 // Charger les logs
@@ -108,6 +127,13 @@ async function loadLogs() {
     }
     if (filters.value.objet_type) {
       params.append("objet_type", filters.value.objet_type);
+    }
+    if (dateRange.value.from) {
+      params.append("from_date", dateRange.value.from);
+      params.append("to_date", dateRange.value.to);
+    }
+    if (filters.value.search) {
+      params.append("search", filters.value.search);
     }
 
     const response = await $fetch<any>(`/api/activity-log?${params}`);
@@ -149,50 +175,6 @@ function formatDate(date: string) {
     minute: "2-digit",
     second: "2-digit",
   });
-}
-
-// Formater l'action pour l'affichage
-function formatAction(action: string) {
-  const labels: Record<string, string> = {
-    connexion: "Connexion",
-    deconnexion: "Déconnexion",
-    agent_cree: "Agent créé",
-    role_attribue: "Rôle attribué",
-    role_modifie: "Rôle modifié",
-    role_revoque: "Rôle révoqué",
-    role_supprime: "Rôle supprimé",
-    categorie_creee: "Catégorie créée",
-    categorie_supprimee: "Catégorie supprimée",
-    direction_cree: "Direction créé",
-    direction_supprime: "Direction supprimé",
-    departement_cree: "Département créé",
-    departement_supprime: "Département supprimé",
-  };
-  return labels[action] || action;
-}
-
-// Couleur du badge selon l'action
-function getActionColor(
-  action: string
-): "success" | "neutral" | "info" | "error" | "warning" {
-  if (action === "connexion") return "success";
-  if (action === "deconnexion") return "neutral";
-  if (action.includes("cree") || action.includes("attribue")) return "info";
-  if (action.includes("supprime") || action.includes("revoque")) return "error";
-  if (action.includes("modifie")) return "warning";
-  return "neutral";
-}
-
-// Icône selon l'action
-function getActionIcon(action: string) {
-  if (action === "connexion") return "i-lucide-log-in";
-  if (action === "deconnexion") return "i-lucide-log-out";
-  if (action.includes("agent")) return "i-lucide-user-plus";
-  if (action.includes("role")) return "i-lucide-shield";
-  if (action.includes("categorie")) return "i-lucide-tag";
-  if (action.includes("direction")) return "i-heroicons-building-office";
-  if (action.includes("departement")) return "i-lucide-building-2";
-  return "i-lucide-activity";
 }
 
 // Colonnes du tableau
@@ -240,16 +222,17 @@ const columns = [
     header: "Action",
     cell: ({ row }: any) => {
       const action = row.original.action;
+      const style = actionVerbStyle(action);
       return h(
         UBadge,
         {
-          color: getActionColor(action),
+          color: style.color,
           variant: "subtle",
           class: "gap-1",
         },
         () => [
-          h(UIcon, { name: getActionIcon(action), class: "text-xs" }),
-          formatAction(action),
+          h(UIcon, { name: objetTypeIcon(row.original.objet_type), class: "text-xs" }),
+          formatActionLabel(action),
         ]
       );
     },
@@ -260,8 +243,8 @@ const columns = [
     cell: ({ row }: any) =>
       h(
         "span",
-        { class: "text-sm text-muted capitalize" },
-        row.original.objet_type || "-"
+        { class: "text-sm text-muted" },
+        formatObjetTypeLabel(row.original.objet_type)
       ),
   },
   {
@@ -278,24 +261,6 @@ const columns = [
   },
 ];
 
-// Logs filtrés
-const filteredLogs = computed(() => {
-  if (!filters.value.search) return logs.value;
-
-  const search = filters.value.search.toLowerCase();
-  return logs.value.filter((log) => {
-    const agentName = log.agent
-      ? `${log.agent.prenom} ${log.agent.nom}`.toLowerCase()
-      : "";
-    const agentCode = log.agent?.code_agent?.toLowerCase() || "";
-    return (
-      agentName.includes(search) ||
-      agentCode.includes(search) ||
-      log.action.includes(search)
-    );
-  });
-});
-
 // Changer de page
 function changePage(newPage: number) {
   pagination.value.page = newPage;
@@ -307,15 +272,26 @@ function resetAllFilters() {
   filters.value.action = null;
   filters.value.objet_type = null;
   filters.value.search = "";
+  selectedPeriod.value = "all";
 }
 
 // Watcher sur les filtres
 watch(
-  () => [filters.value.action, filters.value.objet_type],
+  () => [filters.value.action, filters.value.objet_type, selectedPeriod.value],
   () => {
     pagination.value.page = 1;
     loadLogs();
   }
+);
+
+// Recherche : débattue pour ne pas requêter à chaque frappe
+watchDebounced(
+  () => filters.value.search,
+  () => {
+    pagination.value.page = 1;
+    loadLogs();
+  },
+  { debounce: 400 }
 );
 
 // Charger au montage
@@ -323,6 +299,152 @@ onMounted(() => {
   loadLogs();
   loadStats();
 });
+
+/* ---------------------------------------------------
+   Export CSV / JSON du journal (respecte les filtres actifs)
+----------------------------------------------------*/
+const exportLoading = ref(false);
+
+async function fetchExportData() {
+  const params = new URLSearchParams();
+  if (filters.value.action) params.append("action", filters.value.action);
+  if (filters.value.objet_type)
+    params.append("objet_type", filters.value.objet_type);
+  if (dateRange.value.from) {
+    params.append("from_date", dateRange.value.from);
+    params.append("to_date", dateRange.value.to);
+  }
+  if (filters.value.search) params.append("search", filters.value.search);
+
+  return $fetch<any[]>(`/api/activity-log/export?${params}`);
+}
+
+async function exportToCsv() {
+  exportLoading.value = true;
+  try {
+    const data = await fetchExportData();
+
+    if (data.length === 0) {
+      toast.add({
+        title: "Aucune donnée à exporter",
+        description: "Aucune activité ne correspond aux filtres sélectionnés",
+        color: "warning",
+      });
+      return;
+    }
+
+    const headers = [
+      "Date",
+      "Action",
+      "Code Agent",
+      "Nom",
+      "Prénom",
+      "Email",
+      "Type d'objet",
+      "ID objet",
+    ];
+
+    const csvRows = [
+      headers.join(","),
+      ...data.map((row) =>
+        [
+          formatDate(row.date),
+          formatActionLabel(row.action),
+          row.code_agent ?? "",
+          `"${row.nom ?? ""}"`,
+          `"${row.prenom ?? ""}"`,
+          row.email ?? "",
+          formatObjetTypeLabel(row.objet_type),
+          row.objet_id ?? "",
+        ].join(",")
+      ),
+    ];
+
+    const csvContent = csvRows.join("\n");
+    const blob = new Blob(["﻿" + csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    const dateStr = new Date().toISOString().split("T")[0];
+    link.download = `journal-activite-${dateStr}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast.add({
+      title: "Export réussi",
+      description: `${data.length} activité(s) exportée(s)`,
+      color: "success",
+    });
+  } catch {
+    toast.add({
+      title: "Erreur",
+      description: "Impossible d'exporter le journal",
+      color: "error",
+    });
+  } finally {
+    exportLoading.value = false;
+  }
+}
+
+async function exportToJson() {
+  exportLoading.value = true;
+  try {
+    const data = await fetchExportData();
+
+    if (data.length === 0) {
+      toast.add({
+        title: "Aucune donnée à exporter",
+        color: "warning",
+      });
+      return;
+    }
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    const dateStr = new Date().toISOString().split("T")[0];
+    link.download = `journal-activite-${dateStr}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast.add({
+      title: "Export JSON réussi",
+      color: "success",
+    });
+  } catch {
+    toast.add({
+      title: "Erreur",
+      description: "Impossible d'exporter le journal",
+      color: "error",
+    });
+  } finally {
+    exportLoading.value = false;
+  }
+}
+
+const exportItems = [
+  [
+    {
+      label: "Exporter en CSV",
+      icon: "i-lucide-file-spreadsheet",
+      onSelect: exportToCsv,
+    },
+    {
+      label: "Exporter en JSON",
+      icon: "i-lucide-file-json",
+      onSelect: exportToJson,
+    },
+  ],
+];
 </script>
 
 <template>
@@ -334,6 +456,16 @@ onMounted(() => {
         </template>
 
         <template #right>
+          <UDropdownMenu :items="exportItems" :content="{ align: 'end' }">
+            <UButton
+              label="Exporter"
+              trailing-icon="i-lucide-download"
+              color="neutral"
+              variant="outline"
+              :loading="exportLoading"
+            />
+          </UDropdownMenu>
+
           <UButton
             icon="i-lucide-refresh-cw"
             color="neutral"
@@ -415,11 +547,16 @@ onMounted(() => {
                 <p class="text-2xl font-bold">
                   {{
                     stats.top_actions[0]?.action
-                      ? formatAction(stats.top_actions[0].action)
+                      ? formatActionLabel(stats.top_actions[0].action)
                       : "-"
                   }}
                 </p>
-                <p class="text-sm text-muted">Action la plus fréquente</p>
+                <p class="text-sm text-muted">
+                  Action la plus fréquente
+                  <span v-if="stats.top_actions[0]"
+                    >({{ stats.top_actions[0].count }})</span
+                  >
+                </p>
               </div>
             </div>
           </div>
@@ -435,7 +572,6 @@ onMounted(() => {
                 placeholder="Rechercher un utilisateur..."
                 icon="i-lucide-search"
                 class="flex-1 min-w-64"
-                :ui="{ icon: { trailing: { pointer: '' } } }"
               >
                 <template v-if="filters.search" #trailing>
                   <UButton
@@ -491,6 +627,14 @@ onMounted(() => {
                   @click="clearTypeFilter"
                 />
               </div>
+
+              <!-- Filtre par période -->
+              <USelect
+                v-model="selectedPeriod"
+                :items="periodOptions"
+                placeholder="Toute la période"
+                class="min-w-48"
+              />
             </div>
 
             <!-- Ligne 2 : Bouton de réinitialisation et badges -->
@@ -524,6 +668,15 @@ onMounted(() => {
                 Recherche: "{{ filters.search }}"
               </UBadge>
 
+              <UBadge
+                v-if="selectedPeriodLabel"
+                color="warning"
+                variant="subtle"
+                size="xs"
+              >
+                Période: {{ selectedPeriodLabel }}
+              </UBadge>
+
               <UButton
                 label="Réinitialiser"
                 icon="i-lucide-rotate-ccw"
@@ -540,7 +693,7 @@ onMounted(() => {
         <div
           class="bg-elevated border border-default rounded-lg overflow-hidden"
         >
-          <UTable :columns="columns" :data="filteredLogs" :loading="loading">
+          <UTable :columns="columns" :data="logs" :loading="loading">
             <template #empty>
               <div class="flex flex-col items-center justify-center py-12">
                 <UIcon name="i-lucide-inbox" class="text-4xl text-muted mb-4" />
@@ -613,10 +766,10 @@ onMounted(() => {
             <div>
               <p class="text-sm text-muted">Action</p>
               <UBadge
-                :color="getActionColor(selectedLog.action)"
+                :color="actionVerbStyle(selectedLog.action).color"
                 variant="subtle"
               >
-                {{ formatAction(selectedLog.action) }}
+                {{ formatActionLabel(selectedLog.action) }}
               </UBadge>
             </div>
           </div>
@@ -650,8 +803,8 @@ onMounted(() => {
           <div class="grid grid-cols-2 gap-4">
             <div>
               <p class="text-sm text-muted">Type d'objet</p>
-              <p class="font-medium capitalize">
-                {{ selectedLog.objet_type || "-" }}
+              <p class="font-medium">
+                {{ formatObjetTypeLabel(selectedLog.objet_type) }}
               </p>
             </div>
             <div>

@@ -23,7 +23,7 @@ const {
   data: departements,
   pending,
   refresh,
-} = useFetch<Departement[]>("/api/service", {
+} = useFetch<Departement[]>("/api/departement", {
   server: false,
   lazy: true,
   immediate: false,

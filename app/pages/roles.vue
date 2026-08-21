@@ -28,19 +28,6 @@ const {
 });
 
 /* ---------------------------------------------------
-   2. Actions API
-----------------------------------------------------*/
-// Supprimer un rôle
-const softDelete = async (id: string) => {
-  await $fetch(`/api/role/soft-delete`, {
-    method: "PATCH",
-    body: {
-      id: id,
-    },
-  });
-};
-
-/* ---------------------------------------------------
      3. Sélection des lignes
 ----------------------------------------------------*/
 const rowSelection = ref<Record<string, boolean>>({});
@@ -50,6 +37,16 @@ const selectedRows = computed(
     table.value?.tableApi?.getSelectedRowModel().rows.map((r) => r.original) ??
     []
 );
+
+// Suppression d'une ligne : passe par la même confirmation que la
+// suppression en masse, au lieu de supprimer immédiatement au clic.
+const singleDeleteTarget = ref<Role | null>(null);
+const showSingleDeleteModal = ref(false);
+
+function requestSingleDelete(role: Role) {
+  singleDeleteTarget.value = role;
+  showSingleDeleteModal.value = true;
+}
 
 /* ---------------------------------------------------
      4. Items du menu sur chaque ligne
@@ -71,14 +68,7 @@ function getRowItems(row: { original: Role }) {
       label: "Supprimer",
       icon: "i-lucide-trash-2",
       color: "error",
-      onSelect: async () => {
-        await softDelete(s.id_role);
-        toast.add({
-          title: "rôle supprimé",
-        });
-        refresh();
-        clearTableSelection();
-      },
+      onSelect: () => requestSingleDelete(s),
     },
   ];
 }
@@ -249,6 +239,15 @@ function clearTableSelection() {
               </template>
             </UButton>
           </RolesDeleteModal>
+
+          <!-- Modal de suppression (action de ligne, un seul rôle) -->
+          <RolesDeleteModal
+            v-model:open="showSingleDeleteModal"
+            :count="1"
+            :rows="singleDeleteTarget ? [singleDeleteTarget] : []"
+            @deleted="refresh()"
+            @clear-selection="singleDeleteTarget = null"
+          />
 
           <!-- Bouton colonnes visibles -->
           <UDropdownMenu

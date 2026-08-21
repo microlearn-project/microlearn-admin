@@ -104,40 +104,28 @@ async function deactivate(id: string) {
   }
 }
 
-// Supprimer un agent (soft delete)
-async function softDelete(id: string) {
-  try {
-    await $fetch("/api/agent/soft-delete", {
-      method: "PATCH",
-      body: { id },
-    });
+// Suppression d'un agent depuis le menu de ligne — passe par la même
+// confirmation que la suppression en masse (AgentsDeleteModal), au lieu de
+// supprimer immédiatement au clic.
+const singleDeleteTarget = ref<Agent | null>(null);
+const showSingleDeleteModal = ref(false);
 
-    // Mise à jour locale
-    if (agents.value) {
-      agents.value = agents.value.filter((a) => a.id_agent !== id);
-    }
-
-    toast.add({ title: "Agent supprimé" });
-    clearTableSelection();
-  } catch (err) {
-    toast.add({
-      title: "Erreur",
-      description: "Impossible de supprimer l'agent",
-      color: "error",
-    });
-  }
+function requestSingleDelete(agent: Agent) {
+  singleDeleteTarget.value = agent;
+  showSingleDeleteModal.value = true;
 }
 
 // Réinitialiser le mot de passe d'un agent
-async function resetPassword(id: string, codeAgent: string) {
+async function resetPassword(id: string) {
   try {
-    const result = await $fetch(`/api/agent/${id}/reset-password`, {
-      method: "PATCH",
-    });
+    const result = await $fetch<{ temporary_password: string }>(
+      `/api/agent/${id}/reset-password`,
+      { method: "PATCH" },
+    );
 
     toast.add({
       title: "Mot de passe réinitialisé",
-      description: `Le nouveau mot de passe est: ${codeAgent}`,
+      description: `Nouveau mot de passe temporaire (envoyé par email à l'agent) : ${result.temporary_password}`,
       color: "success",
     });
   } catch (err: any) {
@@ -196,7 +184,7 @@ function getRowItems(row: { original: Agent }) {
         label: "Réinitialiser le mot de passe",
         icon: "i-lucide-key-round",
         color: "warning",
-        onSelect: () => resetPassword(a.id_agent, a.code_agent),
+        onSelect: () => resetPassword(a.id_agent),
       },
     );
   }
@@ -207,7 +195,7 @@ function getRowItems(row: { original: Agent }) {
       label: "Supprimer",
       icon: "i-lucide-trash-2",
       color: "error",
-      onSelect: () => softDelete(a.id_agent),
+      onSelect: () => requestSingleDelete(a),
     },
   );
 
@@ -448,6 +436,15 @@ const sorting = ref([
               </template>
             </UButton>
           </AgentsDeleteModal>
+
+          <!-- Modal de suppression (action de ligne, un seul agent) -->
+          <AgentsDeleteModal
+            v-model:open="showSingleDeleteModal"
+            :count="1"
+            :rows="singleDeleteTarget ? [singleDeleteTarget] : []"
+            @deleted="refresh()"
+            @clear-selection="singleDeleteTarget = null"
+          />
 
           <!-- Bouton de filtre -->
           <USelect

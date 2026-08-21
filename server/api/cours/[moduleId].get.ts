@@ -1,31 +1,15 @@
 // server/api/cours/[moduleId].get.ts
-import { createSupabaseServerClient } from "~~/server/utils/supabase";
+import { callApi } from "~~/server/utils/apiBridge";
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler((event) => {
   const moduleId = getRouterParam(event, "moduleId");
 
   if (!moduleId) {
     throw createError({
       statusCode: 400,
-      statusMessage: "ID du module requis",
+      message: "ID du module requis",
     });
   }
 
-  const supabase = createSupabaseServerClient();
-
-  const { data, error } = await supabase
-    .from("cours")
-    .select("*")
-    .eq("id_module", moduleId)
-    .is("deleted_at", null)
-    .order("ordre", { ascending: true });
-
-  if (error) {
-    throw createError({
-      statusCode: 500,
-      statusMessage: error.message,
-    });
-  }
-
-  return data;
+  return callApi(event, "/cours", { query: { module_id: moduleId } });
 });

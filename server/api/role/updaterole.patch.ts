@@ -1,29 +1,15 @@
-// server/api/departement/updatetag.patch.ts
-import { createSupabaseServerClient } from "~~/server/utils/supabase";
-import type { TablesUpdate } from "~/types/database.types";
-
-type RoleUpdate = TablesUpdate<"role">;
+// server/api/role/updaterole.patch.ts
+import { callApi } from "~~/server/utils/apiBridge";
 
 export default defineEventHandler(async (event) => {
   const { id, designation } = await readBody(event);
-  const supabase = createSupabaseServerClient();
 
-  const payload: RoleUpdate = {
-    designation: designation,
-  };
-
-  const { data, error } = await supabase
-    .from("role")
-    .update(payload)
-    .eq("id_role", id)
-    .select();
-
-  if (error) {
-    throw createError({
-      statusCode: 500,
-      statusMessage: error.message,
-    });
+  if (!id) {
+    throw createError({ statusCode: 400, message: "ID du rôle requis" });
   }
 
-  return (data ?? []) as RoleUpdate[];
+  return callApi(event, `/roles/${id}`, {
+    method: "PATCH",
+    body: { designation },
+  });
 });

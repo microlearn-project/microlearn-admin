@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Tables } from "~/types/database.types";
 
-type Agent = Tables<"agent_new">;
+type Agent = Tables<"agent">;
 type Role = Tables<"role">;
 
 const emit = defineEmits<{

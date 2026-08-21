@@ -1,20 +1,21 @@
 // server/api/auth/me.get.ts
-import { getUserSession } from "~~/server/utils/session";
+// Le middleware garantit déjà une session valide pour toute route /api/**
+// non publique — on se contente de reformer la session locale (déjà connue,
+// pas besoin de rappeler l'API) dans la forme attendue par le frontend.
+import { requireSession } from "~~/server/utils/keycloakAuth";
 
-export default defineEventHandler(async (event) => {
-  const session = getUserSession(event);
-
-  if (!session) {
-    return {
-      authenticated: false,
-      user: null,
-    };
-  }
+export default defineEventHandler((event) => {
+  const session = requireSession(event);
 
   return {
     authenticated: true,
-    user: session.user,
-    loggedInAt: session.loggedInAt,
-    expiresAt: session.expiresAt,
+    user: {
+      id_agent: session.id_agent,
+      code_agent: session.code_agent,
+      nom: session.nom,
+      prenom: session.prenom,
+      email: session.email,
+      role: { designation: session.role },
+    },
   };
 });

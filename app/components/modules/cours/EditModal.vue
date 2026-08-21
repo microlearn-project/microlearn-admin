@@ -3,7 +3,10 @@ import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
 import type { Tables } from "~/types/database.types";
 
-type Cours = Tables<"cours">;
+// documents n'est plus une colonne de la table cours (dérivé côté API,
+// cours_document) — omis ici pour rester compatible avec l'objet enrichi
+// que Step2Cours.vue transmet.
+type Cours = Omit<Tables<"cours">, "documents">;
 
 const props = defineProps<{
   cours: Cours;
@@ -11,6 +14,7 @@ const props = defineProps<{
 }>();
 
 const open = defineModel<boolean>("open", { default: false });
+useModalEscapeOnly(open);
 
 const emit = defineEmits<{
   (e: "updated"): void;
@@ -89,6 +93,7 @@ function onClose() {
     :title="`Modification`"
     :description="`Cours : ${cours.titre}`"
     :ui="{ content: 'max-w-5xl' }"
+    :dismissible="false"
     @close="onClose"
   >
     <template #body>

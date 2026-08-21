@@ -2,7 +2,12 @@
 import type { Tables } from "~/types/database.types";
 
 type Module = Tables<"module">;
-type Cours = Tables<"cours">;
+// documents : dérivé de cours_document côté API, pas une colonne de la table
+// cours — voir CoursService.findAllByModule(). Tables<"cours"> garde encore
+// un "documents?: string[]" hérité de l'ancien schéma Supabase ; on l'écrase.
+type Cours = Omit<Tables<"cours">, "documents"> & {
+  documents?: { fichier: string; nom_original: string | null }[];
+};
 
 const props = defineProps<{
   module: Module;
@@ -72,10 +77,17 @@ function getFileName(url: string): string {
   try {
     const parts = url.split("/");
     const fileName = parts[parts.length - 1];
-    return decodeURIComponent(fileName);
+    return fileName ? decodeURIComponent(fileName) : url;
   } catch {
     return url;
   }
+}
+
+// Nom lisible d'un document associé — le vrai nom d'origine quand on l'a,
+// sinon on retombe sur le chemin de stockage (un UUID, moins lisible mais
+// jamais absent).
+function getDocumentLabel(doc: { fichier: string; nom_original: string | null }): string {
+  return doc.nom_original || getFileName(doc.fichier);
 }
 
 // Actions sur les cours
@@ -124,6 +136,7 @@ function onDrop(targetIndex: number) {
   // Réordonner localement
   const items = [...localCours.value];
   const [draggedItem] = items.splice(draggedIndex.value, 1);
+  if (!draggedItem) return;
   items.splice(targetIndex, 0, draggedItem);
 
   // Mettre à jour les ordres visuels
@@ -189,17 +202,21 @@ function hasVideo(cours: Cours): boolean {
   return /src=["']https?:\/\/[^"']*cours-videos[^"']*["']/i.test(cours.description);
 }
 
-// Callbacks des modales
+// Callbacks des modales — rafraîchit aussi le module parent : sa durée de
+// lecture est recalculée côté serveur à chaque changement de cours.
 async function onCoursCreated() {
   await refresh();
+  emit("refresh");
 }
 
 async function onCoursUpdated() {
   await refresh();
+  emit("refresh");
 }
 
 async function onCoursDeleted() {
   await refresh();
+  emit("refresh");
 }
 </script>
 
@@ -370,7 +387,7 @@ async function onCoursDeleted() {
                     class="mt-2 flex flex-wrap gap-1"
                   >
                     <UBadge
-                      v-for="(docUrl, docIndex) in coursItem.documents.slice(
+                      v-for="(doc, docIndex) in coursItem.documents.slice(
                         0,
                         3,
                       )"
@@ -381,7 +398,7 @@ async function onCoursDeleted() {
                       class="max-w-37.5"
                     >
                       <UIcon name="i-lucide-file" class="mr-1 shrink-0" />
-                      <span class="truncate">{{ getFileName(docUrl) }}</span>
+                      <span class="truncate">{{ getDocumentLabel(doc) }}</span>
                     </UBadge>
                     <UBadge
                       v-if="coursItem.documents.length > 3"

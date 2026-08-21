@@ -29,7 +29,7 @@ const {
   refresh,
   error,
 } = useFetch<Departement[]>(
-  () => `/api/module/services-available/${props.module.id_module}`,
+  () => `/api/module/departements-available/${props.module.id_module}`,
   {
     server: false,
     lazy: true,
@@ -57,7 +57,7 @@ const adding = ref<string | null>(null);
 async function addService(departement: Departement) {
   adding.value = departement.id_departement;
   try {
-    await $fetch(`/api/module/services/add`, {
+    await $fetch(`/api/module/departements/add`, {
       method: "POST",
       body: {
         id_module: props.module.id_module,

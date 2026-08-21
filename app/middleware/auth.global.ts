@@ -1,62 +1,44 @@
 // middleware/auth.global.ts
-export default defineNuxtRouteMiddleware(async (to, from) => {
+export default defineNuxtRouteMiddleware(async (to) => {
   const publicRoutes = ["/login"];
 
   if (publicRoutes.includes(to.path)) return;
   if (import.meta.server) return;
 
-  const { authenticated, loading, fetchUser, user, logout } = useAuth();
+  const { authenticated, loading, fetchUser, user } = useAuth();
 
-  // Vérifier l'auth si nécessaire
+  // Vérifier l'auth si nécessaire — le token Keycloak est validé et
+  // rafraîchi automatiquement côté serveur à chaque appel (voir
+  // server/utils/keycloakAuth.ts), inutile de le revérifier ici.
   if (loading.value || !authenticated.value) {
     await fetchUser();
   }
 
-  // Si toujours pas authentifié après fetchUser, rediriger
   if (!authenticated.value) {
-    return navigateTo("/login", { replace: true });
+    return navigateTo(`/login?redirect=${encodeURIComponent(to.fullPath)}`, {
+      replace: true,
+    });
   }
 
-  // Validation session UNIQUEMENT si on ne vient PAS de /login
-  // ET seulement après un délai pour laisser la session se propager
-  if (
-    authenticated.value &&
-    user.value?.session_token &&
-    from.path !== "/login"
-  ) {
-    try {
-      const response = await $fetch<{ valid: boolean }>(
-        "/api/auth/validate-session",
-        {
-          method: "POST",
-          body: { session_token: user.value.session_token },
-        },
-      );
-
-      // Si session invalide, déconnecter
-      if (!response.valid) {
-        console.warn("Session invalidée par le serveur");
-        await logout();
-        return;
-      }
-    } catch (error) {
-      // Ne pas déconnecter sur erreur réseau
-      // Seulement logger l'erreur
-      console.error("Erreur validation session (ignorée):", error);
-      // On continue quand même, la session cookie est peut-être encore valide
-    }
-  }
-
-  // Vérification des permissions par rôle
+  // Vérification des permissions par rôle — l'admin est réservé au staff
+  // (SUPERADMIN/ADMIN/FORMATEUR). Un compte sans rôle applicatif (ex. un
+  // simple "Agent" mobile/apprenant) ne doit jamais accéder au tableau de
+  // bord, même si callback.get.ts ne devrait normalement jamais lui avoir
+  // ouvert de session — filet de sécurité côté client.
   const role = user.value?.role?.designation;
+  const staffRoles = ["SUPERADMIN", "ADMIN", "FORMATEUR"];
+
+  if (!role || !staffRoles.includes(role)) {
+    return navigateTo("/api/auth/logout", { external: true, replace: true });
+  }
 
   const formateurForbidden = [
     "/agents",
     "/roles",
     "/permissions",
-    "/services",
+    "/directions",
     "/departements",
-    "/activity-log",
+    "/activitylogs",
   ];
 
   const adminForbidden = ["/roles"];

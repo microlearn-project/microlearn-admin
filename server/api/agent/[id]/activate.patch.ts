@@ -1,31 +1,15 @@
 // server/api/agent/[id]/activate.patch.ts
-import { createSupabaseServerClient } from "~~/server/utils/supabase";
+import { callApi } from "~~/server/utils/apiBridge";
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler((event) => {
   const id = event.context.params?.id;
 
   if (!id) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Missing agent ID",
-    });
-  }
-  const supabase = createSupabaseServerClient();
-
-
-  const { data, error } = await supabase
-    .from("agent")
-    .update({ actif: true })
-    .eq("id_agent", id)
-    .select()
-    .single();
-
-  if (error) {
-    throw createError({
-      statusCode: 500,
-      statusMessage: error.message,
-    });
+    throw createError({ statusCode: 400, message: "Missing agent ID" });
   }
 
-  return data;
+  return callApi(event, `/agents/${id}`, {
+    method: "PATCH",
+    body: { actif: true },
+  });
 });

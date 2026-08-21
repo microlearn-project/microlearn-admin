@@ -33,19 +33,11 @@ const { data: autorites } = await useFetch<AutoriteSuperieure[]>(
   },
 );
 
-// Transformer la désignation en majuscules automatiquement
-const designationUppercase = computed({
-  get: () => state.designation,
-  set: (value: string) => {
-    state.designation = value.toUpperCase();
-  },
-});
-
 const toast = useToast();
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   try {
-    await $fetch("/api/departement/adddepartement", {
+    await $fetch("/api/direction/adddirection", {
       method: "POST",
       body: {
         designation: event.data.designation,
@@ -123,7 +115,7 @@ function resetForm() {
       >
         <UFormField label="Désignation" name="designation" required>
           <UInput
-            v-model="designationUppercase"
+            v-model="state.designation"
             class="w-full"
             placeholder="DIRECTION DES RESSOURCES HUMAINES"
           />

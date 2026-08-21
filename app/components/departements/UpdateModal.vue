@@ -50,14 +50,6 @@ const state = reactive<Partial<Schema>>({
   actif: false,
 });
 
-// Transformer la désignation en majuscules automatiquement
-const designationUppercase = computed({
-  get: () => state.designation,
-  set: (value: string) => {
-    state.designation = value.toUpperCase();
-  },
-});
-
 /* -------------------------
    Département courant (1 seul)
 --------------------------*/
@@ -88,7 +80,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   if (!currentService.value) return;
 
   try {
-    await $fetch("/api/service/updateservice", {
+    await $fetch("/api/departement/updatedepartement", {
       method: "PATCH",
       body: {
         id: currentService.value.id_departement,
@@ -158,7 +150,7 @@ watch(open, (newValue) => {
         class="space-y-4"
       >
         <UFormField label="Désignation" name="designation" required>
-          <UInput v-model="designationUppercase" class="w-full" />
+          <UInput v-model="state.designation" class="w-full" />
         </UFormField>
 
         <!--  Sélection de direction -->

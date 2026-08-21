@@ -26,21 +26,13 @@ const showServiceModal = ref(false);
 const selectedDepartement = ref<Direction | null>(null);
 const selectedService = ref<Departement | null>(null);
 
-// Transformer le nom en majuscules automatiquement
-const nomUppercase = computed({
-  get: () => form.value.nom,
-  set: (value: string) => {
-    form.value.nom = value.toUpperCase();
-  },
-});
-
 // Récupérer les directions et départements pour l'affichage initial
-const { data: directions } = await useFetch<Direction[]>("/api/departement", {
+const { data: directions } = await useFetch<Direction[]>("/api/direction", {
   server: true,
   lazy: true,
 });
 
-const { data: departements } = await useFetch<Departement[]>("/api/service", {
+const { data: departements } = await useFetch<Departement[]>("/api/departement", {
   server: true,
   lazy: true,
 });
@@ -54,15 +46,18 @@ const form = ref({
   id_departement: "",
 });
 
-// Handlers de sélection
+// Handlers de sélection — changer de direction invalide le département déjà
+// choisi (il pourrait appartenir à l'ancienne direction).
 function handleDepartementSelect(direction: Direction) {
   selectedDepartement.value = direction;
   form.value.id_direction = direction.id_direction;
+  clearService();
 }
 
 function clearDepartement() {
   selectedDepartement.value = null;
   form.value.id_direction = "";
+  clearService();
 }
 
 function handleServiceSelect(departement: Departement) {
@@ -248,15 +243,16 @@ watch(open, (newValue) => {
   </div>
 
   <!-- Modals de sélection -->
-  <AgentsDepartementSelectModal
+  <AgentsDirectionSelectModal
     v-model:open="showDepartementModal"
     v-model:selected-departement="selectedDepartement"
     @select="handleDepartementSelect"
   />
 
-  <AgentsServiceSelectModal
+  <AgentsDepartementSelectModal
     v-model:open="showServiceModal"
     v-model:selected-service="selectedService"
+    :id-direction="form.id_direction"
     @select="handleServiceSelect"
   />
 
@@ -300,7 +296,7 @@ watch(open, (newValue) => {
           </p>
           <div class="grid grid-cols-2 gap-4 p-3 bg-muted/10 rounded-lg">
             <UFormField label="Nom" required>
-              <UInput v-model="nomUppercase" placeholder="Nom de famille" />
+              <UInput v-model="form.nom" placeholder="Nom de famille" />
             </UFormField>
 
             <UFormField label="Prénom" required>
@@ -364,7 +360,9 @@ watch(open, (newValue) => {
                   :label="
                     selectedService
                       ? selectedService.designation
-                      : 'Sélectionner un département'
+                      : selectedDepartement
+                        ? 'Sélectionner un département'
+                        : 'Choisir une direction d\'abord'
                   "
                   :icon="
                     selectedService ? 'i-lucide-building-2' : 'i-lucide-search'
@@ -373,6 +371,7 @@ watch(open, (newValue) => {
                   variant="outline"
                   class="flex-1 justify-start"
                   truncate
+                  :disabled="!selectedDepartement"
                   @click="showServiceModal = true"
                 />
 

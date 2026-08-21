@@ -14,36 +14,15 @@ type Module = Tables<"module">;
 
 const toast = useToast();
 const table = useTemplateRef<any>("table");
-const config = useRuntimeConfig();
 
 const UCheckbox = resolveComponent("UCheckbox");
 const UBadge = resolveComponent("UBadge");
 const UDropdownMenu = resolveComponent("UDropdownMenu");
 const UButton = resolveComponent("UButton");
 
-/* ---------------------------------------------------
-   0. Helper pour construire l'URL complète du fichier
-----------------------------------------------------*/
+// StorageService renvoie toujours des URLs publiques complètes.
 function getFullFileUrl(fichier: string): string {
-  // Si c'est déjà une URL complète, la retourner telle quelle
-  if (fichier.startsWith("http://") || fichier.startsWith("https://")) {
-    return fichier;
-  }
-
-  // Sinon, construire l'URL complète avec Supabase
-  // Le bucket s'appelle "module-documents" d'après ta structure
-  const supabaseUrl = config.public.supabaseUrl || "https://x.supabase.co";
-
-  // Nettoyer le chemin (enlever le / initial si présent)
-  const cleanPath = fichier.startsWith("/") ? fichier.slice(1) : fichier;
-
-  // Si le chemin contient déjà "module-documents", ne pas le rajouter
-  if (cleanPath.includes("documents")) {
-    return `${supabaseUrl}/storage/v1/object/public/${cleanPath}`;
-  }
-
-  // Sinon, ajouter le bucket
-  return `${supabaseUrl}/storage/v1/object/public/documents/${cleanPath}`;
+  return fichier;
 }
 
 /* ---------------------------------------------------
@@ -357,44 +336,11 @@ function clearTableSelection() {
 /* ---------------------------------------------------
    11. Suppression multiple
 ----------------------------------------------------*/
-const deletingMultiple = ref(false);
+const showBulkDeleteModal = ref(false);
 
-async function deleteSelectedDocuments() {
-  if (selectedRows.value.length === 0) return;
-
-  deletingMultiple.value = true;
-
-  try {
-    let totalCoursImpacted = 0;
-
-    for (const doc of selectedRows.value) {
-      const result = await $fetch("/api/document/delete", {
-        method: "DELETE",
-        body: { id: doc.id_document },
-      });
-      totalCoursImpacted += (result as any).coursImpacted || 0;
-    }
-
-    await refresh();
-    clearTableSelection();
-
-    toast.add({
-      title: "Documents supprimés",
-      description:
-        totalCoursImpacted > 0
-          ? `${selectedRows.value.length} document(s) supprimé(s), ${totalCoursImpacted} cours mis à jour`
-          : `${selectedRows.value.length} document(s) supprimé(s)`,
-      color: "success",
-    });
-  } catch (err) {
-    toast.add({
-      title: "Erreur",
-      description: "Erreur lors de la suppression",
-      color: "error",
-    });
-  } finally {
-    deletingMultiple.value = false;
-  }
+function onBulkDeleted() {
+  refresh();
+  clearTableSelection();
 }
 </script>
 
@@ -414,6 +360,13 @@ async function deleteSelectedDocuments() {
         v-model:open="showDeleteModal"
         :document="documentToDelete"
         @deleted="onDocumentDeleted"
+      />
+
+      <!-- Modal de suppression multiple -->
+      <DocumentsBulkDeleteModal
+        v-model:open="showBulkDeleteModal"
+        :documents="selectedRows"
+        @deleted="onBulkDeleted"
       />
 
       <!-- Modal de sélection de module -->
@@ -487,8 +440,7 @@ async function deleteSelectedDocuments() {
             color="error"
             variant="subtle"
             icon="i-lucide-trash"
-            :loading="deletingMultiple"
-            @click="deleteSelectedDocuments"
+            @click="showBulkDeleteModal = true"
           >
             <template #trailing>
               <UKbd>{{ selectedRows.length }}</UKbd>

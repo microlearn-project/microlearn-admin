@@ -17,14 +17,12 @@ const editorKey = ref(0);
 
 const schema1 = z.object({
   titre: z.string().min(3, "Le titre doit contenir au moins 3 caractères").max(255),
-  duree_lecture: z.string().min(1, "La durée est requise"),
 });
 
 type Schema1 = z.output<typeof schema1>;
 
 const state1 = reactive<Partial<Schema1>>({
   titre: "",
-  duree_lecture: "",
 });
 
 async function onSubmitStep1(event: FormSubmitEvent<Schema1>) {
@@ -63,7 +61,6 @@ async function createModule() {
       body: {
         titre: state1.titre,
         description: description.value,
-        duree_lecture: state1.duree_lecture,
         id_agent: user.value.id_agent,
       },
     });
@@ -179,7 +176,7 @@ function goBack() {
           <div>
             <h2 class="text-2xl font-bold mb-2">Informations de base</h2>
             <p class="text-muted">
-              Commencez par définir le titre et la durée estimée de votre module.
+              Commencez par définir le titre de votre module.
             </p>
           </div>
 
@@ -195,15 +192,6 @@ function goBack() {
                 placeholder="Ex: Introduction à la gestion de projet"
                 size="xl"
               />
-            </UFormField>
-
-            <UFormField
-              label="Durée de lecture estimée"
-              name="duree_lecture"
-              required
-              help="Ex: 2h30, 45 min, 1h15"
-            >
-              <UInput v-model="state1.duree_lecture" placeholder="Ex: 2h30" />
             </UFormField>
 
             <div class="flex justify-end gap-3 pt-6 border-t border-default">

@@ -23,7 +23,7 @@ const toast = useToast();
 
 // Fonction de suppression douce
 const softDelete = async (id: string) => {
-  await $fetch(`/api/service/soft-delete`, {
+  await $fetch(`/api/departement/soft-delete`, {
     method: "PATCH",
     body: {
       id: id,
@@ -36,8 +36,8 @@ function confirmationLines(rows: Departement[]): string[] {
   return rows.map((r) => `« ${r.designation} »`);
 }
 
-// Test si la modale est ouverte
-const open = ref(false);
+// Contrôlable en externe (action de ligne) comme en interne (slot trigger)
+const open = defineModel<boolean>("open", { default: false });
 
 watch(open, (newValue) => {
   if (!newValue) {

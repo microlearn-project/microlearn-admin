@@ -1,29 +1,15 @@
 // server/api/tag/updatetag.patch.ts
-import { createSupabaseServerClient } from "~~/server/utils/supabase";
-import type { TablesUpdate } from "~/types/database.types";
-
-type TagUpdate = TablesUpdate<"tag">;
+import { callApi } from "~~/server/utils/apiBridge";
 
 export default defineEventHandler(async (event) => {
   const { id, designation } = await readBody(event);
-  const supabase = createSupabaseServerClient();
 
-  const payload: TagUpdate = {
-    designation: designation,
-  };
-
-  const { data, error } = await supabase
-    .from("tag")
-    .update(payload)
-    .eq("id_tag", id)
-    .select();
-
-  if (error) {
-    throw createError({
-      statusCode: 500,
-      statusMessage: error.message,
-    });
+  if (!id) {
+    throw createError({ statusCode: 400, message: "ID du tag requis" });
   }
 
-  return (data ?? []) as TagUpdate[];
+  return callApi(event, `/tags/${id}`, {
+    method: "PATCH",
+    body: { designation },
+  });
 });

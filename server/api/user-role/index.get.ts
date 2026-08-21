@@ -1,41 +1,41 @@
 // server/api/user-role/index.get.ts
-import { createSupabaseServerClient } from "~~/server/utils/supabase";
+import { callApi } from "~~/server/utils/apiBridge";
 
-export default defineEventHandler(async () => {
-  const supabase = createSupabaseServerClient();
+interface ApiUserRole {
+  id_user_role: string;
+  id_agent: string;
+  id_role: string;
+  granted_by: string | null;
+  date_from: string;
+  date_to: string | null;
+  valide: boolean;
+  created_at: string;
+  updated_at: string;
+  agent_user_role_id_agentToagent: {
+    id_agent: string;
+    code_agent: string;
+    nom: string;
+    prenom: string;
+    email: string;
+    actif: boolean;
+  };
+  role: { id_role: string; designation: string };
+  agent_user_role_granted_byToagent: {
+    id_agent: string;
+    nom: string;
+    prenom: string;
+  } | null;
+}
 
-  const { data, error } = await supabase
-    .from("user_role")
-    .select(
-      `
-    *,
-    agent:id_agent (
-      id_agent,
-      code_agent,
-      nom,
-      prenom,
-      email,
-      actif
-    ),
-    role:id_role (
-      id_role,
-      designation
-    ),
-    granter:granted_by (
-      id_agent,
-      nom,
-      prenom
-    )
-  `,
-    )
-    .order("created_at", { ascending: false });
+export default defineEventHandler(async (event) => {
+  const rows = await callApi<ApiUserRole[]>(event, "/user-roles");
 
-  if (error) {
-    throw createError({
-      statusCode: 500,
-      statusMessage: error.message,
-    });
-  }
-
-  return data;
+  return rows.map((row) => {
+    const {
+      agent_user_role_id_agentToagent: agent,
+      agent_user_role_granted_byToagent: granter,
+      ...rest
+    } = row;
+    return { ...rest, agent, granter };
+  });
 });

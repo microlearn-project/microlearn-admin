@@ -24,22 +24,26 @@ const UButton = resolveComponent("UButton");
 const UBadge = resolveComponent("UBadge");
 const UIcon = resolveComponent("UIcon");
 
-// Liste des actions avec icônes et couleurs
-const actions: ActionOption[] = [
-  { label: "Connexion", value: "connexion", icon: "i-lucide-log-in", color: "success" },
-  { label: "Déconnexion", value: "deconnexion", icon: "i-lucide-log-out", color: "neutral" },
-  { label: "Agent créé", value: "agent_cree", icon: "i-lucide-user-plus", color: "info" },
-  { label: "Rôle attribué", value: "role_attribue", icon: "i-lucide-shield-plus", color: "info" },
-  { label: "Rôle modifié", value: "role_modifie", icon: "i-lucide-shield", color: "warning" },
-  { label: "Rôle révoqué", value: "role_revoque", icon: "i-lucide-shield-off", color: "error" },
-  { label: "Rôle supprimé", value: "role_supprime", icon: "i-lucide-shield-x", color: "error" },
-  { label: "Catégorie créée", value: "categorie_creee", icon: "i-lucide-tag", color: "info" },
-  { label: "Catégorie supprimée", value: "categorie_supprimee", icon: "i-lucide-x", color: "error" },
-  { label: "Direction créé", value: "direction_cree", icon: "i-heroicons-building-office", color: "info" },
-  { label: "Direction supprimé", value: "direction_supprime", icon: "i-heroicons-building-office", color: "error" },
-  { label: "Département créé", value: "departement_cree", icon: "i-lucide-building-2", color: "info" },
-  { label: "Département supprimé", value: "departement_supprime", icon: "i-lucide-building-2", color: "error" },
-];
+// Actions réellement présentes en base (dérivées génériquement par
+// l'intercepteur d'audit côté API) — pas de liste figée ici.
+const { data: facets, pending } = useFetch<{
+  actions: string[];
+  objetTypes: string[];
+}>("/api/activity-log/facets", {
+  default: () => ({ actions: [], objetTypes: [] }),
+});
+
+const actions = computed<ActionOption[]>(() =>
+  facets.value.actions.map((action) => {
+    const style = actionVerbStyle(action);
+    return {
+      label: formatActionLabel(action),
+      value: action,
+      icon: style.icon,
+      color: style.color,
+    };
+  })
+);
 
 function selectAction(action: ActionOption) {
   selectedAction.value = action.value;
@@ -77,15 +81,9 @@ const columns: TableColumn<ActionOption>[] = [
     cell: ({ row }: any) => {
       const action = row.original;
       let type = "Autre";
-      if (action.value.includes("connexion") || action.value.includes("deconnexion")) {
-        type = "Authentification";
-      } else if (action.value.includes("cree")) {
-        type = "Création";
-      } else if (action.value.includes("supprime")) {
-        type = "Suppression";
-      } else if (action.value.includes("modifie") || action.value.includes("attribue") || action.value.includes("revoque")) {
-        type = "Modification";
-      }
+      if (action.value.startsWith("création")) type = "Création";
+      else if (action.value.startsWith("modification")) type = "Modification";
+      else if (action.value.startsWith("suppression")) type = "Suppression";
 
       return h(
         UBadge,
@@ -154,7 +152,23 @@ const globalFilter = ref("");
               />
             </div>
 
+            <div v-if="pending" class="text-center py-8">
+              <UIcon
+                name="i-lucide-loader-circle"
+                class="animate-spin text-3xl text-muted"
+              />
+            </div>
+
+            <div
+              v-else-if="actions.length === 0"
+              class="text-center py-8 text-muted"
+            >
+              <UIcon name="i-lucide-inbox" class="mx-auto mb-2 text-4xl" />
+              <p>Aucune activité enregistrée pour le moment</p>
+            </div>
+
             <UTable
+              v-else
               ref="table"
               v-model:pagination="pagination"
               v-model:global-filter="globalFilter"
@@ -175,7 +189,7 @@ const globalFilter = ref("");
             />
 
             <div
-              v-if="actions && actions.length > 0"
+              v-if="actions.length > 0"
               class="flex items-center justify-between gap-4 border-t border-default pt-4"
             >
               <div class="text-sm text-muted">

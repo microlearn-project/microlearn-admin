@@ -1,45 +1,17 @@
 // server/api/quiz/update.patch.ts
-import { createSupabaseServerClient } from "~~/server/utils/supabase";
-import type { TablesUpdate } from "~/types/database.types";
-
-type QuizUpdate = TablesUpdate<"quiz">;
+import { callApi } from "~~/server/utils/apiBridge";
 
 export default defineEventHandler(async (event) => {
-  const body = await readBody(event);
-  const { id, titre, description } = body;
+  const { id, titre, description } = await readBody(event);
 
   if (!id) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "ID du quiz requis",
-    });
+    throw createError({ statusCode: 400, message: "ID du quiz requis" });
   }
 
-  const supabase = createSupabaseServerClient();
-
-  const payload: QuizUpdate = {};
-
-  if (titre !== undefined) {
-    payload.titre = titre;
-  }
-
-  if (description !== undefined) {
-    payload.description = description;
-  }
-
-  const { data, error } = await supabase
-    .from("quiz")
-    .update(payload)
-    .eq("id_quiz", id)
-    .select()
-    .single();
-
-  if (error) {
-    throw createError({
-      statusCode: 500,
-      statusMessage: error.message,
-    });
-  }
-
-  return data;
+  return callApi(event, `/quiz/${id}`, {
+    method: "PATCH",
+    // @IsOptional() côté API n'accepte que undefined, pas null : null
+    // laisserait passer la validation @IsString échouer.
+    body: { titre, description: description === null ? undefined : description },
+  });
 });

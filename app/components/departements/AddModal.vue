@@ -30,19 +30,11 @@ const { data: directions } = await useFetch<Direction[]>("/api/direction", {
   transform: (data) => data.filter((d) => d.actif && !d.deleted_at),
 });
 
-// Transformer la désignation en majuscules automatiquement
-const designationUppercase = computed({
-  get: () => state.designation,
-  set: (value: string) => {
-    state.designation = value.toUpperCase();
-  },
-});
-
 const toast = useToast();
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   try {
-    await $fetch("/api/service/addservice", {
+    await $fetch("/api/departement/adddepartement", {
       method: "POST",
       body: {
         designation: event.data.designation,
@@ -120,7 +112,7 @@ function resetForm() {
       >
         <UFormField label="Désignation" name="designation" required>
           <UInput
-            v-model="designationUppercase"
+            v-model="state.designation"
             class="w-full"
             placeholder="COURRIER"
           />

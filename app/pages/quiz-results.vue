@@ -53,7 +53,7 @@ const selectedPeriod = ref<string>("all");
 const statusFilter = ref<string>("all");
 const agentSearch = ref<string>("");
 
-const { data: departements } = await useFetch<Departement[]>("/api/service", {
+const { data: departements } = await useFetch<Departement[]>("/api/departement", {
   transform: (data) => data.filter((d) => d.actif && !d.deleted_at),
 });
 
@@ -114,7 +114,7 @@ const dateRange = computed(() => {
 });
 
 const queryParams = computed(() => ({
-  departement: selectedDepartementId.value === "all" ? undefined : selectedDepartementId.value,
+  service: selectedDepartementId.value === "all" ? undefined : selectedDepartementId.value,
   start: dateRange.value.start,
   end: dateRange.value.end,
   status: statusFilter.value === "all" ? undefined : statusFilter.value,
@@ -171,7 +171,7 @@ async function openModuleDetail(module: ModuleStats) {
     const response = await $fetch(`/api/quiz/module-details`, {
       query: {
         id_module: module.id_module,
-        departement: selectedDepartementId.value === "all" ? undefined : selectedDepartementId.value,
+        service: selectedDepartementId.value === "all" ? undefined : selectedDepartementId.value,
         start: dateRange.value.start,
         end: dateRange.value.end,
       },
@@ -385,6 +385,7 @@ async function exportToExcel() {
         row.score,
         row.reussi ? "Réussi" : "Échoué",
         new Date(row.date_soumission).toLocaleString("fr-FR"),
+        Math.round(row.temps_ecoule / 60),
       ].join(",")),
     ];
 
@@ -469,6 +470,21 @@ async function exportToJSON() {
     exportLoading.value = false;
   }
 }
+
+const exportItems = [
+  [
+    {
+      label: "Exporter en CSV",
+      icon: "i-lucide-file-spreadsheet",
+      onSelect: exportToExcel,
+    },
+    {
+      label: "Exporter en JSON",
+      icon: "i-lucide-file-json",
+      onSelect: exportToJSON,
+    },
+  ],
+];
 </script>
 
 <template>
@@ -477,6 +493,18 @@ async function exportToJSON() {
       <UDashboardNavbar title="Résultats des Quiz">
         <template #leading>
           <UDashboardSidebarCollapse />
+        </template>
+
+        <template #right>
+          <UDropdownMenu :items="exportItems" :content="{ align: 'end' }">
+            <UButton
+              label="Exporter"
+              trailing-icon="i-lucide-download"
+              color="neutral"
+              variant="outline"
+              :loading="exportLoading"
+            />
+          </UDropdownMenu>
         </template>
       </UDashboardNavbar>
     </template>
@@ -610,7 +638,6 @@ async function exportToJSON() {
                   v-model="agentSearch"
                   placeholder="Nom, prénom ou code agent..."
                   icon="i-lucide-user-search"
-                  :ui="{ icon: { trailing: { pointer: '' } } }"
                 >
                   <template v-if="agentSearch" #trailing>
                     <UButton
@@ -679,7 +706,7 @@ async function exportToJSON() {
 
         <!-- KPIs -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <UCard :ui="{ body: { padding: 'p-4' } }">
+          <UCard :ui="{ body: 'p-4' }">
             <div class="flex items-center gap-3">
               <div
                 class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0"
@@ -704,7 +731,7 @@ async function exportToJSON() {
             </div>
           </UCard>
 
-          <UCard :ui="{ body: { padding: 'p-4' } }">
+          <UCard :ui="{ body: 'p-4' }">
             <div class="flex items-center gap-3">
               <div
                 class="w-12 h-12 rounded-lg bg-success/10 flex items-center justify-center shrink-0"
@@ -739,7 +766,7 @@ async function exportToJSON() {
             </div>
           </UCard>
 
-          <UCard :ui="{ body: { padding: 'p-4' } }">
+          <UCard :ui="{ body: 'p-4' }">
             <div class="flex items-center gap-3">
               <div
                 class="w-12 h-12 rounded-lg bg-info/10 flex items-center justify-center shrink-0"
@@ -764,7 +791,7 @@ async function exportToJSON() {
             </div>
           </UCard>
 
-          <UCard :ui="{ body: { padding: 'p-4' } }">
+          <UCard :ui="{ body: 'p-4' }">
             <div class="flex items-center gap-3">
               <div
                 class="w-12 h-12 rounded-lg bg-warning/10 flex items-center justify-center shrink-0"

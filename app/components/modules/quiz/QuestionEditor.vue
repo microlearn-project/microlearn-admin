@@ -154,6 +154,22 @@ async function deleteQuestion() {
   }
 }
 
+// Confirmation avant suppression (question ou réponse) — un clic sur la
+// corbeille ne doit pas supprimer immédiatement.
+const showDeleteQuestionConfirm = ref(false);
+const pendingDeleteReponseId = ref<string | null>(null);
+
+function requestDeleteReponse(reponseId: string) {
+  pendingDeleteReponseId.value = reponseId;
+}
+
+function confirmDeleteReponse() {
+  if (pendingDeleteReponseId.value) {
+    deleteReponse(pendingDeleteReponseId.value);
+  }
+  pendingDeleteReponseId.value = null;
+}
+
 // Réinitialiser quand la question change
 watch(
   () => props.question,
@@ -203,7 +219,7 @@ const stats = computed(() => {
       <div class="flex-1 min-w-0">
         <div
           class="text-sm font-medium truncate"
-          v-html="texte || '<span class=\'text-muted italic\'>Question sans texte...</span>'"
+          v-html="texte ? sanitizeHtml(texte) : '<span class=\'text-muted italic\'>Question sans texte...</span>'"
         />
         <div class="flex items-center gap-2 mt-1 text-xs text-muted">
           <span>{{ stats.totalReponses }} réponse(s)</span>
@@ -242,7 +258,7 @@ const stats = computed(() => {
             color="error"
             variant="ghost"
             :loading="deleting"
-            @click="deleteQuestion"
+            @click="showDeleteQuestionConfirm = true"
           />
         </UTooltip>
 
@@ -302,7 +318,7 @@ const stats = computed(() => {
               :index="index"
               :can-delete="reponses.length > 1"
               @update="(data) => updateReponse(reponse.id_reponse, data)"
-              @delete="deleteReponse(reponse.id_reponse)"
+              @delete="requestDeleteReponse(reponse.id_reponse)"
             />
           </div>
 
@@ -326,6 +342,59 @@ const stats = computed(() => {
         </div>
       </div>
     </Transition>
+
+    <!-- Confirmation de suppression de la question -->
+    <UModal
+      v-model:open="showDeleteQuestionConfirm"
+      title="Supprimer cette question"
+      description="Cette action supprime aussi toutes ses réponses. C'est irréversible."
+    >
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <UButton
+            label="Annuler"
+            color="neutral"
+            variant="subtle"
+            @click="showDeleteQuestionConfirm = false"
+          />
+          <UButton
+            label="Supprimer"
+            color="error"
+            variant="solid"
+            :loading="deleting"
+            @click="
+              showDeleteQuestionConfirm = false;
+              deleteQuestion();
+            "
+          />
+        </div>
+      </template>
+    </UModal>
+
+    <!-- Confirmation de suppression d'une réponse -->
+    <UModal
+      :open="!!pendingDeleteReponseId"
+      title="Supprimer cette réponse"
+      description="Cette action est irréversible."
+      @update:open="(v: boolean) => { if (!v) pendingDeleteReponseId = null; }"
+    >
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <UButton
+            label="Annuler"
+            color="neutral"
+            variant="subtle"
+            @click="pendingDeleteReponseId = null"
+          />
+          <UButton
+            label="Supprimer"
+            color="error"
+            variant="solid"
+            @click="confirmDeleteReponse"
+          />
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>
 

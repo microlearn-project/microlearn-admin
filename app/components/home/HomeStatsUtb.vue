@@ -3,7 +3,8 @@ interface DashboardStats {
   totalAgents: number;
   publishedModules: number;
   completedQuiz: number;
-  averageSuccessRate: number; 
+  averageSuccessRate: number;
+  activeSessionsNow: number;
 }
 
 const { data: stats, pending } = await useFetch<DashboardStats>(
@@ -15,6 +16,7 @@ const { data: stats, pending } = await useFetch<DashboardStats>(
       publishedModules: 0,
       completedQuiz: 0,
       averageSuccessRate: 0,
+      activeSessionsNow: 0,
     }),
   }
 );
@@ -23,8 +25,8 @@ const { data: stats, pending } = await useFetch<DashboardStats>(
 <template>
   <UPageGrid class="lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-px">
     <UPageCard
-      icon="i-lucide-users"
-      title="Agents Actifs"
+      icon="i-lucide-radio"
+      title="Connectés maintenant"
       variant="subtle"
       :ui="{
         container: 'gap-y-1.5',
@@ -40,7 +42,7 @@ const { data: stats, pending } = await useFetch<DashboardStats>(
           ---
         </span>
         <span v-else class="text-2xl font-semibold text-highlighted">
-          {{ stats.totalAgents }}
+          {{ stats.activeSessionsNow }}
         </span>
       </div>
     </UPageCard>

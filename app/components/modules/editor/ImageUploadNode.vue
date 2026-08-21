@@ -41,7 +41,7 @@ watch(file, async (newFile) => {
     }
 
     // Remplacer le node d'upload par l'image en base64 (temporaire)
-    // L'upload vers Supabase se fera lors de la sauvegarde du module
+    // L'upload vers le storage se fera lors de la sauvegarde du module
     props.editor
       .chain()
       .focus()

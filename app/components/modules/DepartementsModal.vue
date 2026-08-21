@@ -32,7 +32,7 @@ const {
   refresh,
   error,
 } = useFetch<DepartementWithAttribution[]>(
-  () => `/api/module/services/${props.module.id_module}`,
+  () => `/api/module/departements/${props.module.id_module}`,
   {
     server: false,
     lazy: true,
@@ -72,6 +72,7 @@ const showAddModal = ref(false);
    4. Retirer des départements
 ----------------------------------------------------*/
 const removing = ref(false);
+const showRemoveConfirm = ref(false);
 
 async function removeServices() {
   if (selectedRows.value.length === 0) return;
@@ -82,7 +83,7 @@ async function removeServices() {
   try {
     await Promise.all(
       selectedRows.value.map((departement) =>
-        $fetch(`/api/module/services/remove`, {
+        $fetch(`/api/module/departements/remove`, {
           method: "DELETE",
           body: {
             id_module: props.module.id_module,
@@ -212,7 +213,7 @@ function clearTableSelection() {
               variant="subtle"
               icon="i-lucide-x"
               :loading="removing"
-              @click="removeServices"
+              @click="showRemoveConfirm = true"
             >
               <template #trailing>
                 <UKbd>{{ selectedRows.length }}</UKbd>
@@ -308,4 +309,32 @@ function clearTableSelection() {
     :module="module"
     @added="refresh()"
   />
+
+  <!-- Confirmation avant de retirer les départements sélectionnés -->
+  <UModal
+    v-model:open="showRemoveConfirm"
+    title="Retirer les départements sélectionnés"
+    :description="`${selectedRows.length} département(s) ne seront plus associés à ce module.`"
+  >
+    <template #footer>
+      <div class="flex justify-end gap-2">
+        <UButton
+          label="Annuler"
+          color="neutral"
+          variant="subtle"
+          @click="showRemoveConfirm = false"
+        />
+        <UButton
+          label="Retirer"
+          color="error"
+          variant="solid"
+          :loading="removing"
+          @click="
+            showRemoveConfirm = false;
+            removeServices();
+          "
+        />
+      </div>
+    </template>
+  </UModal>
 </template>

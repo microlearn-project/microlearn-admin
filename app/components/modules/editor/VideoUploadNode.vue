@@ -59,7 +59,6 @@ watch(file, async (newFile) => {
     // Étape 1 — Demander la signed URL à notre API (leger, pas de fichier)
     const { signedUrl, publicUrl } = await $fetch<{
       signedUrl: string;
-      token: string;
       filePath: string;
       publicUrl: string;
     }>("/api/cours/video-signed-url", {
@@ -72,7 +71,7 @@ watch(file, async (newFile) => {
       },
     });
 
-    // Étape 2 — Upload direct vers Supabase Storage (bypass Vercel)
+    // Étape 2 — Upload direct vers le storage (RustFS/S3, bypass Vercel)
     await new Promise<void>((resolve, reject) => {
       const xhr = new XMLHttpRequest();
 

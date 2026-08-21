@@ -4,113 +4,34 @@ definePageMeta({
 });
 
 const { login, authenticated } = useAuth();
-const toast = useToast();
+const route = useRoute();
 
 if (authenticated.value) {
   navigateTo("/");
 }
 
-const loginType = ref<"email" | "code">("code");
-
-const form = ref({
-  identifier: "",
-  password: "",
-  showPassword: false,
+const redirectTo = computed(() => {
+  const value = route.query.redirect;
+  return typeof value === "string" ? value : undefined;
 });
 
-const loading = ref(false);
+const errorMessages: Record<string, string> = {
+  invalid_state: "La session de connexion a expiré. Veuillez réessayer.",
+  token_exchange_failed: "La connexion a échoué. Veuillez réessayer.",
+  no_agent_match:
+    "Aucun agent de la plateforme ne correspond à ce compte. Contactez un administrateur.",
+  no_admin_access:
+    "Votre compte n'a pas les permissions nécessaires pour accéder à l'administration. Contactez un administrateur si vous pensez qu'il s'agit d'une erreur.",
+};
 
-//  État pour la confirmation de session active
-const sessionConflict = ref(false);
-const sessionInfo = ref<any>(null);
+const errorMessage = computed(() => {
+  const code = route.query.error;
+  if (typeof code !== "string") return null;
+  return errorMessages[code] ?? "Une erreur est survenue lors de la connexion.";
+});
 
-const identifierLabel = computed(() =>
-  loginType.value === "email" ? "Adresse email" : "Code agent",
-);
-
-const identifierPlaceholder = computed(() =>
-  loginType.value === "email" ? "votre.email@exemple.com" : "Votre code agent",
-);
-
-const identifierIcon = computed(() =>
-  loginType.value === "email" ? "i-lucide-mail" : "i-lucide-hash",
-);
-
-function toggleLoginType() {
-  loginType.value = loginType.value === "email" ? "code" : "email";
-  form.value.identifier = "";
-}
-
-// Gestion de la connexion avec confirmation
-async function handleSubmit(forceLogin = false) {
-  if (!form.value.identifier.trim()) {
-    toast.add({
-      title: "Erreur",
-      description: `Veuillez entrer votre ${loginType.value === "email" ? "email" : "code agent"}`,
-      color: "error",
-    });
-    return;
-  }
-
-  if (!form.value.password) {
-    toast.add({
-      title: "Erreur",
-      description: "Veuillez entrer votre mot de passe",
-      color: "error",
-    });
-    return;
-  }
-
-  loading.value = true;
-
-  const result = await login(
-    form.value.identifier.trim(),
-    form.value.password,
-    loginType.value,
-    forceLogin,
-  );
-
-  loading.value = false;
-
-  //  Gestion du conflit de session
-  if (!result.success && result.requiresConfirmation) {
-    sessionConflict.value = true;
-    sessionInfo.value = result.sessionInfo;
-    toast.add({
-      title: "Session active détectée",
-      description: result.message,
-      color: "warning",
-    });
-    return;
-  }
-
-  if (result.success) {
-    toast.add({
-      title: "Connexion réussie",
-      description: "Bienvenue sur l'interface d'administration",
-      color: "success",
-    });
-    navigateTo("/");
-  } else {
-    toast.add({
-      title: "Échec de connexion",
-      description: result.error,
-      color: "error",
-    });
-  }
-}
-
-//  Forcer la connexion en fermant la session active
-function confirmForceLogin() {
-  sessionConflict.value = false;
-  handleSubmit(true);
-}
-
-//  Annuler la connexion forcée
-function cancelForceLogin() {
-  sessionConflict.value = false;
-  sessionInfo.value = null;
-  form.value.password = "";
+function handleLogin() {
+  login(redirectTo.value);
 }
 </script>
 
@@ -130,152 +51,33 @@ function cancelForceLogin() {
         </p>
       </div>
 
-      <!--  Modal de confirmation session active -->
-      <UModal
-        v-model:open="sessionConflict"
-        title="Session active détectée"
-        :ui="{ content: 'sm:max-w-lg' }"
-      >
-        <template #body>
-          <div class="space-y-4">
-            <div
-              class="flex items-start gap-3 p-4 bg-warning/10 border border-warning/20 rounded-lg"
-            >
-              <UIcon
-                name="i-lucide-alert-triangle"
-                class="text-warning text-xl mt-0.5"
-              />
-              <div class="flex-1">
-                <p class="font-medium text-warning mb-1">
-                  Une session est déjà ouverte
-                </p>
-                <p class="text-sm text-muted">
-                  Vous êtes déjà connecté sur un autre navigateur ou appareil.
-                </p>
-              </div>
-            </div>
-
-            <div v-if="sessionInfo" class="space-y-2 text-sm">
-              <div class="flex justify-between">
-                <span class="text-muted">Connecté depuis :</span>
-                <span class="font-medium">
-                  {{ new Date(sessionInfo.created_at).toLocaleString("fr-FR") }}
-                </span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-muted">Dernière activité :</span>
-                <span class="font-medium">
-                  {{
-                    new Date(sessionInfo.last_activity).toLocaleString("fr-FR")
-                  }}
-                </span>
-              </div>
-            </div>
-
-            <p class="text-sm">
-              Si vous continuez, l'autre session sera automatiquement fermée.
-            </p>
-          </div>
-        </template>
-
-        <template #footer>
-          <div class="flex justify-end gap-2">
-            <UButton
-              label="Annuler"
-              color="neutral"
-              variant="subtle"
-              @click="cancelForceLogin"
-            />
-            <UButton
-              label="Continuer et fermer l'autre session"
-              color="warning"
-              icon="i-lucide-log-in"
-              @click="confirmForceLogin"
-            />
-          </div>
-        </template>
-      </UModal>
-
       <!-- Carte de connexion -->
       <div class="bg-elevated border border-default rounded-xl p-6 shadow-lg">
-        <!-- Sélecteur de type de connexion -->
-        <div class="flex gap-2 p-1 bg-muted/30 rounded-lg mb-6">
-          <button
-            type="button"
-            class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all"
-            :class="
-              loginType === 'code'
-                ? 'bg-default shadow text-foreground'
-                : 'text-muted hover:text-foreground'
-            "
-            @click="loginType = 'code'"
-          >
-            <UIcon name="i-lucide-hash" class="mr-2" />
-            Code agent
-          </button>
-          <button
-            type="button"
-            class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all"
-            :class="
-              loginType === 'email'
-                ? 'bg-default shadow text-foreground'
-                : 'text-muted hover:text-foreground'
-            "
-            @click="loginType = 'email'"
-          >
-            <UIcon name="i-lucide-mail" class="mr-2" />
-            Email
-          </button>
+        <div
+          v-if="errorMessage"
+          class="flex items-start gap-3 p-4 mb-4 bg-error/10 border border-error/20 rounded-lg"
+        >
+          <UIcon
+            name="i-lucide-alert-triangle"
+            class="text-error text-xl mt-0.5 shrink-0"
+          />
+          <p class="text-sm">{{ errorMessage }}</p>
         </div>
 
-        <!-- Formulaire -->
-        <form @submit.prevent="handleSubmit(false)" class="space-y-4">
-          <UFormField :label="identifierLabel">
-            <UInput
-              v-model="form.identifier"
-              :placeholder="identifierPlaceholder"
-              :icon="identifierIcon"
-              size="lg"
-              autocomplete="username"
-              class="w-full"
-            />
-          </UFormField>
+        <p class="text-sm text-muted mb-4">
+          L'identification se fait via le service d'authentification de
+          l'organisation. Vous serez redirigé pour saisir votre code agent
+          et votre mot de passe.
+        </p>
 
-          <UFormField label="Mot de passe">
-            <UInput
-              v-model="form.password"
-              :type="form.showPassword ? 'text' : 'password'"
-              placeholder="Votre mot de passe"
-              icon="i-lucide-lock"
-              size="lg"
-              autocomplete="current-password"
-              class="w-full"
-            >
-              <template #trailing>
-                <UButton
-                  :icon="
-                    form.showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'
-                  "
-                  color="neutral"
-                  variant="ghost"
-                  size="xs"
-                  :padded="false"
-                  @click="form.showPassword = !form.showPassword"
-                />
-              </template>
-            </UInput>
-          </UFormField>
-
-          <UButton
-            type="submit"
-            label="Se connecter"
-            color="primary"
-            size="lg"
-            block
-            :loading="loading"
-            class="mt-6"
-          />
-        </form>
+        <UButton
+          label="Se connecter"
+          icon="i-lucide-log-in"
+          color="primary"
+          size="lg"
+          block
+          @click="handleLogin"
+        />
       </div>
 
       <p class="text-center text-sm text-muted mt-6">

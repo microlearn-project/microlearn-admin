@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import type { Tables } from "~/types/database.types";
 
-type Cours = Tables<"cours">;
+// documents n'est plus une colonne de la table cours (dérivé côté API,
+// cours_document) — omis ici pour rester compatible avec l'objet enrichi
+// que Step2Cours.vue transmet.
+type Cours = Omit<Tables<"cours">, "documents">;
 
 const props = defineProps<{
   cours: Cours;

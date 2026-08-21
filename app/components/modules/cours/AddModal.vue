@@ -7,6 +7,7 @@ const props = defineProps<{
 }>();
 
 const open = defineModel<boolean>("open", { default: false });
+useModalEscapeOnly(open);
 
 const emit = defineEmits<{
   (e: "created"): void;
@@ -81,6 +82,7 @@ function onClose() {
     v-model:open="open"
     :title="'Ajouter un cours'"
     :ui="{ content: 'max-w-5xl' }"
+    :dismissible="false"
     @close="onClose"
     :description="'Créez un nouveau cours pour ce module. '"
   >

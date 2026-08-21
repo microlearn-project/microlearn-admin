@@ -24,7 +24,7 @@ const {
   pending,
   error,
   refresh,
-} = await useFetch<Departement[]>("/api/service", {
+} = await useFetch<Departement[]>("/api/departement", {
   server: true,
   lazy: false,
 });
@@ -43,22 +43,12 @@ const directionsMap = computed(() => {
 ----------------------------------------------------*/
 // Activer un département
 const activate = async (id: string) => {
-  await $fetch(`/api/service/${id}/activate`, { method: "PATCH" });
+  await $fetch(`/api/departement/${id}/activate`, { method: "PATCH" });
 };
 
 // Désactiver un département
 const deactivate = async (id: string) => {
-  await $fetch(`/api/service/${id}/deactivate`, { method: "PATCH" });
-};
-
-// Supprimer un département
-const softDelete = async (id: string) => {
-  await $fetch(`/api/service/soft-delete`, {
-    method: "PATCH",
-    body: {
-      id: id,
-    },
-  });
+  await $fetch(`/api/departement/${id}/deactivate`, { method: "PATCH" });
 };
 
 /* ---------------------------------------------------
@@ -71,6 +61,16 @@ const selectedRows = computed(
     table.value?.tableApi?.getSelectedRowModel().rows.map((r) => r.original) ??
     [],
 );
+
+// Suppression d'une ligne : passe par la même confirmation que la
+// suppression en masse, au lieu de supprimer immédiatement au clic.
+const singleDeleteTarget = ref<Departement | null>(null);
+const showSingleDeleteModal = ref(false);
+
+function requestSingleDelete(departement: Departement) {
+  singleDeleteTarget.value = departement;
+  showSingleDeleteModal.value = true;
+}
 
 /* ---------------------------------------------------
      4. Items du menu sur chaque ligne
@@ -132,24 +132,7 @@ function getRowItems(row: { original: Departement }) {
       label: "Supprimer",
       icon: "i-lucide-trash-2",
       color: "error",
-      onSelect: async () => {
-        try {
-          await softDelete(s.id_departement);
-
-          departements.value = departements.value?.filter(
-            (srv) => srv.id_departement !== s.id_departement,
-          );
-
-          toast.add({ title: "Département supprimé" });
-          clearTableSelection();
-        } catch {
-          toast.add({
-            title: "Erreur",
-            description: "Suppression impossible",
-            color: "error",
-          });
-        }
-      },
+      onSelect: () => requestSingleDelete(s),
     },
   ];
 }
@@ -356,6 +339,15 @@ function clearTableSelection() {
               </template>
             </UButton>
           </DepartementsDeleteModal>
+
+          <!-- Modal de suppression (action de ligne, un seul département) -->
+          <DepartementsDeleteModal
+            v-model:open="showSingleDeleteModal"
+            :count="1"
+            :rows="singleDeleteTarget ? [singleDeleteTarget] : []"
+            @deleted="refresh()"
+            @clear-selection="singleDeleteTarget = null"
+          />
 
           <!-- Bouton de filtre -->
           <USelect

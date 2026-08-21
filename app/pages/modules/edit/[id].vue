@@ -186,6 +186,7 @@ function backToList() {
             :module="module"
             @next="nextStep"
             @previous="previousStep"
+            @refresh="refresh"
           />
 
           <!-- Étape 3: Quiz -->

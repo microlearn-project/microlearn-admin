@@ -21,14 +21,12 @@ const toast = useToast();
 ----------------------------------------------------*/
 const schema = z.object({
   titre: z.string().min(3).max(255),
-  duree_lecture: z.string().min(1),
 });
 
 type Schema = z.output<typeof schema>;
 
 const state = reactive<Schema>({
   titre: props.module.titre,
-  duree_lecture: props.module.duree_lecture,
 });
 
 // Description gérée séparément (éditeur WYSIWYG)
@@ -65,7 +63,6 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         id: props.module.id_module,
         titre: event.data.titre,
         description: description.value,
-        duree_lecture: event.data.duree_lecture,
       },
     });
 
@@ -109,13 +106,13 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         <ModulesCreateEditor v-model="description" :module-id="module.id_module" />
       </UFormField>
 
-      <!-- Durée -->
-      <UFormField
-        label="Durée de lecture estimée"
-        name="duree_lecture"
-        required
-      >
-        <UInput v-model="state.duree_lecture" />
+      <!-- Durée (calculée automatiquement à partir des cours) -->
+      <UFormField label="Durée de lecture estimée">
+        <div class="flex items-center gap-2 text-muted">
+          <UIcon name="i-lucide-clock" />
+          <span>{{ module.duree_lecture }}</span>
+          <span class="text-xs">(calculée à partir des cours de l'étape 2)</span>
+        </div>
       </UFormField>
 
       <!-- Associations -->

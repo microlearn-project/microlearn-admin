@@ -6,7 +6,6 @@ interface TypeOption {
   label: string;
   value: string;
   icon: string;
-  description: string;
 }
 
 const open = defineModel<boolean>("open", { default: false });
@@ -23,45 +22,22 @@ const table = useTemplateRef<any>("table");
 const UButton = resolveComponent("UButton");
 const UIcon = resolveComponent("UIcon");
 
-// Liste des types d'objets
-const types: TypeOption[] = [
-  {
-    label: "Agent",
-    value: "agent",
-    icon: "i-lucide-user",
-    description: "Actions liées aux agents/utilisateurs"
-  },
-  {
-    label: "User Role",
-    value: "user_role",
-    icon: "i-lucide-shield",
-    description: "Attribution et gestion des rôles"
-  },
-  {
-    label: "Session",
-    value: "session",
-    icon: "i-lucide-key-round",
-    description: "Connexions et déconnexions"
-  },
-  {
-    label: "Catégorie",
-    value: "tag",
-    icon: "i-lucide-tag",
-    description: "Gestion des catégories/tags"
-  },
-  {
-    label: "Direction",
-    value: "direction",
-    icon: "i-heroicons-building-office",
-    description: "Gestion des directions"
-  },
-  {
-    label: "Département",
-    value: "departement",
-    icon: "i-lucide-building-2",
-    description: "Gestion des départements"
-  },
-];
+// Types d'objets réellement présents en base (dérivés génériquement par
+// l'intercepteur d'audit côté API) — pas de liste figée ici.
+const { data: facets, pending } = useFetch<{
+  actions: string[];
+  objetTypes: string[];
+}>("/api/activity-log/facets", {
+  default: () => ({ actions: [], objetTypes: [] }),
+});
+
+const types = computed<TypeOption[]>(() =>
+  facets.value.objetTypes.map((type) => ({
+    label: formatObjetTypeLabel(type),
+    value: type,
+    icon: objetTypeIcon(type),
+  }))
+);
 
 function selectType(type: TypeOption) {
   selectedType.value = type.value;
@@ -89,7 +65,6 @@ const columns: TableColumn<TypeOption>[] = [
         ]),
         h("div", { class: "flex-1 min-w-0" }, [
           h("p", { class: "font-medium" }, type.label),
-          h("p", { class: "text-xs text-muted truncate" }, type.description),
         ]),
       ]);
     },
@@ -150,7 +125,23 @@ const globalFilter = ref("");
               />
             </div>
 
+            <div v-if="pending" class="text-center py-8">
+              <UIcon
+                name="i-lucide-loader-circle"
+                class="animate-spin text-3xl text-muted"
+              />
+            </div>
+
+            <div
+              v-else-if="types.length === 0"
+              class="text-center py-8 text-muted"
+            >
+              <UIcon name="i-lucide-inbox" class="mx-auto mb-2 text-4xl" />
+              <p>Aucune activité enregistrée pour le moment</p>
+            </div>
+
             <UTable
+              v-else
               ref="table"
               v-model:pagination="pagination"
               v-model:global-filter="globalFilter"
@@ -171,7 +162,7 @@ const globalFilter = ref("");
             />
 
             <div
-              v-if="types && types.length > 0"
+              v-if="types.length > 0"
               class="flex items-center justify-between gap-4 border-t border-default pt-4"
             >
               <div class="text-sm text-muted">

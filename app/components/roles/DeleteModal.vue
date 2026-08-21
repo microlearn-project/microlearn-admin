@@ -31,8 +31,8 @@ const softDelete = async (id: string) => {
   });
 };
 
-// Test si la modale est ouverte
-const open = ref(false);
+// Contrôlable en externe (action de ligne) comme en interne (slot trigger)
+const open = defineModel<boolean>("open", { default: false });
 
 watch(open, (newValue) => {
   if (!newValue) {
@@ -44,7 +44,7 @@ watch(open, (newValue) => {
 // Soumission de la suppression
 async function onSubmit(rows: Array<any>) {
   try {
-    await Promise.all(rows.map((r) => softDelete(String(r.id_tag))));
+    await Promise.all(rows.map((r) => softDelete(String(r.id_role))));
     toast.add({ title: `${rows.length} rôle(s) supprimé(s)` });
     emit("deleted");
     emit("clear-selection");
@@ -75,7 +75,7 @@ function clear_selection() {
 <template>
   <UModal
     v-model:open="open"
-    :title="`Supprimer ${count} rôles${count > 1 ? 's' : ''}`"
+    :title="`Supprimer ${count} rôle${count > 1 ? 's' : ''}`"
     :description="`Êtes-vous sûr ? `"
   >
     <slot />

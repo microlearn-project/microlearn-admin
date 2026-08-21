@@ -14,7 +14,10 @@ const emit = defineEmits<{
 }>();
 
 const toast = useToast();
-const open = ref(false);
+// defineModel (pas un simple ref) : permet aussi bien le déclenchement via
+// clic sur le slot (toolbar) que le pilotage externe (action de ligne, sans
+// enfant à cliquer).
+const open = defineModel<boolean>("open", { default: false });
 const loading = ref(false);
 
 async function deleteAgents() {

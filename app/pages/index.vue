@@ -35,8 +35,17 @@ const isFormateur = computed(() => user.value?.role?.designation === 'FORMATEUR'
         <!-- Stats principales (rapide - 1-2 requêtes) -->
         <HomeStatsUtb />
 
-        <!-- Top modules (rapide - ~5 requêtes) -->
-        <HomeTopModules />
+        <!-- Alerte agents jamais actifs -->
+        <HomeInactiveAgentsAlert />
+
+        <!-- Top modules / modules à la traîne -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <HomeTopModules />
+          <HomeStrugglingModules />
+        </div>
+
+        <!-- Participation par département -->
+        <HomeServicesProgress />
 
         <!-- Actions rapides -  Caché pour FORMATEUR -->
         <UCard v-if="!isFormateur">

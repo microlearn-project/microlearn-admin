@@ -1,26 +1,13 @@
 // server/api/role/soft-delete.patch.ts
-import { createSupabaseServerClient } from "~~/server/utils/supabase";
-import type { Tables } from "~/types/database.types";
-
-type RoleDelete = Tables<"role">;
+import { callApi } from "~~/server/utils/apiBridge";
 
 export default defineEventHandler(async (event) => {
   const { id } = await readBody(event);
-  const supabase = createSupabaseServerClient();
 
-  // Hard delete
-  const { data, error } = await supabase
-    .from("role")
-    .delete()
-    .eq("id_role", id)
-    .select();
-
-  if (error) {
-    throw createError({
-      statusCode: 500,
-      statusMessage: error.message,
-    });
+  if (!id) {
+    throw createError({ statusCode: 400, message: "ID du rôle requis" });
   }
 
-  return (data ?? []) as RoleDelete[];
+  await callApi(event, `/roles/${id}`, { method: "DELETE" });
+  return { success: true };
 });
