@@ -244,7 +244,7 @@ async function onCoursDeleted() {
         class="sticky top-0 z-30 bg-warning/10 border border-warning/30 rounded-lg p-4 flex items-center justify-between gap-4"
       >
         <div class="flex items-center gap-3">
-          <UIcon name="i-lucide-alert-circle" class="text-warning text-xl" />
+          <UIcon name="i-lucide-circle-alert" class="text-warning text-xl" />
           <div>
             <p class="font-medium">Ordre modifié</p>
             <p class="text-sm text-muted">

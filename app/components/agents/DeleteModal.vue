@@ -70,7 +70,7 @@ watch(open, (newValue) => {
     <template #body>
       <div class="space-y-4">
         <div class="flex items-start gap-3 p-4 bg-error/10 border border-error/20 rounded-lg">
-          <UIcon name="i-lucide-alert-triangle" class="text-error text-xl mt-0.5" />
+          <UIcon name="i-lucide-triangle-alert" class="text-error text-xl mt-0.5" />
           <div>
             <p class="font-medium">Êtes-vous sûr de vouloir supprimer {{ count }} agent(s) ?</p>
             <p class="text-sm text-muted mt-1">

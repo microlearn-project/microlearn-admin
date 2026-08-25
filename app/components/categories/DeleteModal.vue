@@ -203,7 +203,7 @@ function confirmationLines(rows: Tag[]): string[] {
       <div class="space-y-4">
         <!-- Avertissement -->
         <div class="flex items-start gap-3 p-4 bg-error/10 border border-error/20 rounded-lg">
-          <UIcon name="i-lucide-alert-triangle" class="text-error text-xl mt-0.5 shrink-0" />
+          <UIcon name="i-lucide-triangle-alert" class="text-error text-xl mt-0.5 shrink-0" />
           <div>
             <p class="font-medium text-error">
               « {{ tagToForceDelete?.designation }} » est associée à

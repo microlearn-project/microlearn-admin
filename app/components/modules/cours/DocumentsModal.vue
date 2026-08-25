@@ -216,7 +216,7 @@ async function saveDocuments() {
               class="flex items-center gap-2 text-xs"
             >
               <UIcon
-                name="i-lucide-check-circle"
+                name="i-lucide-circle-check"
                 class="text-success shrink-0"
               />
               <span class="truncate" :title="url">

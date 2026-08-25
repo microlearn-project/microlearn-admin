@@ -184,7 +184,7 @@ const globalStats = computed(() => {
       <div class="bg-elevated rounded-xl p-4">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-lg bg-info/10 flex items-center justify-center">
-            <UIcon name="i-lucide-help-circle" class="text-info text-xl" />
+            <UIcon name="i-lucide-circle-question-mark" class="text-info text-xl" />
           </div>
           <div>
             <p class="text-2xl font-bold">{{ globalStats.coursWithQuiz }}</p>
@@ -196,7 +196,7 @@ const globalStats = computed(() => {
       <div class="bg-elevated rounded-xl p-4">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
-            <UIcon name="i-lucide-check-circle" class="text-success text-xl" />
+            <UIcon name="i-lucide-circle-check" class="text-success text-xl" />
           </div>
           <div>
             <p class="text-2xl font-bold">{{ globalStats.readyQuiz }}</p>
@@ -280,7 +280,7 @@ const globalStats = computed(() => {
                   />
                   <UIcon
                     v-else
-                    name="i-lucide-alert-circle"
+                    name="i-lucide-circle-alert"
                     class="mr-1"
                   />
                   {{ getQuizStatus(coursItem.id_cours).label }}

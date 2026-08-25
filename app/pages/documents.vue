@@ -167,7 +167,7 @@ function getFileIcon(document: Document): string {
     gif: "i-lucide-image",
     zip: "i-lucide-file-archive",
     rar: "i-lucide-file-archive",
-    mp4: "i-lucide-file-video",
+    mp4: "i-lucide-file-play",
     mp3: "i-lucide-file-audio",
     txt: "i-lucide-file-text",
   };

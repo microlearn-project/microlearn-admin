@@ -212,7 +212,7 @@ function clearTableSelection() {
               label="Modifier"
               color="secondary"
               variant="subtle"
-              icon="i-lucide-edit-2"
+              icon="i-lucide-pen"
             />
           </RolesUpdateModal>
 

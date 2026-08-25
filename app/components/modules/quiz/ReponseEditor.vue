@@ -119,7 +119,7 @@ const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         <!-- Toggle bonne réponse -->
         <UTooltip :text="estCorrecte ? 'Réponse correcte' : 'Marquer comme correcte'">
           <UButton
-            :icon="estCorrecte ? 'i-lucide-check-circle' : 'i-lucide-circle'"
+            :icon="estCorrecte ? 'i-lucide-circle-check' : 'i-lucide-circle'"
             size="xs"
             :color="estCorrecte ? 'success' : 'neutral'"
             :variant="estCorrecte ? 'solid' : 'ghost'"

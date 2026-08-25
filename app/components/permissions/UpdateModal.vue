@@ -113,7 +113,7 @@ async function submit() {
         <!-- Statut valide -->
         <div class="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
           <div class="flex items-center gap-2">
-            <UIcon :name="form.valide ? 'i-lucide-check-circle' : 'i-lucide-x-circle'"
+            <UIcon :name="form.valide ? 'i-lucide-circle-check' : 'i-lucide-circle-x'"
                    :class="form.valide ? 'text-success' : 'text-error'" />
             <span class="text-sm font-medium">Attribution {{ form.valide ? 'active' : 'révoquée' }}</span>
           </div>

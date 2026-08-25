@@ -72,7 +72,7 @@ async function onDelete() {
 
         <div class="bg-warning/10 border border-warning/20 rounded-lg p-3">
           <div class="flex items-start gap-2">
-            <UIcon name="i-lucide-alert-triangle" class="text-warning mt-0.5" />
+            <UIcon name="i-lucide-triangle-alert" class="text-warning mt-0.5" />
             <p class="text-sm">
               Si un quiz est associé à ce cours, il sera également supprimé.
             </p>

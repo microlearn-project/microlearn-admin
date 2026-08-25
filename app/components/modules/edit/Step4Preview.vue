@@ -102,7 +102,7 @@ function formatDate(date: string) {
         class="bg-success/10 border border-success/20 rounded-lg p-4"
       >
         <div class="flex items-center gap-3">
-          <UIcon name="i-lucide-check-circle" class="text-success text-xl" />
+          <UIcon name="i-lucide-circle-check" class="text-success text-xl" />
           <div>
             <p class="font-medium">Module déjà publié</p>
             <p class="text-sm text-muted">
@@ -114,7 +114,7 @@ function formatDate(date: string) {
 
       <div v-else class="bg-warning/10 border border-warning/20 rounded-lg p-4">
         <div class="flex items-center gap-3">
-          <UIcon name="i-lucide-alert-triangle" class="text-warning text-xl" />
+          <UIcon name="i-lucide-triangle-alert" class="text-warning text-xl" />
           <div>
             <p class="font-medium">Module non publié</p>
             <p class="text-sm text-muted">

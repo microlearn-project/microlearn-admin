@@ -179,7 +179,7 @@ function getRowItems(row: { original: UserRole }) {
     { type: "separator" },
     {
       label: "Modifier",
-      icon: "i-lucide-edit",
+      icon: "i-lucide-square-pen",
       onSelect: () => {
         userRoleToEdit.value = ur;
         showEditModal.value = true;
@@ -615,7 +615,7 @@ const stats = computed(() => {
         class="text-center py-16 border-2 border-dashed border-default rounded-lg"
       >
         <UIcon
-          name="i-lucide-shield-question"
+          name="i-lucide-shield-question-mark"
           class="text-5xl text-muted mb-4"
         />
         <p class="font-medium mb-2">Aucune attribution trouvée</p>

@@ -4,7 +4,8 @@ interface DashboardStats {
   publishedModules: number;
   completedQuiz: number;
   averageSuccessRate: number;
-  activeSessionsNow: number;
+  activeSessionsAdmin: number;
+  activeSessionsMobile: number;
 }
 
 const { data: stats, pending } = await useFetch<DashboardStats>(
@@ -16,9 +17,14 @@ const { data: stats, pending } = await useFetch<DashboardStats>(
       publishedModules: 0,
       completedQuiz: 0,
       averageSuccessRate: 0,
-      activeSessionsNow: 0,
+      activeSessionsAdmin: 0,
+      activeSessionsMobile: 0,
     }),
   }
+);
+
+const activeSessionsTotal = computed(
+  () => stats.value.activeSessionsAdmin + stats.value.activeSessionsMobile
 );
 </script>
 
@@ -37,12 +43,17 @@ const { data: stats, pending } = await useFetch<DashboardStats>(
       }"
       class="lg:rounded-none first:rounded-l-lg last:rounded-r-lg hover:z-1"
     >
-      <div class="flex items-center gap-2">
-        <span v-if="pending" class="text-2xl font-semibold text-highlighted">
-          ---
-        </span>
-        <span v-else class="text-2xl font-semibold text-highlighted">
-          {{ stats.activeSessionsNow }}
+      <div class="flex flex-col gap-0.5">
+        <div class="flex items-center gap-2">
+          <span v-if="pending" class="text-2xl font-semibold text-highlighted">
+            ---
+          </span>
+          <span v-else class="text-2xl font-semibold text-highlighted">
+            {{ activeSessionsTotal }}
+          </span>
+        </div>
+        <span v-if="!pending" class="text-xs text-muted">
+          Admin : {{ stats.activeSessionsAdmin }} · Mobile : {{ stats.activeSessionsMobile }}
         </span>
       </div>
     </UPageCard>
@@ -71,7 +82,7 @@ const { data: stats, pending } = await useFetch<DashboardStats>(
     </UPageCard>
 
     <UPageCard
-      icon="i-lucide-check-circle"
+      icon="i-lucide-circle-check"
       title="Quiz Complétés"
       variant="subtle"
       :ui="{

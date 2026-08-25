@@ -43,19 +43,19 @@ const canAccessAccountConsole = computed(() => hasRole('SUPERADMIN'))
   >
     <div class="space-y-3">
       <div class="flex items-start gap-3">
-        <UIcon name="i-lucide-check-circle" class="text-success mt-0.5 shrink-0" />
+        <UIcon name="i-lucide-circle-check" class="text-success mt-0.5 shrink-0" />
         <p class="text-sm">Utilisez un mot de passe unique que vous n'utilisez nulle part ailleurs</p>
       </div>
       <div class="flex items-start gap-3">
-        <UIcon name="i-lucide-check-circle" class="text-success mt-0.5 shrink-0" />
+        <UIcon name="i-lucide-circle-check" class="text-success mt-0.5 shrink-0" />
         <p class="text-sm">Mélangez lettres majuscules, minuscules, chiffres et caractères spéciaux</p>
       </div>
       <div class="flex items-start gap-3">
-        <UIcon name="i-lucide-check-circle" class="text-success mt-0.5 shrink-0" />
+        <UIcon name="i-lucide-circle-check" class="text-success mt-0.5 shrink-0" />
         <p class="text-sm">Évitez les informations personnelles facilement devinables</p>
       </div>
       <div class="flex items-start gap-3">
-        <UIcon name="i-lucide-check-circle" class="text-success mt-0.5 shrink-0" />
+        <UIcon name="i-lucide-circle-check" class="text-success mt-0.5 shrink-0" />
         <p class="text-sm">Ne partagez jamais votre mot de passe avec qui que ce soit</p>
       </div>
     </div>

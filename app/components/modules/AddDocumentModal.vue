@@ -187,7 +187,7 @@ function isFileTooLarge(file: File): boolean {
                 <UIcon
                   :name="
                     isFileTooLarge(file)
-                      ? 'i-lucide-alert-triangle'
+                      ? 'i-lucide-triangle-alert'
                       : 'i-lucide-file'
                   "
                   :class="

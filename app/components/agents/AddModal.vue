@@ -333,7 +333,7 @@ watch(open, (isOpen) => {
           <div
             class="w-16 h-16 mx-auto rounded-full bg-success/10 flex items-center justify-center mb-4"
           >
-            <UIcon name="i-lucide-check-circle" class="text-success text-3xl" />
+            <UIcon name="i-lucide-circle-check" class="text-success text-3xl" />
           </div>
           <p class="font-medium text-lg">
             {{ generatedAgent?.prenom }} {{ generatedAgent?.nom }}
@@ -375,7 +375,7 @@ watch(open, (isOpen) => {
           class="bg-warning/10 border border-warning/20 rounded-lg p-4 text-sm"
         >
           <div class="flex items-start gap-2">
-            <UIcon name="i-lucide-alert-triangle" class="text-warning mt-0.5" />
+            <UIcon name="i-lucide-triangle-alert" class="text-warning mt-0.5" />
             <div>
               <p class="font-medium">Important</p>
               <p class="text-muted mt-1">

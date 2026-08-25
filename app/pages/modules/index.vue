@@ -88,7 +88,7 @@ function getRowItems(row: { original: Module }) {
     { type: "separator" },
     {
       label: "Modifier",
-      icon: "i-lucide-edit",
+      icon: "i-lucide-square-pen",
       onSelect: () => {
         navigateTo(`/modules/edit/${m.id_module}`);
       },
@@ -518,7 +518,7 @@ async function toggleDownloadable(id: string, enabled: boolean) {
             label="Modifier"
             color="secondary"
             variant="subtle"
-            icon="i-lucide-edit-2"
+            icon="i-lucide-pen"
             @click="
               selectedRows[0] &&
                 navigateTo(`/modules/edit/${selectedRows[0].id_module}`)

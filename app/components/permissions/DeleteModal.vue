@@ -92,7 +92,7 @@ async function execute() {
           :class="isDeleteMode ? 'bg-error/10 border border-error/20' : 'bg-warning/10 border border-warning/20'"
         >
           <UIcon
-            name="i-lucide-alert-triangle"
+            name="i-lucide-triangle-alert"
             :class="isDeleteMode ? 'text-error' : 'text-warning'"
             class="text-xl mt-0.5"
           />

@@ -37,10 +37,14 @@ export default defineEventHandler(async (event) => {
     } catch (err: any) {
       lastError = err;
       if (err?.statusCode !== 409) throw err;
-      // 409 : collision sur code_agent OU email — une collision d'email ne
-      // se résoudra jamais en réessayant, mais l'API ne distingue pas les
-      // deux dans son message ; on retente prudemment, puis on renvoie
-      // l'erreur reçue si toutes les tentatives échouent.
+      // 409 : l'API distingue maintenant la collision email de la collision
+      // code_agent dans son message (voir AgentsService.conflictMessageFor
+      // côté API) — une collision d'email ne se résoudra jamais en
+      // réessayant avec un nouveau code, inutile de gâcher les tentatives.
+      const message: string = err?.statusMessage ?? "";
+      if (message.toLowerCase().includes("email")) {
+        throw err;
+      }
     }
   }
   throw lastError;

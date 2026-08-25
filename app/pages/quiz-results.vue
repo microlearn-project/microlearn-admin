@@ -737,7 +737,7 @@ const exportItems = [
                 class="w-12 h-12 rounded-lg bg-success/10 flex items-center justify-center shrink-0"
               >
                 <UIcon
-                  name="i-lucide-check-circle"
+                  name="i-lucide-circle-check"
                   class="text-success text-2xl"
                 />
               </div>

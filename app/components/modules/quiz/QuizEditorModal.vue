@@ -244,7 +244,7 @@ const quizStats = computed(() => {
         <!-- Pas de quiz : formulaire de création -->
         <div v-else-if="!quiz" class="space-y-4">
           <div class="text-center py-8">
-            <UIcon name="i-lucide-help-circle" class="text-5xl text-muted mb-4" />
+            <UIcon name="i-lucide-circle-question-mark" class="text-5xl text-muted mb-4" />
             <h3 class="text-lg font-semibold mb-2">Aucun quiz pour ce cours</h3>
             <p class="text-muted mb-6">
               Créez un quiz pour évaluer les connaissances des agents sur ce cours.
@@ -310,7 +310,7 @@ const quizStats = computed(() => {
               class="flex items-center gap-4 pt-2 border-t border-default text-sm"
             >
               <div class="flex items-center gap-2">
-                <UIcon name="i-lucide-help-circle" class="text-muted" />
+                <UIcon name="i-lucide-circle-question-mark" class="text-muted" />
                 <span>{{ quizStats.totalQuestions }} question(s)</span>
               </div>
               <div class="flex items-center gap-2">
@@ -325,7 +325,7 @@ const quizStats = computed(() => {
                 }"
               >
                 <UIcon
-                  :name="quizStats.isValid ? 'i-lucide-check-circle' : 'i-lucide-alert-circle'"
+                  :name="quizStats.isValid ? 'i-lucide-circle-check' : 'i-lucide-circle-alert'"
                 />
                 <span>{{ quizStats.validQuestions }} valide(s)</span>
               </div>

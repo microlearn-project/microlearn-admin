@@ -49,7 +49,7 @@ function rateColor(rate: number) {
     </div>
 
     <div v-else-if="strugglingModules.length === 0" class="text-center py-8">
-      <UIcon name="i-lucide-check-circle" class="text-4xl text-success mb-2" />
+      <UIcon name="i-lucide-circle-check" class="text-4xl text-success mb-2" />
       <p class="text-sm text-muted">
         Aucun résultat de quiz encore enregistré
       </p>

@@ -588,7 +588,7 @@ const exportItems = [
               <div class="flex items-center gap-2">
                 <UButton
                   :label="selectedActionLabel || 'Filtrer par action'"
-                  :icon="filters.action ? 'i-lucide-filter-check' : 'i-lucide-filter'"
+                  :icon="filters.action ? 'i-lucide-list-filter-plus' : 'i-lucide-filter'"
                   :color="filters.action ? 'primary' : 'neutral'"
                   variant="outline"
                   class="min-w-48 justify-start"

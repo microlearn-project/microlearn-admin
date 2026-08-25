@@ -38,7 +38,7 @@ export function actionVerbStyle(action: string): {
   icon: string;
 } {
   if (action.startsWith("création")) {
-    return { color: "info", icon: "i-lucide-plus-circle" };
+    return { color: "info", icon: "i-lucide-circle-plus" };
   }
   if (action.startsWith("modification")) {
     return { color: "warning", icon: "i-lucide-pencil" };
@@ -60,7 +60,7 @@ export function objetTypeIcon(type: string): string {
     cours: "i-lucide-book-open",
     documents: "i-lucide-file-text",
     modules: "i-lucide-layers",
-    quiz: "i-lucide-help-circle",
+    quiz: "i-lucide-circle-question-mark",
     session: "i-lucide-key-round",
   };
   return icons[type] || "i-lucide-box";

@@ -58,7 +58,7 @@ function handleLogin() {
           class="flex items-start gap-3 p-4 mb-4 bg-error/10 border border-error/20 rounded-lg"
         >
           <UIcon
-            name="i-lucide-alert-triangle"
+            name="i-lucide-triangle-alert"
             class="text-error text-xl mt-0.5 shrink-0"
           />
           <p class="text-sm">{{ errorMessage }}</p>

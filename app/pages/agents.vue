@@ -383,6 +383,14 @@ const sorting = ref([
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
+          <AgentsArchivedModal v-if="isSuperAdmin" @restored="refresh()">
+            <UButton
+              label="Agents archivés"
+              icon="i-lucide-archive"
+              color="neutral"
+              variant="outline"
+            />
+          </AgentsArchivedModal>
           <AgentsAddModal @addagent="refresh()" />
         </template>
       </UDashboardNavbar>
@@ -411,7 +419,7 @@ const sorting = ref([
               label="Modifier"
               color="secondary"
               variant="subtle"
-              icon="i-lucide-edit-2"
+              icon="i-lucide-pen"
             />
           </AgentsUpdateModal>
 

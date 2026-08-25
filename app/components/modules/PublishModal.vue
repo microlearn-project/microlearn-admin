@@ -85,7 +85,7 @@ async function onSubmit() {
 
         <div class="bg-warning/10 border border-warning/20 rounded-lg p-4">
           <div class="flex items-start gap-3">
-            <UIcon name="i-lucide-alert-triangle" class="text-warning mt-0.5 shrink-0" />
+            <UIcon name="i-lucide-triangle-alert" class="text-warning mt-0.5 shrink-0" />
             <div class="text-sm">
               <p class="font-medium mb-1">Attention</p>
               <p class="text-muted">

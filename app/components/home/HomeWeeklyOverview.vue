@@ -96,7 +96,7 @@ const quizReussisColor = computed(() => {
       <div class="text-center p-4 bg-elevated border border-default rounded-lg">
         <div class="flex items-center justify-center gap-2 mb-2">
           <UIcon
-            name="i-lucide-check-circle"
+            name="i-lucide-circle-check"
             :class="`text-${quizReussisColor} text-xl`"
           />
           <p :class="`text-3xl font-bold text-${quizReussisColor}`">

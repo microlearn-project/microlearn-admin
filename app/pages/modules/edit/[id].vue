@@ -61,7 +61,7 @@ const steps = [
     number: 3,
     title: "Quiz",
     description: "Évaluations",
-    icon: "i-lucide-help-circle",
+    icon: "i-lucide-circle-question-mark",
   },
   {
     number: 4,
@@ -213,7 +213,7 @@ function backToList() {
   <UDashboardPanel v-else-if="pending">
     <template #body>
       <div class="flex items-center justify-center h-96">
-        <UIcon name="i-lucide-loader-2" class="animate-spin text-4xl" />
+        <UIcon name="i-lucide-loader-circle" class="animate-spin text-4xl" />
       </div>
     </template>
   </UDashboardPanel>

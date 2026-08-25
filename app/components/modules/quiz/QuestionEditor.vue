@@ -328,7 +328,7 @@ const stats = computed(() => {
             class="mt-3 p-3 bg-warning/10 border border-warning/20 rounded-lg"
           >
             <div class="flex items-start gap-2">
-              <UIcon name="i-lucide-alert-triangle" class="text-warning mt-0.5" />
+              <UIcon name="i-lucide-triangle-alert" class="text-warning mt-0.5" />
               <div class="text-sm">
                 <p v-if="reponses.length < 2" class="text-warning">
                   Ajoutez au moins 2 réponses

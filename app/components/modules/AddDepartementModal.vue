@@ -202,7 +202,7 @@ const pagination = ref({
           "
           class="text-center py-8 text-muted"
         >
-          <UIcon name="i-lucide-check-circle" class="mx-auto mb-2 text-4xl" />
+          <UIcon name="i-lucide-circle-check" class="mx-auto mb-2 text-4xl" />
           <p>Tous les départements sont déjà associés à ce module</p>
         </div>
 

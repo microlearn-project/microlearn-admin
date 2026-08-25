@@ -60,8 +60,8 @@ function formatAction(action: string): string {
 
 // Fonction pour obtenir l'icône selon le type d'action
 function getActionIcon(action: string): string {
-  if (action.includes("cree") || action.includes("attribue")) return "i-lucide-plus-circle";
-  if (action.includes("modifie")) return "i-lucide-edit";
+  if (action.includes("cree") || action.includes("attribue")) return "i-lucide-circle-plus";
+  if (action.includes("modifie")) return "i-lucide-square-pen";
   if (action.includes("supprime") || action.includes("retire")) return "i-lucide-trash-2";
   if (action.includes("publie")) return "i-lucide-upload";
   if (action.includes("depublie")) return "i-lucide-arrow-down";

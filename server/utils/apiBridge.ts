@@ -50,6 +50,11 @@ export async function callApi<T = unknown>(
     const message = Array.isArray(data?.message)
       ? data.message.join(", ")
       : (data?.message ?? "Erreur de l'API");
-    throw createError({ statusCode: status, message: message });
+    // statusMessage ET message : selon le composant, l'erreur est lue via
+    // err.data.statusMessage OU err.data.message (les deux conventions
+    // coexistent dans l'app) — sans les deux, la moitié des toasts d'erreur
+    // retombaient sur leur message générique de fallback au lieu du détail
+    // renvoyé par l'API (ex: distinction code_agent vs email sur un 409).
+    throw createError({ statusCode: status, statusMessage: message, message });
   }
 }

@@ -420,7 +420,7 @@ const columns: TableColumn<AgentProgression>[] = [
             <div class="bg-elevated border border-default rounded-lg p-4">
               <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
-                  <UIcon name="i-lucide-check-circle" class="text-success text-xl" />
+                  <UIcon name="i-lucide-circle-check" class="text-success text-xl" />
                 </div>
                 <div>
                   <p class="text-2xl font-bold">{{ progressionData.stats.tauxCompletion }}%</p>
