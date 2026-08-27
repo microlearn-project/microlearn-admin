@@ -146,8 +146,7 @@ async function saveDocuments() {
     <template #body>
       <div class="space-y-4">
         <p class="text-sm text-muted">
-          Sélectionnez les documents à associer à ce cours. Les URLs complètes
-          seront stockées pour un accès direct sur mobile.
+          Sélectionnez les documents à associer à ce cours.
         </p>
 
         <!-- État de chargement -->
@@ -191,12 +190,6 @@ async function saveDocuments() {
               <p class="font-medium truncate">
                 {{ getFileName(doc) }}
               </p>
-              <p
-                class="text-xs text-muted truncate"
-                :title="getFullUrl(doc.fichier)"
-              >
-                {{ getFullUrl(doc.fichier) }}
-              </p>
             </div>
           </div>
         </div>
@@ -219,7 +212,14 @@ async function saveDocuments() {
                 name="i-lucide-circle-check"
                 class="text-success shrink-0"
               />
-              <span class="truncate" :title="url">
+              <span
+                class="truncate"
+                :title="
+                  availableDocuments.find((d) => getFullUrl(d.fichier) === url)
+                    ?.nom_original ||
+                  getFileName({ fichier: url, nom_original: null } as Document)
+                "
+              >
                 {{
                   availableDocuments.find((d) => getFullUrl(d.fichier) === url)
                     ?.nom_original ||
