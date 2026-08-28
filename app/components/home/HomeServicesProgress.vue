@@ -18,6 +18,13 @@ const sortedServices = computed(() =>
   [...services.value].sort((a, b) => b.participationRate - a.participationRate)
 );
 
+// Aperçu limité en carte — la liste complète (avec recherche) est dans
+// HomeServicesProgressModal, plus adapté à mesure que le nombre de
+// départements augmente.
+const PREVIEW_COUNT = 5;
+const previewServices = computed(() => sortedServices.value.slice(0, PREVIEW_COUNT));
+const showAllModal = ref(false);
+
 function rateColor(rate: number) {
   if (rate >= 75) return "success";
   if (rate >= 40) return "warning";
@@ -57,7 +64,7 @@ function rateColor(rate: number) {
     </div>
 
     <div v-else class="space-y-4">
-      <div v-for="service in sortedServices" :key="service.departement">
+      <div v-for="service in previewServices" :key="service.departement">
         <div class="flex items-center justify-between mb-1.5">
           <p class="text-sm font-medium truncate">{{ service.departement }}</p>
           <div class="flex items-center gap-2 shrink-0">
@@ -81,6 +88,21 @@ function rateColor(rate: number) {
           />
         </div>
       </div>
+
+      <UButton
+        v-if="sortedServices.length > PREVIEW_COUNT"
+        :label="`Voir tout (${sortedServices.length} départements)`"
+        icon="i-lucide-list"
+        variant="link"
+        size="sm"
+        class="px-0"
+        @click="showAllModal = true"
+      />
     </div>
+
+    <HomeServicesProgressModal
+      v-model:open="showAllModal"
+      :services="sortedServices"
+    />
   </UCard>
 </template>

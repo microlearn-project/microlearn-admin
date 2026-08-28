@@ -26,11 +26,20 @@ const { data: stats, pending } = await useFetch<DashboardStats>(
 const activeSessionsTotal = computed(
   () => stats.value.activeSessionsAdmin + stats.value.activeSessionsMobile
 );
+
+// "Connectés maintenant" reste réservé à SUPERADMIN/ADMIN — même logique
+// que "Actions rapides" sur ce même tableau de bord (pages/index.vue).
+const { hasRole } = useAuth();
+const isFormateur = computed(() => hasRole("FORMATEUR"));
 </script>
 
 <template>
-  <UPageGrid class="lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-px">
+  <UPageGrid
+    :class="isFormateur ? 'lg:grid-cols-3' : 'lg:grid-cols-4'"
+    class="gap-4 sm:gap-6 lg:gap-px"
+  >
     <UPageCard
+      v-if="!isFormateur"
       icon="i-lucide-radio"
       title="Connectés maintenant"
       variant="subtle"

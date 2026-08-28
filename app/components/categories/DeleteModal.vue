@@ -21,6 +21,12 @@ const emit = defineEmits<{
 const toast = useToast();
 const open = defineModel<boolean>("open", { default: false });
 
+// La suppression forcée (DELETE /tags/:id/force) est restreinte à SUPERADMIN
+// côté API — sans ce garde, un ADMIN/FORMATEUR se prenait un 403 brut sans
+// explication en cliquant "Supprimer quand même".
+const { hasRole } = useAuth();
+const canForceDelete = computed(() => hasRole("SUPERADMIN"));
+
 // État de la modale de confirmation (tag utilisé dans des modules)
 const confirmModal = ref(false);
 const affectedModules = ref<{ id_module: string; titre: string }[]>([]);
@@ -232,7 +238,10 @@ function confirmationLines(rows: Tag[]): string[] {
         </div>
 
         <!-- Info supplémentaire -->
-        <div class="flex items-start gap-2 p-3 bg-warning/10 border border-warning/20 rounded-lg text-sm">
+        <div
+          v-if="canForceDelete"
+          class="flex items-start gap-2 p-3 bg-warning/10 border border-warning/20 rounded-lg text-sm"
+        >
           <UIcon name="i-lucide-info" class="text-warning mt-0.5 shrink-0" />
           <p class="text-muted">
             Cette action est <strong>irréversible</strong>. Les modules listés
@@ -241,15 +250,29 @@ function confirmationLines(rows: Tag[]): string[] {
           </p>
         </div>
 
+        <!-- Non-SUPERADMIN : la suppression forcée est restreinte côté API -->
+        <div
+          v-else
+          class="flex items-start gap-2 p-3 bg-info/10 border border-info/20 rounded-lg text-sm"
+        >
+          <UIcon name="i-lucide-shield-alert" class="text-info mt-0.5 shrink-0" />
+          <p class="text-muted">
+            Seul un <strong>SUPERADMIN</strong> peut forcer la suppression
+            d'une catégorie encore utilisée. Retirez-la d'abord des modules
+            listés ci-dessus, ou contactez un SUPERADMIN.
+          </p>
+        </div>
+
         <div class="flex justify-end gap-3 pt-2">
           <UButton
-            label="Annuler"
+            :label="canForceDelete ? 'Annuler' : 'Fermer'"
             color="neutral"
             variant="outline"
             :disabled="forceLoading"
             @click="onCancelForceDelete"
           />
           <UButton
+            v-if="canForceDelete"
             label="Supprimer quand même"
             color="error"
             variant="solid"
