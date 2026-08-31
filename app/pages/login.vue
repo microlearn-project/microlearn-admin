@@ -39,9 +39,18 @@ function handleLogin() {
 // afficher (retour d'un échec de connexion) : dans ce cas on ne redirige
 // jamais automatiquement, sinon l'utilisateur ne verrait jamais le message
 // et boucherait indéfiniment sur un nouvel échec.
-if (!authenticated.value && !errorMessage.value) {
-  login(redirectTo.value);
-}
+//
+// Dans onMounted (jamais au niveau racine du <script setup>) : cette page
+// est rendue côté serveur (SSR) comme toute page Nuxt, et login() fait
+// window.location.href — window n'existe pas côté serveur, ce qui plantait
+// le rendu SSR avec "Cannot read properties of undefined (reading
+// 'location')". onMounted ne s'exécute jamais côté serveur, uniquement
+// après hydratation dans le navigateur.
+onMounted(() => {
+  if (!authenticated.value && !errorMessage.value) {
+    login(redirectTo.value);
+  }
+});
 </script>
 
 <template>
