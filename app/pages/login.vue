@@ -33,6 +33,15 @@ const errorMessage = computed(() => {
 function handleLogin() {
   login(redirectTo.value);
 }
+
+// Redirection automatique vers Keycloak, sans page intermédiaire à cliquer
+// (même logique que console.neon.tech) — sauf s'il y a une erreur à
+// afficher (retour d'un échec de connexion) : dans ce cas on ne redirige
+// jamais automatiquement, sinon l'utilisateur ne verrait jamais le message
+// et boucherait indéfiniment sur un nouvel échec.
+if (!authenticated.value && !errorMessage.value) {
+  login(redirectTo.value);
+}
 </script>
 
 <template>
@@ -46,15 +55,20 @@ function handleLogin() {
           <UIcon name="i-lucide-graduation-cap" class="text-primary text-3xl" />
         </div>
         <h1 class="text-2xl font-bold">UTB Learn Administration</h1>
-        <p class="text-muted mt-2">
-          Connectez-vous pour accéder au tableau de bord
-        </p>
       </div>
 
-      <!-- Carte de connexion -->
-      <div class="bg-elevated border border-default rounded-xl p-6 shadow-lg">
+      <!-- Pas d'erreur : redirection auto en cours, simple indicateur -->
+      <div v-if="!errorMessage" class="flex flex-col items-center gap-3 py-4">
+        <UIcon
+          name="i-lucide-loader-circle"
+          class="text-primary text-3xl animate-spin"
+        />
+        <p class="text-muted text-sm">Redirection vers la connexion...</p>
+      </div>
+
+      <!-- Erreur : pas de redirection auto, l'utilisateur doit voir le message -->
+      <div v-else class="bg-elevated border border-default rounded-xl p-6 shadow-lg">
         <div
-          v-if="errorMessage"
           class="flex items-start gap-3 p-4 mb-4 bg-error/10 border border-error/20 rounded-lg"
         >
           <UIcon
@@ -71,7 +85,7 @@ function handleLogin() {
         </p>
 
         <UButton
-          label="Se connecter"
+          label="Réessayer"
           icon="i-lucide-log-in"
           color="primary"
           size="lg"
